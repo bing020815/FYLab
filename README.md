@@ -414,3 +414,49 @@ gunzip path_abun_unstrat_descrip.tsv.gz
 ```
 
 
+# raw_data structure  [optional]
+```
+ . 
+├── 科研案A
+│   └── human
+│       └── Stool
+│       └── YF
+│       └── Stomach
+│       └── YF
+│   └── metadata
+├── 科研案B
+│   └── metadata
+│   └── human
+│       └── Stool
+│             └── Fastq 
+│             └── Basespace 
+│                    └── *BasespaceFiles
+│                    └── *SampleTable
+│                              └── SampleA.csv
+│                              └── SampleB.csv …
+│                    └── PopulationTable
+│                              └── PopulationTable_abundance.csv
+│                              └── PopulationTable_reads.csv
+│             └── Qiime2 
+│                    └── *Qiime_ver
+│                            └── *SampleTable
+│                            └── TabularTable
+│                                    └── microbes_tabular_level_type_Qiimer_ver.csv
+│                                    └── pathway_tabular__Qiimer_ver.csv
+│                                    └── enzyme_tabular__Qiimer_ver.csv
+│                            └── PopulationTable
+│                                    └── PopulationTable_abundance.csv
+│                                    └── PopulationTable_reads.csv  
+│                                    └── PopulationTable_pathway.csv
+│                                    └── PopulationTable_enzyme.csv
+│                            └── EC_metagenome_out
+│                                    └── pred_metagenome_unstrat_descrip.tsv.gz
+│                            └── KEGG_pathways_out
+│                                    └── path_abun_unstrat_descrip.tsv.gz
+│                            └── KO_metagenome_out
+│                            └── raw
+│                                    └── otu_table.tsv
+│                                    └── taxonomy.tsv
+│                                    └── denoise_settings.txt
+└── 商業案-廠商A 
+```
