@@ -82,10 +82,6 @@ nohup qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --in
 ```
 nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization paired-end-demux.qzv &
 ```
-### 查看结果，幫助判斷如何設定去除雜訊參數 [not supported in headless environments] (optional)
-```
-qiime tools view demux.qzv
-```
 
 ## Denoise 去除雜訊 [標準流程: 290-240]
 ### 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
@@ -215,7 +211,10 @@ cd phyloseq; mv tree.nwk rooted_tree.nwk; cd ../
 ### 產出taxa-bar.qzv
 ```
 qiime taxa barplot \
---i-table table.qza \ --m-metadata-file metadata.tsv \ --i-taxonomy taxonomy.qza \ --o-visualization taxa-bar.qzv
+  --i-table table.qza \
+  --m-metadata-file metadata.tsv \
+  --i-taxonomy taxonomy.qza \
+  --o-visualization taxa-bar.qzv
 ```
 
 ## OTU Percentage(如果有要跑bar圖就要接著跑這個)  [optional]
