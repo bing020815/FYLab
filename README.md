@@ -551,6 +551,9 @@ gunzip path_abun_unstrat_descrip.tsv.gz
 │                            └── raw
 │                                    └── otu_table.tsv
 │                                    └── taxonomy.tsv
+│                                    └── dehost_otu_table.tsv
+│                                    └── dehost_taxonomy.tsv
+│                                    └── dna-sequences.fasta
 │                                    └── denoise_settings.txt
 └── 商業案-廠商A 
 ```
