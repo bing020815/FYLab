@@ -2,6 +2,7 @@
 ## Folder Management
 * Window -> File WINSCP
 * Mac -> Filezilla
+
 主機名稱：140.127.97.45
 使⽤者名稱：adprc
 
