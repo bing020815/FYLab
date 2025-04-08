@@ -178,7 +178,7 @@ conda activate host-tools
 ```
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
 ```
-nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
+nohup bowtie2 -x /home/adprc/host_genome/[human]_genome/host_genome_index \
        -f phyloseq/dna-sequences.fasta \
        -S phyloseq/mapping_host_genome.sam \
        -p 2 \
