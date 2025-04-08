@@ -178,38 +178,64 @@ qiime tools export \
 conda activate host-tools
 ```
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
-```
-nohup bowtie2 -x /home/adprc/host_genome/[human]_genome/host_genome_index \
-       -f phyloseq/dna-sequences.fasta \
-       -S phyloseq/mapping_host_genome.sam \
-       -p 2 \
-       2> phyloseq/mapping_host_genome.txt &
-```
-## 將 .sam 轉換為 .bam（二進位格式，處理效率更高）
+### human
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
+         -f phyloseq/dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+### mouse
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
+         -f phyloseq/dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+### dog
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
+         -f phyloseq/dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+### cat
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
+         -f phyloseq/dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+## samtools 處理宿主基因
+### 1.將 .sam 轉換為 .bam（二進位格式，處理效率更高）
 ```
 samtools view -h -b phyloseq/mapping_host_genome.sam -o phyloseq/mapping_host_genome.bam
 ```
-## 篩選出「成功比對上的宿主序列」
+### 2.篩選出「成功比對上的宿主序列」
 ```
 samtools view -h -b -F 4 phyloseq/mapping_host_genome.bam > phyloseq/mapped_host_genome.bam
 ```
-## 排序 BAM 檔（按 read name）
+### 3.排序 BAM 檔（按 read name）
 ```
 samtools sort -n phyloseq/mapped_host_genome.bam -o phyloseq/sorted.bam
 ```
-## 把比對上的宿主 reads 轉回 FASTA
+### 4.把比對上的宿主 reads 轉回 FASTA
 ```
 samtools fasta -@ 2 phyloseq/sorted.bam -F 4 -0 phyloseq/host_reads.fasta
 ```
-## 篩選出「未比對上的非宿主序列」
+### 5.篩選出「未比對上的非宿主序列」
 ```
 samtools view -h -b -f 4 phyloseq/mapping_host_genome.bam > phyloseq/nonhost.bam
 ```
-## 排序未比對序列
+### 6.排序未比對序列
 ```
 samtools sort -n phyloseq/nonhost.bam -o phyloseq/nonhost_sorted.bam
 ```
-## 匯出非宿主 reads 為 FASTA
+### 7.匯出非宿主 reads 為 FASTA
 ```
 samtools fasta -@ 2 phyloseq/nonhost_sorted.bam -f 4 -0 phyloseq/nonhost.fasta
 ```
@@ -221,19 +247,20 @@ samtools fasta -@ 2 phyloseq/nonhost_sorted.bam -f 4 -0 phyloseq/nonhost.fasta
   ```
   seqkit stats -T phyloseq/*.fasta | awk '{print $1, $4}' | column -t
   ```
-## 建立filtered資料夾
+## 輸出去除宿主基因otu_table.tsv, taxonomy.tsv
+### 0.建立filtered資料夾
 ```
 mkdir -p phyloseq/filtered_host
 ```
-## 建立keep_ids
+### 1.建立keep_ids
 ```
 grep '^>' phyloseq/nonhost.fasta | sed 's/^>//' > phyloseq/filtered_host/keep_ids.txt
 ```
-## 建立filtered otu_table.tsv
+### 2.建立filtered otu_table.tsv
 ```
 awk 'NR==FNR{keep[$1]; next} NR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/otu_table.tsv
 ```
-## 建立filtered taxonomy.tsv
+### 3.建立filtered taxonomy.tsv
 ```
 awk 'NR==FNR{keep[$1]; next} NR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/taxonomy.tsv
 ```
