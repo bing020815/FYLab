@@ -178,7 +178,7 @@ qiime tools export \
 conda activate host-tools
 ```
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
-### human
+### human [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -186,7 +186,7 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
-### mouse
+### mouse [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -194,7 +194,7 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
-### dog
+### dog [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -202,7 +202,7 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
-### cat
+### cat [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
