@@ -8,14 +8,15 @@
 ## Puty/terminal
 Windos: Putty
   + IP: adprc@140.127.97.45
+
 Mac: Terminal
   + run: ssh adprc@140.127.97.45
 
 
 # QIIME2 - Preparation 分析前準備
-對檢體資料清單絕對路徑輸出
+對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
 ```
-ls | sed "s:^:`pwd`/:" > file_path.txt
+find . -maxdepth 1 -type f ! -name 'file_path.txt' -exec realpath {} \; > file_path.txt
 ```
 
 ## 留下檢體的絕對路徑資料,按照儲存格式存成manifest.csv
@@ -24,7 +25,7 @@ ls | sed "s:^:`pwd`/:" > file_path.txt
  CH4773,/home/fyadmin/Desktop/Hong-Ying/CL/CH4773_S29_L001_R1_01.fastq.gz,forward
  CH4773,/home/fyadmin/Desktop/Hong-Ying/CL/CH4773_S29_L001_R2_001.fastq.gz,reverse
 
-確認file_path.txt的資料紀錄是否存在
+(option)確認'file_path.txt'的資料紀錄是否存在
 ```
 cat file_path.txt
 ```
@@ -41,7 +42,7 @@ cat file_path.txt
   使用excel修改
   ```
 
-確認file_path.txt的資料紀錄已移除
+(option)確認file_path.txt的資料紀錄已移除
 ```
 cat file_path.txt
 ```
@@ -168,6 +169,72 @@ qiime tools export \
 qiime tools export \
   --input-path rep-seqs.qza \
   --output-path phyloseq
+```
+
+# Dehost 排除host基因
+## 啟動host-tools package
+```
+conda activate host-tools
+```
+## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
+```
+nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
+       -f phyloseq/dna-sequences.fasta \
+       -S phyloseq/mapping_host_genome.sam \
+       -p 2 \
+       2> phyloseq/mapping_host_genome.txt &
+```
+## 將 .sam 轉換為 .bam（二進位格式，處理效率更高）
+```
+samtools view -h -b phyloseq/mapping_host_genome.sam -o phyloseq/mapping_host_genome.bam
+```
+## 篩選出「成功比對上的宿主序列」
+```
+samtools view -h -b -F 4 phyloseq/mapping_host_genome.bam > phyloseq/mapped_host_genome.bam
+```
+## 排序 BAM 檔（按 read name）
+```
+samtools sort -n phyloseq/mapped_host_genome.bam -o phyloseq/sorted.bam
+```
+## 把比對上的宿主 reads 轉回 FASTA
+```
+samtools fasta -@ 2 phyloseq/sorted.bam -F 4 -0 phyloseq/host_reads.fasta
+```
+## 篩選出「未比對上的非宿主序列」
+```
+samtools view -h -b -f 4 phyloseq/mapping_host_genome.bam > phyloseq/nonhost.bam
+```
+## 排序未比對序列
+```
+samtools sort -n phyloseq/nonhost.bam -o phyloseq/nonhost_sorted.bam
+```
+## 匯出非宿主 reads 為 FASTA
+```
+samtools fasta -@ 2 phyloseq/nonhost_sorted.bam -f 4 -0 phyloseq/nonhost.fasta
+```
+  ### 查看host基因佔比 [option1]
+  ```
+  cat phyloseq/mapping_host_genome.txt
+  ```
+  ### 查看host基因佔比 [option2]
+  ```
+  seqkit stats -T phyloseq/*.fasta | awk '{print $1, $4}' | column -t
+  ```
+## 建立filtered資料夾
+```
+mkdir -p phyloseq/filtered_host
+```
+## 建立keep_ids
+```
+grep '^>' phyloseq/nonhost.fasta | sed 's/^>//' > phyloseq/filtered_host/keep_ids.txt
+```
+## 建立filtered otu_table.tsv
+```
+awk 'NR==FNR{keep[$1]; next} NR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/otu_table.tsv
+```
+## 建立filtered taxonomy.tsv
+```
+awk 'NR==FNR{keep[$1]; next} NR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/taxonomy.tsv
 ```
 
 
