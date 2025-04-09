@@ -256,11 +256,11 @@ mkdir -p phyloseq/filtered_host
 ```
 grep '^>' phyloseq/nonhost.fasta | sed 's/^>//' > phyloseq/filtered_host/keep_ids.txt
 ```
-### 2.建立 dehost_otu_table.tsv
+### 2.建立 dehost_taxonomy.tsv
 ```
 awk 'FNR==NR {keep[$1]; next} FNR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/dehost_taxonomy.tsv
 ```
-### 3.建立 dehost_taxonomy.tsv
+### 3.建立 dehost_otu_table.tsv
 ```
 awk 'FNR==NR {keep[$1]; next} FNR<=2 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/dehost_otu_table.tsv
 ```
