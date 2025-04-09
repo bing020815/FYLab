@@ -178,7 +178,7 @@ qiime tools export \
 conda activate host-tools
 ```
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
-### human [pick one fits the project]
+  ### human [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -186,7 +186,7 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
-### mouse [pick one fits the project]
+  ### mouse [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -194,7 +194,7 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
-### dog [pick one fits the project]
+  ### dog [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -202,7 +202,7 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
-### cat [pick one fits the project]
+  ### cat [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -258,11 +258,11 @@ grep '^>' phyloseq/nonhost.fasta | sed 's/^>//' > phyloseq/filtered_host/keep_id
 ```
 ### 2.建立 dehost_otu_table.tsv
 ```
-awk 'NR==FNR{keep[$1]; next} NR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/dehost_otu_table.tsv
+awk 'FNR==NR{keep[$1]; next} $1 ~ /^#OTU ID/ || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/dehost_otu_table.tsv
 ```
 ### 3.建立 dehost_taxonomy.tsv
 ```
-awk 'NR==FNR{keep[$1]; next} NR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/dehost_taxonomy.tsv
+awk 'FNR==NR{keep[$1]; next} $1 ~ /^Feature ID/ || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/dehost_taxonomy.tsv
 ```
 
 
