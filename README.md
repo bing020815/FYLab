@@ -93,7 +93,7 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 ```
 nohup qiime dada2 denoise-paired \
 --i-demultiplexed-seqs paired-end-demux.qza \
---p-trim-left-f 0 --p-trim-left-r 0 \
+--p-trim-left-f 17 --p-trim-left-r 21 \
 --p-trunc-len-f 290 --p-trunc-len-r 240 \
 --p-n-threads 2 \
 --o-representative-sequences rep-seqs.qza \
