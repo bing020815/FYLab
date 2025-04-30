@@ -118,6 +118,13 @@ qiime metadata tabulate \
   --m-input-file stats.qza \
   --o-visualization stats.qzv
 ```
+### 直接看序列表長度[optional]
+```
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs-summary.qzv
+```
+
 
 # Analysis 導出特征表
 ## 建立導出用資料夾
