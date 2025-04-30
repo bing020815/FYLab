@@ -105,7 +105,7 @@ nohup qiime dada2 denoise-paired \
 ```
 紀錄denoise設定
 ```
-echo "--p-trim-left-f 0 --p-trim-left-r 0" >> denoise_settings.txt
+echo "--p-trim-left-f 17 --p-trim-left-r 21" >> denoise_settings.txt
 echo "--p-trunc-len-f 290 --p-trunc-len-r 240" >> denoise_settings.txt
 ```
 
