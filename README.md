@@ -174,7 +174,7 @@ qiime tools export \
 --output-path phyloseq
 ```
 
-### -- 轉出 rep-seqs.qza 檔案，產生dna-sequences.fasta，方便查詢Sequence --
+### -- 轉換 rep-seqs.qza 檔案，產生dna-sequences.fasta，方便查詢Sequence --
 ### https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes
 ```
 qiime tools export \
@@ -282,14 +282,21 @@ biom convert \
   --to-hdf5 \
   --table-type="OTU table"
 ```
-
+### Dehost pathway 流程前期準備: 從原始 rep-seqs.qza 過濾出 dehost 用的 rep-seqs.qza
+```
+qiime feature-table filter-seqs \
+  --i-data rep-seqs.qza \
+  --i-table phyloseq/filtered_host/dehost_otu_table.biom \
+  --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
+```
 
 # 畫圖
 ## KEGG Pathway 前期準備
 ### 4.Phylogeny Tree (此步驟要超級久，可以多線程設定)
+dehost:[--i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza]; not dehost:[--i-sequences rep-seqs.qza]
 ```
 nohup qiime phylogeny align-to-tree-mafft-fasttree \
---i-sequences rep-seqs.qza \
+--i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza \
 --o-alignment aligned-rep-seqs.qza \
 --o-masked-alignment masked-aligned-rep-seqs.qza \
 --o-tree unrooted-tree.qza \
@@ -298,9 +305,13 @@ nohup qiime phylogeny align-to-tree-mafft-fasttree \
 ```
 
 ### 5.導出代表序列 (這步完成後，可以跳到 #PICRUSt2，直接啟動picrust2)
-註:產出dna-sequences.fasta
+1. Input:
+dehost:[--input-path phyloseq/filtered_host/dehost_rep_seqs.qza]; not dehost:[--input-path rep-seqs.qza]
+2. Output:
+dehost:[--output-path phyloseq/filtered_host/]; not dehost:[--output-path fastq1]
+註: 產出dna-sequences.fasta 於 `phyloseq/filtered_host/` or `fastq1/`
 ```
-qiime tools export --input-path rep-seqs.qza --output-path fastq1
+qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
 ```
 
 
@@ -419,16 +430,6 @@ conda deactivate
 
 
 # PICRUSt2 - Metabolism Pathway
-## Dehost 流程前期準備: 啟動 seqkit-env 處理 dehost fastq
-```
-conda activate seqkit-env
-```
-## Dehost 流程前期準備: 執行產出 filtered_rep_seqs.fasta 過濾掉 host 序列
-```
-seqkit grep -f phyloseq/filtered_host/keep_ids.txt fastq1/dna-sequences.fasta > phyloseq/filtered_host/filtered_rep_seqs.fasta
-```
-
-
 ## 啟動PICRUSt2 package
 ```
 conda activate picrust2
@@ -436,11 +437,11 @@ conda activate picrust2
 
 ## 1.Place reads into reference tree (此階段需跑一下)
 -p 可改設定核心 能設定為4-6
-dehost: [-s filtered_rep_seqs.fasta]
+dehost: [-s phyloseq/filtered_host/dna-sequences.fasta]
 not dehost: [-s fastq1/dna-sequences.fasta]
 ```
 nohup place_seqs.py \
--s fastq1/dna-sequences.fasta \
+-s phyloseq/filtered_host/dna-sequences.fasta \
 -o out.tre \
 -p 2 \
 --intermediate intermediate/place_seqs &
@@ -474,18 +475,22 @@ nohup hsp.py \
 
 ## 3.Generate metagenome predictions
 KO
+dehost: [-i phyloseq/filtered_host/dehost_otu_table.biom]
+not dehost: [-i phyloseq/feature-table.biom]
 ```
 nohup metagenome_pipeline.py \
--i phyloseq/feature-table.biom \
+-i phyloseq/filtered_host/dehost_otu_table.biom \
 -m marker_predicted_and_nsti.tsv.gz \
 -f KO_predicted.tsv.gz \
 -o KO_metagenome_out \
 --strat_out &
 ```
 EC
+dehost: [-i phyloseq/filtered_host/dehost_otu_table.biom]
+not dehost: [-i phyloseq/feature-table.biom]
 ```
 nohup metagenome_pipeline.py \
--i phyloseq/feature-table.biom \
+-i phyloseq/filtered_host/dehost_otu_table.biom \
 -m marker_predicted_and_nsti.tsv.gz \
 -f EC_predicted.tsv.gz \
 -o EC_metagenome_out \
