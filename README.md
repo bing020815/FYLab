@@ -274,6 +274,14 @@ awk 'FNR==NR {keep[$1]; next} FNR==1 || $1 in keep' phyloseq/filtered_host/keep_
 ```
 awk 'FNR==NR {keep[$1]; next} FNR<=2 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/dehost_otu_table.tsv
 ```
+### Dehost pathway 流程前期準備: dehost_otu_table.tsv 轉檔 dehost_otu_table.biom
+```
+biom convert \
+  -i phyloseq/filtered_host/dehost_otu_table.tsv \
+  -o phyloseq/filtered_host/dehost_otu_table.biom \
+  --to-hdf5 \
+  --table-type="OTU table"
+```
 
 
 # 畫圖
@@ -290,10 +298,10 @@ nohup qiime phylogeny align-to-tree-mafft-fasttree \
 ```
 
 ### 5.導出代表序列 (這步完成後，可以跳到 #PICRUSt2，直接啟動picrust2)
+註:產出dna-sequences.fasta
 ```
 qiime tools export --input-path rep-seqs.qza --output-path fastq1
 ```
-註:產出dna-sequences.fasta
 
 
 ### 6.導出無根進化樹 [optional]
@@ -411,6 +419,16 @@ conda deactivate
 
 
 # PICRUSt2 - Metabolism Pathway
+## Dehost 流程前期準備: 啟動 seqkit-env 處理 dehost fastq
+```
+conda activate seqkit-env
+```
+## Dehost 流程前期準備: 執行產出 filtered_rep_seqs.fasta 過濾掉 host 序列
+```
+seqkit grep -f phyloseq/filtered_host/keep_ids.txt fastq1/dna-sequences.fasta > phyloseq/filtered_host/filtered_rep_seqs.fasta
+```
+
+
 ## 啟動PICRUSt2 package
 ```
 conda activate picrust2
@@ -418,6 +436,8 @@ conda activate picrust2
 
 ## 1.Place reads into reference tree (此階段需跑一下)
 -p 可改設定核心 能設定為4-6
+dehost: [-s filtered_rep_seqs.fasta]
+not dehost: [-s fastq1/dna-sequences.fasta]
 ```
 nohup place_seqs.py \
 -s fastq1/dna-sequences.fasta \
