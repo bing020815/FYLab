@@ -302,6 +302,12 @@ qiime feature-table filter-seqs \
   --i-table phyloseq/filtered_host/dehost_otu_table.qza \
   --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
 ```
+### Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 rep-seqsfasta
+```
+qiime tools export \
+  --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
+  --output-path phyloseq/filtered_host/
+```
 
 # 畫圖
 ## KEGG Pathway 前期準備
