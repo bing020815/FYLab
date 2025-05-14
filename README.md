@@ -287,11 +287,19 @@ biom convert \
   --to-hdf5 \
   --table-type="OTU table"
 ```
+### Dehost pathway 流程前期準備: 把 dehost_otu_table.biom 匯入為 QIIME2 格式
+```
+qiime tools import \
+  --input-path phyloseq/filtered_host/dehost_otu_table.biom \
+  --type 'FeatureTable[Frequency]' \
+  --input-format BIOMV210Format \
+  --output-path phyloseq/filtered_host/dehost_otu_table.qza
+```
 ### Dehost pathway 流程前期準備: 從原始 rep-seqs.qza 過濾出 dehost 用的 rep-seqs.qza
 ```
 qiime feature-table filter-seqs \
   --i-data rep-seqs.qza \
-  --i-table phyloseq/filtered_host/dehost_otu_table.biom \
+  --i-table phyloseq/filtered_host/dehost_otu_table.qza \
   --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
 ```
 
