@@ -183,7 +183,8 @@ qiime tools export \
 ```
 
 # Dehost 排除host基因
-## 啟動host-tools package
+## 啟動host-tools package 
+https://useast.ensembl.org/index.html
 ```
 conda activate host-tools
 ```
