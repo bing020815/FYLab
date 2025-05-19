@@ -185,6 +185,7 @@ qiime tools export \
 # Dehost 排除host基因
 ## 啟動host-tools package 
 https://useast.ensembl.org/index.html
+包含: bowtie2, samtools, seqkit
 ```
 conda activate host-tools
 ```
