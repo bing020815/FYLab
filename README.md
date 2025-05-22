@@ -182,6 +182,14 @@ qiime tools export \
   --output-path phyloseq
 ```
 
+# Dehost 排除host基因
+## 啟動host-tools package 
+
+包含: bowtie2, samtools, seqkit 工具包 
+https://useast.ensembl.org/index.html
+```
+conda activate host-tools
+```
 ### Step 1: 檢查代表性序列品質（QC）
 ```
 seqkit stats phyloseq/dna-sequences.fasta
@@ -195,15 +203,6 @@ nohup seqkit seq -m 120 -M 500 -n -v phyloseq/dna-sequences.fasta > phyloseq/fil
 ### Step 3: 再檢查代表性序列品質（QC）
 ```
 seqkit stats phyloseq/dna-sequences.fasta
-```
-
-# Dehost 排除host基因
-## 啟動host-tools package 
-
-包含: bowtie2, samtools, seqkit 工具包 
-https://useast.ensembl.org/index.html
-```
-conda activate host-tools
 ```
 
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
