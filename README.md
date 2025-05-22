@@ -223,6 +223,14 @@ conda activate host-tools
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+  ### all(human, mouse, dog, cat, cattle, duck, goat, horse, pig, rabbit, turkey, chicken, sheep) [pick one fits the project]
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
+         -f phyloseq/dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
 ## samtools 處理宿主基因
 ### 1.將 .sam 轉換為 .bam（二進位格式，處理效率更高）
 ```
