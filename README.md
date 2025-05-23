@@ -483,6 +483,7 @@ conda activate picrust2
 -p 可改設定核心 能設定為4-6
 dehost: [-s phyloseq/filtered_host/dna-sequences.fasta]
 not dehost: [-s fastq1/dna-sequences.fasta]
++ 就算最後 log 出現 Exit 1，只要產生的 out.tre 與 place_seqs_out/ 資料夾存在且完整，就可繼續執行後續流程
 ```
 nohup place_seqs.py \
 -s phyloseq/filtered_host/dna-sequences.fasta \
