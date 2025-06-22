@@ -472,7 +472,7 @@ awk 'FNR==NR {keep[$1]; next} FNR<=2 || $1 in keep' phyloseq/filtered_host/keep_
 ```
 conda activate qiime2-2023.2
 ```
-### Dehost pathway 流程前期準備: dehost_otu_table.tsv 轉檔 dehost_otu_table.biom
+### 1. Dehost pathway 流程前期準備: dehost_otu_table.tsv 轉檔 dehost_otu_table.biom
 ```
 biom convert \
   -i phyloseq/filtered_host/dehost_otu_table.tsv \
@@ -480,7 +480,7 @@ biom convert \
   --to-hdf5 \
   --table-type="OTU table"
 ```
-### Dehost pathway 流程前期準備: 把 dehost_otu_table.biom 匯入為 QIIME2 格式
+### 2. Dehost pathway 流程前期準備: 把 dehost_otu_table.biom 匯入為 QIIME2 格式
 ```
 qiime tools import \
   --input-path phyloseq/filtered_host/dehost_otu_table.biom \
@@ -488,21 +488,22 @@ qiime tools import \
   --input-format BIOMV210Format \
   --output-path phyloseq/filtered_host/dehost_otu_table.qza
 ```
-### Dehost pathway 流程前期準備: 從原始 rep-seqs.qza 過濾出 dehost 用的 rep-seqs.qza
+### 3. Dehost pathway 流程前期準備: 從原始 rep-seqs.qza 過濾出 dehost 用的 rep-seqs.qza
 ```
 qiime feature-table filter-seqs \
   --i-data rep-seqs.qza \
   --i-table phyloseq/filtered_host/dehost_otu_table.qza \
   --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
 ```
-### 把 taxonomy.qza 過濾出與 dehost 一致的分類結果
+### 4. 把 taxonomy.qza 過濾出與 dehost 一致的分類結果
 ```
-qiime feature-table filter-features \
-  --i-table taxonomy.qza \
-  --m-metadata-file phyloseq/filtered_host/dehost_otu_table.qza \
-  --o-filtered-table phyloseq/filtered_host/dehost_taxonomy.qza
+qiime tools import \
+  --input-path phyloseq/filtered_host/dehost_taxonomy.tsv \
+  --type 'FeatureData[Taxonomy]' \
+  --output-path phyloseq/filtered_host/dehost_taxonomy.qza \
+  --input-format HeaderlessTSVTaxonomyFormat
 ```
-### Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 rep-seqs.fasta
+### 5. Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 rep-seqs.fasta
 ```
 qiime tools export \
   --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
