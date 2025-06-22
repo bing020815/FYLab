@@ -67,7 +67,7 @@ chmod +x trim_all.sh
 mv -f trimmed_fastq/*.fastq.gz .
 ```
 
-
+<p align="center"><a href="#fylab">Top</a></p>
 
 # QIIME2 - Preparation 分析前準備
 對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
@@ -83,6 +83,9 @@ find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -
  CH4773,/home/fyadmin/Desktop/Hong-Ying/CL/CH4773_S29_L001_R1_01.fastq.gz,forward
  CH4773,/home/fyadmin/Desktop/Hong-Ying/CL/CH4773_S29_L001_R2_001.fastq.gz,reverse
 ```
+<details>
+<summary>(Optional) 確認file_path.txt檔案與處理資料</summary>
+
 (option)確認'file_path.txt'的資料紀錄是否存在
 ```
 cat file_path.txt
@@ -104,6 +107,8 @@ cat file_path.txt
 ```
 cat file_path.txt
 ```
+</details><br>
+
 生成 manifest.csv
 ```
 echo "sample-id,absolute-filepath,direction" > manifest.csv && awk -F'/' '{file=$NF; split(file, parts, "_"); sample=parts[1]; if (file ~ /R1/) dir="forward"; else if (file ~ /R2/) dir="reverse"; print sample","$0","dir}' file_path.txt >> manifest.csv
@@ -265,6 +270,10 @@ seqkit stats phyloseq/dna-sequences.fasta
 ```
 
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat/綜合物種all]基因組
+
+<details>
+<summary><strong>選擇一項適合專案的基因組</strong></summary>
+
   ### human [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
@@ -305,6 +314,8 @@ seqkit stats phyloseq/dna-sequences.fasta
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+</details><br>
+
 ## samtools 處理宿主基因
 ### 1.將 .sam 轉換為 .bam（二進位格式，處理效率更高）
 ```
@@ -419,6 +430,9 @@ qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --out
 ```
 <p align="center"><a href="#fylab">Top</a></p>
 
+<details>
+<summary><strong>點我展開畫進化樹</strong></summary>
+  
 ### 6.導出無根進化樹 [optional]
 ```
 qiime tools export \
@@ -434,8 +448,15 @@ qiime tools export \
 --output-path phyloseq
 cd phyloseq; mv tree.nwk rooted_tree.nwk; cd ../
 ```
+</details><br>
 
+
+  
 ## OTU Bar Plot [optional]
+
+<details>
+<summary><strong>點我展開畫OTU圖</strong></summary>
+
 ### 產出taxa-bar.qzv
 ```
 qiime taxa barplot \
@@ -444,8 +465,13 @@ qiime taxa barplot \
   --i-taxonomy taxonomy.qza \
   --o-visualization taxa-bar.qzv
 ```
+</details><br>
 
 ## OTU Percentage(如果有要跑bar圖就要接著跑這個)  [optional]
+
+<details>
+<summary><strong>點我展開畫OTU圖</strong></summary>
+
 ### 1.Taxanomy Collapse
 ```
 qiime taxa collapse \
@@ -477,8 +503,14 @@ biom convert \
 --to-tsv \
 --header-key taxonomy
 ```
+</details><br>
 
+
+  
 ## Diversity  [optional]
+<details>
+<summary><strong>點我展開畫Diversity圖</strong></summary>
+  
 ### 1.
 ```
 qiime diversity core-metrics-phylogenetic \
@@ -531,6 +563,7 @@ jaccard
 ```
 conda deactivate
 ```
+</details><br>
 
 <p align="center"><a href="#fylab">Top</a></p>
 
