@@ -1,4 +1,4 @@
-# FYLab
+# FYLab (20250622 updated)
 ## Folder Management
 * Window -> File WINSCP
 * Mac -> Filezilla
@@ -12,6 +12,50 @@ Windos: Putty
 
 Mac: Terminal
   + run: ssh adprc@140.127.97.45
+
+# FastQ files Preprocess： 前處理Primer問題
+FastQ現存現象:
+* 舊機型上機(600 cycle): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
+* 新機型上機(600 cycle; 序列長度為含primer 300 bp): 沒有額外設定，序列長度為含primer共計 300 bp
+* 解決方法：為了讓所有FasqQ統一長度，有prime的序列刪掉需要去除掉primer; 沒primer的序列則保留不動，不切序列前段
+
+## 啟用cutadapt環境
+```
+conda activate cutadapt310
+```
+
+## 建立一個資料夾放原始fastq檔
+在自己的工作資料夾中，建立raw_fastq資料夾，並且移動所有fastq檔案至raw_fastq資料夾
+```
+mkdir raw_fastq
+mv *.fastq.gz raw_fastq/
+```
+
+## 下載去除primer腳本與執行
+```
+curl -o trim_all.sh https://raw.githubusercontent.com/bing020815/FYLab/main/trim_all.sh
+```
+
+## 賦予執行權限
+```
+chmod +x trim_all.sh
+```
+
+## 執行去除primer腳本
+* 腳本會尋找 raw_fastq/*_R1_*.fastq.gz 形式的檔案，請確認你已將 FASTQ 放在正確路徑下（raw_fastq/ 資料夾中）
+* 剪完的檔案會輸出至 trimmed_fastq/ 目錄下
+* raw_fastq/*_R1_*.fastq.gz 形式的檔案則不會被修改或刪除，需要清理空間時可優先清理這邊
+```
+./trim_all.sh
+```
+
+## 移動統一格式fastq資料至專案資料夾
+* 將trimmed_fastq/ 目錄下所有剪完的fastq移動回專案資料夾下
+* 會將舊存在的fastq覆蓋掉(原始fastq還是有在raw_fastq裡有保留)
+```
+mv -f trimmed_fastq/*.fastq.gz .
+```
+
 
 
 # QIIME2 - Preparation 分析前準備
@@ -90,14 +134,14 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 ### (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
 ### --p-trim-left-* 的數值應根據使用的 primer 長度設定。
 ### --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 20～30 bp。
-### 例如：290 + 240 = 530，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 70 bp，屬於合理值(overlap 通常建議 >20-30 bp)
+### 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
 ### (將雙端測序數據處理為高品質的序列數據，並輸出相關結果)
 ### table.qzv - 可以看到Sample的取樣深度
 ```
 nohup qiime dada2 denoise-paired \
 --i-demultiplexed-seqs paired-end-demux.qza \
---p-trim-left-f 17 --p-trim-left-r 21 \
---p-trunc-len-f 290 --p-trunc-len-r 240 \
+--p-trim-left-f 0 --p-trim-left-r 0 \
+--p-trunc-len-f 270 --p-trunc-len-r 240 \
 --p-n-threads 2 \
 --o-representative-sequences rep-seqs.qza \
 --o-table table.qza \
@@ -105,8 +149,8 @@ nohup qiime dada2 denoise-paired \
 ```
 紀錄denoise設定
 ```
-echo "--p-trim-left-f 17 --p-trim-left-r 21" >> denoise_settings.txt
-echo "--p-trunc-len-f 290 --p-trunc-len-r 240" >> denoise_settings.txt
+echo "--p-trim-left-f 0 --p-trim-left-r 0" >> denoise_settings.txt
+echo "--p-trunc-len-f 270 --p-trunc-len-r 240" >> denoise_settings.txt
 ```
 
 ### 檢查stats檔案denosis狀態圖表
