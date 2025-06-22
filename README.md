@@ -457,7 +457,7 @@ qiime tools export --input-path rep-seqs.qza --output-path fastq1/
 <p align="center"><a href="#fylab">Top</a></p>
 
 <details>
-<summary><strong>點我展開畫進化樹</strong></summary>
+<summary><strong>點我展開畫進化樹(optional)</strong></summary>
   
 ### 6.導出無根進化樹 [optional]
 ```
