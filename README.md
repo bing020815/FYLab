@@ -272,7 +272,7 @@ seqkit stats phyloseq/dna-sequences.fasta
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat/綜合物種all]基因組
 
 <details>
-<summary><strong>選擇一項適合專案的基因組</strong></summary>
+<summary><strong>請選擇一項適合專案的基因組執行dehost</strong></summary>
 
   ### human [pick one fits the project]
   ```
