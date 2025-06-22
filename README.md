@@ -115,13 +115,13 @@ echo "sample-id,absolute-filepath,direction" > manifest.csv && awk -F'/' '{file=
 ```
 
 ## 將表有csv轉成逗號分個的txt檔案 
-### (fastq轉黨qiime2用)
+* (fastq轉黨qiime2用)
 ```
 cp manifest.csv manifest.txt
 ```
 
 ## 把逗號分隔的csv改成製表符\t的tsv 
-### (metadata才需要用到)
+* (metadata才需要用到)
 ```
 sed 's/,/\t/g' manifest.csv > manifest.tsv
 ```
@@ -133,28 +133,28 @@ conda activate qiime2-2023.2
 ```
 
 ## FASTQ 匯入轉檔 QIIME 2 可使用的格式 (.qza)
-### (need to wait process time, use 'top' command to check, press 'q' to leave)
-### 會產出 paired-end-demux.qza 檔案
-### 依照manifest.txt將兩段序列配對
+* (need to wait process time, use 'top' command to check, press 'q' to leave)
+* 會產出 paired-end-demux.qza 檔案
+* 依照manifest.txt將兩段序列配對
 ```
 nohup qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest.txt --output-path paired-end-demux.qza --input-format PairedEndFastqManifestPhred33 &
 ```
 
 ## 轉成可視化報表
-### 利用 qza 檔案，轉黨輸出成qzv，可以畫成可視化報表
-### https://view.qiime2.org/
+* 利用 qza 檔案，轉黨輸出成qzv，可以畫成可視化報表
+* https://view.qiime2.org/
 ```
 nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization paired-end-demux.qzv &
 ```
 
 ## Denoise 去除雜訊 [標準流程: 270-240]
-### 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
-### (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
-### --p-trim-left-* 的數值應根據使用的 primer 長度設定。
-### --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 20～30 bp。
-### 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
-### (將雙端測序數據處理為高品質的序列數據，並輸出相關結果)
-### table.qzv - 可以看到Sample的取樣深度
+* 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
+* (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
+* --p-trim-left-* 的數值應根據使用的 primer 長度設定。
+* --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 20～30 bp。
+* 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
+* (將雙端測序數據處理為高品質的序列數據，並輸出相關結果)
+* table.qzv - 可以看到Sample的取樣深度
 ```
 nohup qiime dada2 denoise-paired \
 --i-demultiplexed-seqs paired-end-demux.qza \
@@ -172,16 +172,16 @@ echo "--p-trunc-len-f 270 --p-trunc-len-r 240" >> denoise_settings.txt
 ```
 
 ### 檢查stats檔案denosis狀態圖表
-### 利用 qza 檔案，轉黨輸出成qzv，可以畫成可視化報表
-### stats.qzv - 確認denoise中的資訊。
-### https://view.qiime2.org/
+* 利用 qza 檔案，轉黨輸出成qzv，可以畫成可視化報表
+* stats.qzv - 確認denoise中的資訊。
+* https://view.qiime2.org/
 ```
 qiime metadata tabulate \
   --m-input-file stats.qza \
   --o-visualization stats.qzv
 ```
 ### 直接看序列表長度[optional]
-(產出rep-seqs-summary.qzv)
+* (產出rep-seqs-summary.qzv)
 ```
 qiime feature-table tabulate-seqs \
   --i-data rep-seqs.qza \
@@ -195,7 +195,7 @@ qiime feature-table tabulate-seqs \
 mkdir phyloseq
 ```
 ## 轉黨qza檔案成biom檔案
-### 輸入去除雜訊後的table.qza，再輸出成biom format: feature-table.biom
+* 輸入去除雜訊後的table.qza，再輸出成biom format: feature-table.biom
 ```
 qiime tools export \
 --input-path table.qza \
@@ -203,8 +203,8 @@ qiime tools export \
 ```
 
 ## Biom 轉黨
-### 將輸出成biom format的當案轉黨成otu_table.tsv 
-### biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
+* 將輸出成biom format的當案轉黨成otu_table.tsv 
+* biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
 ```
 biom convert \
 -i phyloseq/feature-table.biom \
@@ -213,14 +213,14 @@ biom convert \
 ```
 
 ## 下載模型
-### 下載 2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs
+* 下載 2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs
 ```
 wget https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza
 ```
 
 ## 模型分類
-### 透過已訓練好的模型gg-13-8-99-nb-classifier.qza來預測，並輸出taxonomy.qza
-gg-13-8-99-nb-classifier.qza 要放在與 Fastq同層的資料夾，需要一些時間
+* 透過已訓練好的模型gg-13-8-99-nb-classifier.qza來預測，並輸出taxonomy.qza
+* gg-13-8-99-nb-classifier.qza 要放在與 Fastq同層的資料夾，需要一些時間
 ```
 nohup qiime feature-classifier classify-sklearn \
 --i-classifier gg-13-8-99-nb-classifier.qza \
@@ -230,7 +230,7 @@ nohup qiime feature-classifier classify-sklearn \
 ```
 
 ## qza格式轉檔
-###  將分類好的輸出檔案taxonomy.qza轉黨為成taxonomy.tsv，存至phyloseq
+*  將分類好的輸出檔案taxonomy.qza轉黨為成taxonomy.tsv，存至phyloseq
 ```
 qiime tools export \
 --input-path taxonomy.qza \
@@ -238,7 +238,7 @@ qiime tools export \
 ```
 
 ### -- 轉換 rep-seqs.qza 檔案，產生dna-sequences.fasta，方便查詢Sequence --
-### https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes
+* https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes
 ```
 qiime tools export \
   --input-path rep-seqs.qza \
