@@ -853,10 +853,6 @@ nohup add_descriptions.py \
 ```
 
 
-Python to unzip `.gz` file
-```
-gunzip path_abun_unstrat_descrip.tsv.gz
-```
 <p align="center"><a href="#fylab">Top</a></p>
 
 # Key files relationship
