@@ -574,9 +574,11 @@ conda activate picrust2
 ```
 
 ## 1.Place reads into reference tree (此階段需跑一下)
+
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+  
 -p 可改設定核心 能設定為4-6
-dehost: [-s phyloseq/filtered_host/dna-sequences.fasta]
-not dehost: [-s fastq1/dna-sequences.fasta]
 + 就算最後 log 出現 Exit 1，只要產生的 out.tre 與 place_seqs_out/ 資料夾存在且完整，就可繼續執行後續流程
 ```
 nohup place_seqs.py \
@@ -585,6 +587,19 @@ nohup place_seqs.py \
 -p 2 \
 --intermediate intermediate/place_seqs &
 ```
+</details><br>
+<details>
+<summary><strong>未Dehost使用語法</strong></summary>
+  
+-p 可改設定核心 能設定為4-6
+```
+nohup place_seqs.py \
+-s fastq1/dna-sequences.fasta \
+-o out.tre \
+-p 2 \
+--intermediate intermediate/place_seqs &
+```
+</details><br>
 
 ## 2.Hidden-state prediction
 ```
@@ -614,8 +629,9 @@ nohup hsp.py \
 
 ## 3.Generate metagenome predictions
 KO
-dehost: [-i phyloseq/filtered_host/dehost_otu_table.biom]
-not dehost: [-i phyloseq/feature-table.biom]
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/filtered_host/dehost_otu_table.biom \
@@ -624,9 +640,24 @@ nohup metagenome_pipeline.py \
 -o KO_metagenome_out \
 --strat_out &
 ```
+</details><br>
+<details>
+<summary><strong>未Dehost使用語法</strong></summary>
+
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/feature-table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f KO_predicted.tsv.gz \
+-o KO_metagenome_out \
+--strat_out &
+```
+</details><br>
+
 EC
-dehost: [-i phyloseq/filtered_host/dehost_otu_table.biom]
-not dehost: [-i phyloseq/feature-table.biom]
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/filtered_host/dehost_otu_table.biom \
@@ -635,6 +666,19 @@ nohup metagenome_pipeline.py \
 -o EC_metagenome_out \
 --strat_out &
 ```
+</details><br>
+<details>
+<summary><strong>未Dehost使用語法</strong></summary>
+
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/feature-table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f EC_predicted.tsv.gz \
+-o EC_metagenome_out \
+--strat_out &
+```
+</details><br>
 
 
 ## 4.KEGG pathway
