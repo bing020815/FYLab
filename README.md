@@ -28,7 +28,7 @@ Mac: Terminal
 FastQ現存現象:
 * 舊機型上機(600 cycle): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
 * 新機型上機(600 cycle): 沒有額外設定，序列長度為含primer共計 300 bp
-* 解決方法：為了讓所有FasqQ統一長度，有prime的序列刪掉需要去除掉primer; 沒primer的序列則保留不動，不切序列前段
+* 解決方法：所有FasqQ統一長度，有prime的序列刪掉要去除掉primer; 沒primer的序列則保留不動，不切序列前段
 
 ## 啟用cutadapt環境
 ```
