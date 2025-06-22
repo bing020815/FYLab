@@ -1,4 +1,5 @@
-# FYLab (20250622 updated)
+# FYLab 
++ (20250622 updated)
 ## Folder Management
 * Window -> File WINSCP
 * Mac -> Filezilla
@@ -15,12 +16,14 @@ Mac: Terminal
 
 
 # Table of Content:
-1. [FastQ files Preprocess：前處理Primer問題](#FastQ-files-Preprocess：前處理Primer問題)
+1. [FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess：前處理Primer)
 2. [QIIME2 - Preparation 分析前準備](#QIIME2---Preparation-分析前準備)
+3. [Dehost 排除host基因](#Dehost-排除host基因)
+4. [畫圖](#畫圖)
+5. [PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 
 
-
-# FastQ files Preprocess：前處理Primer問題
+# FastQ files Preprocess：前處理Primer
 FastQ現存現象:
 * 舊機型上機(600 cycle): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
 * 新機型上機(600 cycle; 序列長度為含primer 300 bp): 沒有額外設定，序列長度為含primer共計 300 bp
@@ -384,6 +387,7 @@ qiime tools export \
   --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
   --output-path phyloseq/filtered_host/
 ```
+[<p align='center'>Top</p>](#FYLab)
 
 # 畫圖
 ## KEGG Pathway 前期準備
@@ -408,7 +412,7 @@ dehost:[--output-path phyloseq/filtered_host/]; not dehost:[--output-path fastq1
 ```
 qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
 ```
-
+[<p align='center'>Top</p>](#FYLab)
 
 ### 6.導出無根進化樹 [optional]
 ```
@@ -523,6 +527,7 @@ jaccard
 conda deactivate
 ```
 
+[<p align='center'>Top</p>](#FYLab)
 
 # PICRUSt2 - Metabolism Pathway
 ## 啟動PICRUSt2 package
@@ -637,7 +642,7 @@ Python to unzip `.gz` file
 ```
 gunzip path_abun_unstrat_descrip.tsv.gz
 ```
-
+[<p align='center'>Top</p>](#FYLab)
 
 # raw_data structure  [optional]
 ```
