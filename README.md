@@ -72,7 +72,7 @@ mv -f trimmed_fastq/*.fastq.gz .
 # QIIME2 - Preparation 分析前準備
 對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
 ```
-find . -maxdepth 1 -type f ! -name 'file_path.txt' -exec realpath {} \; > file_path.txt
+find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -exec realpath {} \; > file_path.txt
 ```
 
 ## 留下檢體的絕對路徑資料,按照儲存格式存成manifest.csv
