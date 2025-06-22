@@ -260,15 +260,27 @@ conda activate host-tools
 seqkit stats phyloseq/dna-sequences.fasta
 ```
 
-### Step 2: 建議加強篩選（可選）
+### Step 2: 加強篩選與過濾（可選）
+* 保守篩選濾除低於 350 bp 序列，減少過多序列定序停留於Family
 ```
-nohup seqkit seq -m 120 -M 500 -n -v phyloseq/dna-sequences.fasta > phyloseq/filtered_dna-sequences.fasta &
+nohup seqkit seq -m 350 -M 500 -n -v phyloseq/dna-sequences.fasta > phyloseq/filtered_dna-sequences.fasta &
 ```
 
 ### Step 3: 再檢查代表性序列品質（QC）
+<details>
+<summary><strong>使用加強篩選與過濾後語法</strong></summary>
+
+```
+seqkit stats phyloseq/filtered_dna-sequences.fasta
+```
+</details><br>
+<details>
+<summary><strong>未使用加強篩選與過濾語法</strong></summary>
+
 ```
 seqkit stats phyloseq/dna-sequences.fasta
 ```
+</details><br>
 
 ## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat/綜合物種all]基因組
 
@@ -276,6 +288,20 @@ seqkit stats phyloseq/dna-sequences.fasta
 <summary><strong>請選擇一項適合專案的基因組執行dehost</strong></summary>
 
   ### human [pick one fits the project]
+  <details>
+  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
+  
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
+         -f phyloseq/filtered_dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+  </details><br>
+  <details>
+  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
+  
   ```
   nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -283,7 +309,23 @@ seqkit stats phyloseq/dna-sequences.fasta
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+  </details><br>
+  
   ### mouse [pick one fits the project]
+  <details>
+  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
+  
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
+         -f phyloseq/filtered_dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+  </details><br>
+  <details>
+  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
+  
   ```
   nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -291,7 +333,23 @@ seqkit stats phyloseq/dna-sequences.fasta
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+  </details><br>
+
   ### dog [pick one fits the project]
+  <details>
+  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
+  
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
+         -f phyloseq/filtered_dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+  </details><br>
+  <details>
+  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
+  
   ```
   nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -299,7 +357,24 @@ seqkit stats phyloseq/dna-sequences.fasta
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+  </details><br>
+  
+  
   ### cat [pick one fits the project]
+  <details>
+  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
+  
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
+         -f phyloseq/filtered_dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+  </details><br>
+  <details>
+  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
+  
   ```
   nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -307,7 +382,23 @@ seqkit stats phyloseq/dna-sequences.fasta
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+  </details><br>
+  
   ### all(human, mouse, dog, cat, cattle, duck, goat, horse, pig, rabbit, turkey, chicken, sheep) [pick one fits the project]
+  <details>
+  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
+  
+  ```
+  nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
+         -f phyloseq/filtered_dna-sequences.fasta \
+         -S phyloseq/mapping_host_genome.sam \
+         -p 2 \
+         2> phyloseq/mapping_host_genome.txt &
+  ```
+  </details><br>
+  <details>
+  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
+  
   ```
   nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
@@ -315,6 +406,7 @@ seqkit stats phyloseq/dna-sequences.fasta
          -p 2 \
          2> phyloseq/mapping_host_genome.txt &
   ```
+  </details><br>
 </details><br>
 
 ## samtools 處理宿主基因
@@ -398,12 +490,20 @@ qiime feature-table filter-seqs \
   --i-table phyloseq/filtered_host/dehost_otu_table.qza \
   --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
 ```
-### Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 rep-seqsfasta
+### 把 taxonomy.qza 過濾出與 dehost 一致的分類結果
+```
+qiime feature-table filter-features \
+  --i-table taxonomy.qza \
+  --m-metadata-file phyloseq/filtered_host/dehost_otu_table.qza \
+  --o-filtered-table phyloseq/filtered_host/dehost_taxonomy.qza
+```
+### Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 rep-seqs.fasta
 ```
 qiime tools export \
   --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
   --output-path phyloseq/filtered_host/
 ```
+
 <p align="center"><a href="#fylab">Top</a></p>
 
 # 畫圖
@@ -441,7 +541,7 @@ nohup qiime phylogeny align-to-tree-mafft-fasttree \
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
-註: 產出dna-sequences.fasta 於 `phyloseq/filtered_host/`
+註: 產出dehost過的dna-sequences.fasta 於 `phyloseq/filtered_host/`
 ```
 qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
 ```
@@ -449,7 +549,7 @@ qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --out
 <details>
 <summary><strong>未Dehost使後語法</strong></summary>
   
-註: 產出dna-sequences.fasta 於 `fastq1/`
+註: 產出dehost過的dna-sequences.fasta 於 `fastq1/`
 ```
 qiime tools export --input-path rep-seqs.qza --output-path fastq1/
 ```
@@ -752,6 +852,21 @@ Python to unzip `.gz` file
 gunzip path_abun_unstrat_descrip.tsv.gz
 ```
 <p align="center"><a href="#fylab">Top</a></p>
+
+# Key files relationship
+* rep_seqs.qza: QIIME2 .qza 物件, 代表性序列（代表每個 feature 的 DNA 序列, 建立分類器、taxonomy 指派、畫 phylogeny
+* taxonomy.qza: QIIME2 .qza 物件, 每條序列對應到的分類資訊（Domain → Species）, 繪製分類組成圖、群落分析
+* otu_table.qza: QIIME2 .qza 物件, 每筆樣本與每條 feature 的 abundance 表（ASV/OTU 數量）,多樣性分析、群落結構比較
+* dna-sequences.fasta: FASTA（非 QIIME2 格式）,rep_seqs.qza 轉成人可讀的序列格式, 外部工具使用（如 dehost、seqkit、bowtie2 等）
+```
+DADA2 / Deblur 處理原始 FASTQ 檔案
+       │
+       ├──→ rep_seqs.qza   ←──────→  (匯出為 fasta) → dna-sequences.fasta
+       │                         ↑                     ↑
+       ├──→ otu_table.qza        │                     │
+       │                         │                     │
+       └──→ rep_seqs.qza ──→ classify-sklearn → taxonomy.qza
+```
 
 # raw_data structure  [optional]
 ```
