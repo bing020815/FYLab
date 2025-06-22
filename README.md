@@ -17,14 +17,14 @@ Mac: Terminal
 
 
 # Table of Content:
-1. [FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess：前處理Primer)
+1. [FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [QIIME2 - Preparation 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [Dehost 排除host基因](#Dehost-排除host基因)
 4. [畫圖](#畫圖)
 5. [PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 
 
-# FastQ files Preprocess：前處理Primer
+# FastQ files Preprocess 前處理Primer
 FastQ現存現象:
 * 舊機型上機(600 cycle): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
 * 新機型上機(600 cycle; 序列長度為含primer 300 bp): 沒有額外設定，序列長度為含primer共計 300 bp
