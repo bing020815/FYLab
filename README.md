@@ -264,7 +264,7 @@ nohup seqkit seq -m 120 -M 500 -n -v phyloseq/dna-sequences.fasta > phyloseq/fil
 seqkit stats phyloseq/dna-sequences.fasta
 ```
 
-## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat]基因組
+## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat/綜合物種all]基因組
   ### human [pick one fits the project]
   ```
   nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
