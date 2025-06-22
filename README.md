@@ -388,7 +388,7 @@ qiime tools export \
   --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
   --output-path phyloseq/filtered_host/
 ```
-[<p align='center'>Top</p>](#fylab)
+<p align="center"><a href="#fylab">Top</a></p>
 
 # 畫圖
 ## KEGG Pathway 前期準備
@@ -413,7 +413,7 @@ dehost:[--output-path phyloseq/filtered_host/]; not dehost:[--output-path fastq1
 ```
 qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
 ```
-[<p align='center'>Top</p>](#FYLab)
+<p align="center"><a href="#fylab">Top</a></p>
 
 ### 6.導出無根進化樹 [optional]
 ```
@@ -528,7 +528,7 @@ jaccard
 conda deactivate
 ```
 
-[<p align='center'>Top</p>](#FYLab)
+<p align="center"><a href="#fylab">Top</a></p>
 
 # PICRUSt2 - Metabolism Pathway
 ## 啟動PICRUSt2 package
@@ -643,7 +643,7 @@ Python to unzip `.gz` file
 ```
 gunzip path_abun_unstrat_descrip.tsv.gz
 ```
-[<p align='center'>Top</p>](#FYLab)
+<p align="center"><a href="#fylab">Top</a></p>
 
 # raw_data structure  [optional]
 ```
