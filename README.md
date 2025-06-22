@@ -76,7 +76,7 @@ find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -
 ```
 
 ## 留下檢體的絕對路徑資料,按照儲存格式存成manifest.csv
-## (按照順序: R1_forward, R2_reverse)
+* (按照順序: R1_forward, R2_reverse)
 ``` csv
  # 此為範例格式，無需執行
  sample-id,absolute-filepath,direction
