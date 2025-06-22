@@ -438,19 +438,19 @@ samtools sort -n phyloseq/nonhost.bam -o phyloseq/nonhost_sorted.bam
 ```
 samtools fasta -@ 2 phyloseq/nonhost_sorted.bam -f 4 -0 phyloseq/nonhost.fasta
 ```
-  ### 查看host基因佔比 [option1]
-  * overall alignment rate: 宿主基因佔比
-  ```
-  cat phyloseq/mapping_host_genome.txt
-  ```
-  ### 查看host基因佔比 [option2]
-  * dna-sequences.fasta: 原始代表性序列（未過濾長度）
-  * filtered_dna-sequences.fasta: 只保留長度 350~500 bp 的序列
-  * host_reads.fasta: 成功比對到宿主的序列（被剃除）
-  * nonhost.fasta: 未比對到宿主的序列（保留分析）
-  ```
-  seqkit stats -T phyloseq/*.fasta | awk '{print $1, $4}' | column -t
-  ```
+### 查看host基因佔比 [option1]
+* overall alignment rate: 宿主基因佔比
+```
+cat phyloseq/mapping_host_genome.txt
+```
+### 查看host基因佔比 [option2]
+* dna-sequences.fasta: 原始代表性序列（未過濾長度）
+* filtered_dna-sequences.fasta: 只保留長度 350~500 bp 的序列
+* host_reads.fasta: 成功比對到宿主的序列（被剃除）
+* nonhost.fasta: 未比對到宿主的序列（保留分析）
+```
+seqkit stats -T phyloseq/*.fasta | awk '{print $1, $4}' | column -t
+```
 ## 輸出去除宿主基因otu_table.tsv, taxonomy.tsv
 ### 0.建立filtered資料夾
 ```
