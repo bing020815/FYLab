@@ -237,7 +237,7 @@ qiime tools export \
 --output-path phyloseq
 ```
 
-### -- 轉換 rep-seqs.qza 檔案，產生dna-sequences.fasta，方便查詢Sequence --
+### -- 解壓縮 rep-seqs.qza 檔案，產生dna-sequences.fasta，方便查詢Sequence、篩選350bp長度 --
 * https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes
 ```
 qiime tools export \
