@@ -71,7 +71,8 @@ mv -f trimmed_fastq/*.fastq.gz .
 <p align="center"><a href="#fylab">Top</a></p>
 
 # QIIME2 - Preparation 分析前準備
-對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
+![QIIME2](img/QIIME2_flow.png)
+## 對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
 ```
 find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -exec realpath {} \; > file_path.txt
 ```
@@ -110,7 +111,7 @@ cat file_path.txt
 ```
 </details><br>
 
-生成 manifest.csv
+## 生成 manifest.csv
 ```
 echo "sample-id,absolute-filepath,direction" > manifest.csv && awk -F'/' '{file=$NF; split(file, parts, "_"); sample=parts[1]; if (file ~ /R1/) dir="forward"; else if (file ~ /R2/) dir="reverse"; print sample","$0","dir}' file_path.txt >> manifest.csv
 ```
@@ -166,7 +167,7 @@ nohup qiime dada2 denoise-paired \
 --o-table table.qza \
 --o-denoising-stats stats.qza > nohup.out 2>&1 &
 ```
-紀錄denoise設定
+## 紀錄denoise設定
 ```
 echo "--p-trim-left-f 0 --p-trim-left-r 0" >> denoise_settings.txt
 echo "--p-trunc-len-f 270 --p-trunc-len-r 240" >> denoise_settings.txt
@@ -702,6 +703,7 @@ conda deactivate
 <p align="center"><a href="#fylab">Top</a></p>
 
 # PICRUSt2 - Metabolism Pathway
+![PICRUSt2](img/picrust2_flow.png)
 ## 啟動PICRUSt2 package
 ```
 conda activate picrust2
