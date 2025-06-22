@@ -143,6 +143,7 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 ```
 
 ## Denoise 去除雜訊 [標準流程: 290-240]
+![V3-V4](img/primer.png)
 ### 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
 ### (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
 ### --p-trim-left-* 的數值應根據使用的 primer 長度設定。
