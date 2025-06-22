@@ -1,5 +1,6 @@
 # FYLab 
-+ (20250622 updated)
+(20250622 updated)
+
 ## Folder Management
 * Window -> File WINSCP
 * Mac -> Filezilla
@@ -387,7 +388,7 @@ qiime tools export \
   --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
   --output-path phyloseq/filtered_host/
 ```
-[<p align='center'>Top</p>](#FYLab)
+[<p align='center'>Top</p>](#fylab)
 
 # 畫圖
 ## KEGG Pathway 前期準備
