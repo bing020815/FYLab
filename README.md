@@ -408,7 +408,9 @@ qiime tools export \
 # 畫圖
 ## KEGG Pathway 前期準備
 ### 4.Phylogeny Tree (此步驟要超級久，可以多線程設定)
-dehost:[--i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza]; not dehost:[--i-sequences rep-seqs.qza]
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
 ```
 nohup qiime phylogeny align-to-tree-mafft-fasttree \
 --i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza \
@@ -418,16 +420,40 @@ nohup qiime phylogeny align-to-tree-mafft-fasttree \
 --o-rooted-tree rooted-tree.qza \
 --p-n-threads 2 > nohup.out 2>&1 &
 ```
+</details><br>
+<details>
+<summary><strong>未Dehost使後語法</strong></summary>
+
+```
+nohup qiime phylogeny align-to-tree-mafft-fasttree \
+--i-sequences rep-seqs.qza \
+--o-alignment aligned-rep-seqs.qza \
+--o-masked-alignment masked-aligned-rep-seqs.qza \
+--o-tree unrooted-tree.qza \
+--o-rooted-tree rooted-tree.qza \
+--p-n-threads 2 > nohup.out 2>&1 &
+```
+</details><br>
+
 
 ### 5.導出代表序列 (這步完成後，可以跳到 #PICRUSt2，直接啟動picrust2)
-1. Input:
-dehost:[--input-path phyloseq/filtered_host/dehost_rep_seqs.qza]; not dehost:[--input-path rep-seqs.qza]
-2. Output:
-dehost:[--output-path phyloseq/filtered_host/]; not dehost:[--output-path fastq1]
-註: 產出dna-sequences.fasta 於 `phyloseq/filtered_host/` or `fastq1/`
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
+註: 產出dna-sequences.fasta 於 `phyloseq/filtered_host/`
 ```
 qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
 ```
+</details><br>
+<details>
+<summary><strong>未Dehost使後語法</strong></summary>
+  
+註: 產出dna-sequences.fasta 於 `fastq1/`
+```
+qiime tools export --input-path rep-seqs.qza --output-path fastq1/
+```
+</details><br>
+
 <p align="center"><a href="#fylab">Top</a></p>
 
 <details>
