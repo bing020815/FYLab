@@ -13,7 +13,14 @@ Windos: Putty
 Mac: Terminal
   + run: ssh adprc@140.127.97.45
 
-# FastQ files Preprocess： 前處理Primer問題
+
+# Table of Content:
+1. [FastQ files Preprocess：前處理Primer問題](#FastQ-files-Preprocess：前處理Primer問題)
+2. [QIIME2 - Preparation 分析前準備](#QIIME2---Preparation-分析前準備)
+
+
+
+# FastQ-files-Preprocess：前處理Primer問題
 FastQ現存現象:
 * 舊機型上機(600 cycle): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
 * 新機型上機(600 cycle; 序列長度為含primer 300 bp): 沒有額外設定，序列長度為含primer共計 300 bp
