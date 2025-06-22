@@ -1,5 +1,11 @@
 # FYLab 
-(20250622 updated)
+* 20250622 updated
+```
+  + Primer 處理流程
+  + Denoise 設定統一 270,240
+  + 修正dehost最低條件需滿足 350 bp
+  + 增加可讀性
+```
 
 ## Folder Management
 * Window -> File WINSCP
