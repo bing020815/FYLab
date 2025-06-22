@@ -263,7 +263,7 @@ seqkit stats phyloseq/dna-sequences.fasta
 ### Step 2: 加強篩選與過濾（可選）
 * 保守篩選濾除低於 350 bp 序列，減少過多序列定序停留於Family
 ```
-nohup seqkit seq -m 350 -M 500 -n -v phyloseq/dna-sequences.fasta > phyloseq/filtered_dna-sequences.fasta &
+nohup seqkit seq -m 350 -M 500 -v phyloseq/dna-sequences.fasta -o phyloseq/filtered_dna-sequences.fasta &
 ```
 
 ### Step 3: 再檢查代表性序列品質（QC）
