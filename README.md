@@ -181,6 +181,7 @@ qiime metadata tabulate \
   --o-visualization stats.qzv
 ```
 ### 直接看序列表長度[optional]
+(產出rep-seqs-summary.qzv)
 ```
 qiime feature-table tabulate-seqs \
   --i-data rep-seqs.qza \
