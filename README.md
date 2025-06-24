@@ -275,6 +275,7 @@ seqkit stats phyloseq/dna-sequences.fasta
 ### Step 2: 加強篩選與過濾（可選）
 * 去除R1, R2合併後小於 350 bp序列
 * 保守篩選濾除低於 350 bp 序列，減少過多序列定序停留於Family
+* 需要高品質、高分類準確度的研究，例如 菌種層級分析、生物標記開發
 ```
 nohup seqkit seq -m 350 -M 500 -v phyloseq/dna-sequences.fasta -o phyloseq/filtered_dna-sequences.fasta &
 ```
