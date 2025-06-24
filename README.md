@@ -164,6 +164,8 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 * --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 20～30 bp。
 * 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
 * (將雙端測序數據處理為高品質的序列數據，並輸出相關結果)
+* 流程會先各自 denoise（F / R）→ 再合併 → 再去 chimera → 再輸出 ASV
+* 不足trucLen的reads會被剃除、去除可能是拼接自高豐度序列的 chimera (default method:consensus)
 * table.qzv - 可以看到Sample的取樣深度
 ```
 nohup qiime dada2 denoise-paired \
