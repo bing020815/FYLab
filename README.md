@@ -226,6 +226,8 @@ biom convert \
 
 ## 下載模型
 * 下載 2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs
+* https://greengenes.lbl.gov/
+* https://www.lcsciences.com/documents/sample_data/16S_sequencing/src/html/top2.html
 ```
 wget https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza
 ```
