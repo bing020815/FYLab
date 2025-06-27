@@ -121,7 +121,22 @@ cat file_path.txt
 
 ## 生成 manifest.csv
 ```
-echo "sample-id,absolute-filepath,direction" > manifest.csv && awk -F'/' '{file=$NF; split(file, parts, "_"); sample=parts[1]; if (file ~ /R1/) dir="forward"; else if (file ~ /R2/) dir="reverse"; print sample","$0","dir}' file_path.txt >> manifest.csv
+echo "sample-id,absolute-filepath,direction" > manifest.csv && \
+awk -F'/' '
+BEGIN { OFS="," }
+{
+  file = $NF
+  split(file, parts, "_")
+  sample = parts[1]
+  if (file ~ /_R1_/) dir = "forward"
+  else if (file ~ /_R2_/) dir = "reverse"
+  else next
+
+  key = sample"-"dir
+  if (!seen[key]++) {
+    print sample, $0, dir
+  }
+}' file_path.txt >> manifest.csv
 ```
 
 ## 將表有csv轉成逗號分個的txt檔案 
