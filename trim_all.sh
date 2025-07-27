@@ -37,7 +37,7 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
     echo ""
 done
 
-echo "🎉 All samples trimmed."
+echo "All samples trimmed."
 
 if [ ${#FAILED_SAMPLES[@]} -gt 0 ]; then
     echo ""
