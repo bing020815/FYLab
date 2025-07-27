@@ -5,11 +5,16 @@ mkdir -p trimmed_fastq
 FWD_PRIMER="CCTACGGGNGGCWGCAG"
 REV_PRIMER="GACTACHVGGGTATCTAATCC"
 
+FAILED_SAMPLES=()  
+
 for R1 in raw_fastq/*_R1*.fastq.gz; do
     R2=${R1/_R1/_R2}
 
     if [ ! -f "$R2" ]; then
-        echo "Skipping: no R2 found for $R1"
+        BASENAME=$(basename "$R1")
+        SAMPLE=${BASENAME%%_R1*}
+        FAILED_SAMPLES+=("$SAMPLE")
+        echo "Skipping: no R2 found for $BASENAME"
         continue
     fi
 
@@ -32,4 +37,14 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
     echo ""
 done
 
-echo "All samples trimmed."
+echo "🎉 All samples trimmed."
+
+if [ ${#FAILED_SAMPLES[@]} -gt 0 ]; then
+    echo ""
+    echo "The following samples were skipped due to missing R2 files:"
+    for sample in "${FAILED_SAMPLES[@]}"; do
+        echo "  - $sample"
+    done
+else
+    echo "All samples had matched R1 and R2 files."
+fi
