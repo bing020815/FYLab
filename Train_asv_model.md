@@ -23,11 +23,11 @@ qiime feature-classifier extract-reads \
 ```
 qiime tools import \
   --type 'FeatureData[Taxonomy]' \
-  --input-path /2023.2/gg_13_8_otus/rep_set/99_otu_taxonomy.txt \
+  --input-path gg/2023.2/gg_13_8_otus/taxonomy/99_otu_taxonomy.txt \
   --input-format HeaderlessTSVTaxonomyFormat \
   --output-path gg/gg_13_8_99_Taxonomy.qza
 ```
-
+/Users/bingjewu/Desktop/classifier/
 
 ### step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
 ```
