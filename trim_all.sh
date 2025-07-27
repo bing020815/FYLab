@@ -5,11 +5,11 @@ mkdir -p trimmed_fastq
 FWD_PRIMER="CCTACGGGNGGCWGCAG"
 REV_PRIMER="GACTACHVGGGTATCTAATCC"
 
-for R1 in raw_fastq/*R1*.fastq.gz; do
-    R2=${R1/R1/R2}
+for R1 in raw_fastq/*_R1*.fastq.gz; do
+    R2=${R1/_R1/_R2}
 
     if [ ! -f "$R2" ]; then
-        echo "Skip: Paired file not found for $R1"
+        echo "Skipping: no R2 found for $R1"
         continue
     fi
 
