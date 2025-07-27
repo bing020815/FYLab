@@ -1,8 +1,8 @@
 Train model for ASV prediction
 
-# Naïve Bayesian: greengene1
-
-## step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
+# greengene1
+## Naïve Bayesian: 
+### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
 ```
 qiime tools import \
   --type 'FeatureData[Sequence]' \
@@ -10,7 +10,7 @@ qiime tools import \
   --output-path gg_13_8_99_RefSeq.qza
 ```
 
-## step 1-1.（可選）裁切參考序列為 V3–V4 區段（341F–805R）
+### step 1-1.（可選）裁切參考序列為 V3–V4 區段（341F–805R）
 ```
 qiime feature-classifier extract-reads \
   --i-sequences gg_13_8_99_RefSeq.qza \
@@ -19,7 +19,7 @@ qiime feature-classifier extract-reads \
   --o-reads gg_13_8_99_RefSeq_341-805.qza
 ```
 
-## step 2. 匯入 taxonomy 為 .qza; 用於訓練nb模型參考使用
+### step 2. 匯入 taxonomy 為 .qza; 用於訓練nb模型參考使用
 ```
 qiime tools import \
   --type 'FeatureData[Taxonomy]' \
@@ -29,7 +29,7 @@ qiime tools import \
 ```
 
 
-## step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+### step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
 ```
 qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads gg_13_8_99_RefSeq_341-805.qza \
@@ -38,8 +38,8 @@ qiime feature-classifier fit-classifier-naive-bayes \
 ```
 
 
-# vsearch Method: greengene1
-## step 1. 使用classify-consensus-vsearch方法，並且參考指定使用reads序列[不需要裁切]、taxanomy
+## vsearch Method:
+### step 1. 使用classify-consensus-vsearch方法，並且參考指定使用reads序列[不需要裁切]、taxanomy
 ```
 qiime feature-classifier classify-consensus-vsearch \
   --i-query dada2_output/representative_sequences.qza \
@@ -51,9 +51,10 @@ qiime feature-classifier classify-consensus-vsearch \
 ```
 
 
-# Naïve Bayesian: SILVA
 
-## step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
+# SILVA
+## Naïve Bayesian: 
+### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
 ```
 qiime tools import \
   --type 'FeatureData[Sequence]' \
@@ -61,7 +62,7 @@ qiime tools import \
   --output-path silva_RefSeq.qza
 ```
 
-## step 1-1.（可選）裁切參考序列為 V3–V4 區段（341F–805R）
+### step 1-1.（可選）裁切參考序列為 V3–V4 區段（341F–805R）
 --p-trunc-len 可選，加上可避免過長尾端造成模型過擬合
 ```
 qiime feature-classifier extract-reads \
@@ -71,7 +72,7 @@ qiime feature-classifier extract-reads \
   --o-reads silva_RefSeq_341-805.qza
 ```
 
-## step 2. 匯入 taxonomy 為 .qza
+### step 2. 匯入 taxonomy 為 .qza
 ```
 qiime tools import \
   --type 'FeatureData[Taxonomy]' \
@@ -81,7 +82,7 @@ qiime tools import \
 ```
 
 
-## step 3.訓練 Naive Bayes 模型
+### step 3.訓練 Naive Bayes 模型
 ```
 qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads silva_RefSeq_341-805.qza \
@@ -90,8 +91,8 @@ qiime feature-classifier fit-classifier-naive-bayes \
 ```
 
 
-# vsearch Method: SILVA
-## VSEARCH 比對方法（不需裁切）
+## vsearch Method:
+### VSEARCH 比對方法（不需裁切）
 ```
 qiime feature-classifier classify-consensus-vsearch \
   --i-query dada2_output/representative_sequences.qza \
@@ -100,9 +101,3 @@ qiime feature-classifier classify-consensus-vsearch \
   --p-threads 8 \
   --output-dir taxa_silva_vsearch
 ```
-
-
-
-
-
-46+90+16+70+42+90+42+52+34+18=250
