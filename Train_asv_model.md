@@ -36,15 +36,18 @@ qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-taxonomy gg/gg_13_8_99_Taxonomy.qza \
   --o-classifier gg/gg_13_8_99_NB_classifier_V3V4.qza
 ```
-
+### 關鍵模型、參考檔案路徑
+/home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
+/home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qzaa \
+/home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
 
 ## vsearch Method:
 ### step 1. 使用classify-consensus-vsearch方法，並且參考指定使用reads序列[不需要裁切]、taxanomy
 ```
 qiime feature-classifier classify-consensus-vsearch \
   --i-query dada2_output/representative_sequences.qza \
-  --i-reference-reads gg_13_8_99_RefSeq.qza \
-  --i-reference-taxonomy gg_13_8_99_Taxonomy.qza \
+  --i-reference-reads /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qzaa \
   --p-threads 8 \
   --verbose \
   --output-dir taxa
@@ -90,14 +93,18 @@ qiime feature-classifier fit-classifier-naive-bayes \
   --o-classifier silva_138_99_NB_classifier_V3V4.qza
 ```
 
+### 關鍵模型、參考檔案路徑
+/home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \
+/home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
+/home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
 
 ## vsearch Method:
 ### VSEARCH 比對方法（不需裁切）
 ```
 qiime feature-classifier classify-consensus-vsearch \
   --i-query dada2_output/representative_sequences.qza \
-  --i-reference-reads silva_RefSeq.qza \
-  --i-reference-taxonomy silva_Taxonomy.qza \
+  --i-reference-reads /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \ 
+  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
   --p-threads 8 \
   --output-dir taxa_silva_vsearch
 ```
