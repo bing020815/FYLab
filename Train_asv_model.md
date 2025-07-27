@@ -27,7 +27,7 @@ qiime tools import \
   --input-format HeaderlessTSVTaxonomyFormat \
   --output-path gg/gg_13_8_99_Taxonomy.qza
 ```
-/Users/bingjewu/Desktop/classifier/
+
 
 ### step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
 ```
