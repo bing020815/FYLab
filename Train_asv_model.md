@@ -1,6 +1,8 @@
 Train model for ASV prediction
 
-# greengene1
+# greengene1 Database
+https://docs.qiime2.org/2023.2/data-resources/
+
 ## Naïve Bayesian: 
 ### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
 ```
@@ -59,7 +61,9 @@ qiime feature-classifier classify-consensus-vsearch \
 
 
 
-# SILVA
+# SILVA Database
+https://docs.qiime2.org/2024.10/data-resources/
+
 ## Naïve Bayesian: 
 ### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
 ```
