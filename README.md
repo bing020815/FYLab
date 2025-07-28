@@ -246,6 +246,7 @@ biom convert \
 GreenGenes 16S rRNA gene databas:
   + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多 (約 100,000 條)
   + Greengenes2 從 2022 年起開始重新建構，採用全基因體（WoL），但可參考序列數少 (約 21,000 條)
+
 [Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
 
 ### Option1: Naive Bayes 模型分類 (V3-V4)
@@ -274,6 +275,7 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 <summary><strong>SILVA 138 16S Self-trained [20250728 新增]</strong></summary>
 
 SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 條)
+
 [Cite 參考資訊](https://docs.qiime2.org/2024.10/data-resources/)
   
 ### Option1: Naive Bayes 模型分類 (V3-V4)
