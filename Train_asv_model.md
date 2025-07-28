@@ -48,15 +48,15 @@ qiime feature-classifier fit-classifier-naive-bayes \
 
 
 ## vsearch Method:
-### step 1. 使用classify-consensus-vsearch方法，並且參考指定使用reads序列[不需要裁切]、taxanomy
+### 使用classify-consensus-vsearch方法，並且參考指定使用reads序列[不需要裁切]、taxanomy
 ```
 qiime feature-classifier classify-consensus-vsearch \
-  --i-query dada2_output/representative_sequences.qza \
+  --i-query dada2_output/rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qzaa \
   --p-threads 8 \
-  --verbose \
-  --output-dir taxa
+  --o-classification taxonomy.qza \
+  --verbose
 ```
 
 
@@ -112,9 +112,10 @@ qiime feature-classifier fit-classifier-naive-bayes \
 ### VSEARCH 比對方法（不需裁切）
 ```
 qiime feature-classifier classify-consensus-vsearch \
-  --i-query dada2_output/representative_sequences.qza \
+  --i-query dada2_output/rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \ 
   --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
   --p-threads 8 \
-  --output-dir taxa_silva_vsearch
+  --o-classification taxonomy.qza \
+  --verbose
 ```
