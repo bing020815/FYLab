@@ -1,10 +1,8 @@
 # FYLab 
-* 20250622 updated
+* 20250728 updated
 ```
-  + Primer 處理流程
-  + Denoise 設定統一 270,240
-  + 修正dehost最低條件需滿足 350 bp
-  + 增加可讀性
+  + 新增序列模型資料庫: Greengenes, SILVA
+  + Naive Bayesian 模型採用 V3-V4 段提升預測精準度
 ```
 
 ## Folder Management
@@ -239,7 +237,71 @@ biom convert \
 --to-tsv
 ```
 
-## 下載模型
+## 模型分類
+根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
+
+<details>
+<summary><strong>Greengenes 13_8 16S Self-trained [20250728 新增]</strong></summary>
+
+GreenGenes 16S rRNA gene databas:
+  + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多 (約 100,000 條)
+  + Greengenes2 從 2022 年起開始重新建構，採用全基因體（WoL），但可參考序列數少 (約 21,000 條)
+[Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
+
+### Option1: Naive Bayes 模型分類 (V3-V4)
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option2: vsearch 模型分類 (full-length)
+```
+nohup qiime feature-classifier classify-consensus-vsearch \
+  --i-query rep-seqs.qza \
+  --i-reference-reads /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qza \
+  --p-threads 4 \
+  --o-classification taxonomy.qza \
+  --verbose > nohup_vsearch.out 2>&1 &
+```
+
+</details><br>
+
+<details>
+<summary><strong>SILVA 138 16S Self-trained [20250728 新增]</strong></summary>
+
+SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 條)
+[Cite 參考資訊](https://docs.qiime2.org/2024.10/data-resources/)
+  
+### Option1: Naive Bayes 模型分類 (V3-V4)
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option2: vsearch 模型分類 (full-length)
+```
+nohup qiime feature-classifier classify-consensus-vsearch \
+  --i-query rep-seqs.qza \
+  --i-reference-reads /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
+  --p-threads 4 \
+  --o-classification taxonomy.qza \
+  --verbose > nohup_vsearch.out 2>&1 &
+```
+
+</details><br>
+
+<details>
+<summary><strong>Greengenes 13_8 16S full-length</strong></summary>
+  
+### Step 1. 下載模型
 * 下載 2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs
 * https://greengenes.lbl.gov/
 * https://www.lcsciences.com/documents/sample_data/16S_sequencing/src/html/top2.html
@@ -247,7 +309,7 @@ biom convert \
 wget https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza
 ```
 
-## 模型分類
+### Step2. Naive Bayes 模型分類
 * 透過已訓練好的模型gg-13-8-99-nb-classifier.qza來預測，並輸出taxonomy.qza
 * gg-13-8-99-nb-classifier.qza 要放在與 Fastq同層的資料夾，需要一些時間
 ```
@@ -257,6 +319,9 @@ nohup qiime feature-classifier classify-sklearn \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
 ```
+
+</details><br>
+
 
 ## qza格式轉檔
 *  將分類好的輸出檔案taxonomy.qza轉黨為成taxonomy.tsv，存至phyloseq
