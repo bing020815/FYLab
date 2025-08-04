@@ -44,7 +44,7 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
 
     TOTAL_SAMPLES=$((TOTAL_SAMPLES+1))
 
-    FOUND=$(awk '/Read [12] with adapter:/ {gsub(",", "", $4); sum += $4} END {print sum}' "$LOG")
+    FOUND=$(awk '/Read [12] with adapter:/ {gsub(",", "", $4); sum += $4} END {print sum + 0}' "$LOG")
 
     if [[ "$FOUND" =~ ^[0-9]+$ ]] && [ "$FOUND" -gt 0 ]; then
         REMOVED_PRIMER=$((REMOVED_PRIMER+1))
