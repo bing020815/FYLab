@@ -10,8 +10,6 @@ OVERLAP=15
 
 # 統計變數
 TOTAL_SAMPLES=0
-REMOVED_PRIMER=0
-PRIMER_NOT_FOUND=0
 FAILED_SAMPLES=()
 
 for R1 in raw_fastq/*_R1*.fastq.gz; do
@@ -43,25 +41,12 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
         "$R1" "$R2" > "$LOG"
 
     TOTAL_SAMPLES=$((TOTAL_SAMPLES+1))
-
-    FOUND=$(awk '/Read [12] with adapter:/ {gsub(",", "", $4); sum += $4} END {print sum + 0}' "$LOG")
-
-    if [[ "$FOUND" =~ ^[0-9]+$ ]] && [ "$FOUND" -gt 0 ]; then
-        REMOVED_PRIMER=$((REMOVED_PRIMER+1))
-        echo "$SAMPLE: 偵測並移除 primer（共 $FOUND 條 read）"
-    else
-        PRIMER_NOT_FOUND=$((PRIMER_NOT_FOUND+1))
-        echo "$SAMPLE: 未偵測到 primer"
-    fi
-
     echo ""
 done
 
 # 統計輸出
 echo "完成所有樣本處理"
 echo "總樣本數：$TOTAL_SAMPLES"
-echo "成功移除 primer 的樣本數：$REMOVED_PRIMER"
-echo "未偵測到 primer 的樣本數：$PRIMER_NOT_FOUND"
 
 if [ ${#FAILED_SAMPLES[@]} -gt 0 ]; then
     echo ""
