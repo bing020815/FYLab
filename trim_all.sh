@@ -48,7 +48,7 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
 
     FOUND=$(awk '/Read [12]: *[0-9]+ reads with adapter/ {gsub(",", "", $3); sum += $3} END {print sum}' "$LOG")
 
-    if [ "$FOUND" -gt 0 ]; then
+    if [[ "$FOUND" =~ ^[0-9]+$ ]] && [ "$FOUND" -gt 0 ]; then
         REMOVED_PRIMER=$((REMOVED_PRIMER+1))
         echo "$SAMPLE: 偵測並移除 primer（共 $FOUND 條 read）"
     else
