@@ -173,7 +173,7 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 ## Denoise 去除雜訊 [標準流程: 270-240]
 * 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
 * (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
-* --p-trim-left-* 的數值應根據使用的 primer 長度設定。
+* --p-trim-left-* 的數值應根據使用的 primer 長度設定，無法指定單獨的樣本做。
 * --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 20～30 bp。
 * 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
 * (將雙端測序數據處理為高品質的序列數據，並輸出相關結果)
