@@ -30,6 +30,8 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
     OUT_R2="trimmed_fastq/${SAMPLE}_R2_trimmed.fastq.gz"
     LOG="logs/${SAMPLE}.log"
 
+    echo "Trimming $SAMPLE ..."
+
     cutadapt \
         -e $ERROR_RATE \
         --overlap $OVERLAP \
@@ -37,20 +39,24 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
         -G "$REV_PRIMER" \
         -o "$OUT_R1" \
         -p "$OUT_R2" \
-        "$R1" "$R2" > "$LOG"
+        "$R1" "$R2" > "$LOG" 2>&1
 
-    TOTAL_SAMPLES=$((TOTAL_SAMPLES+1))
+    TOTAL_SAMPLES=$((TOTAL_SAMPLES + 1))
 
-    # 統計是否有去除 primer
+    # 檢查是否有移除 primer（累加 Read 1 和 Read 2）
     FOUND=$(grep "with adapter" "$LOG" | grep -E "Read 1|Read 2" | awk '{s+=$1} END {print s}')
     if [ "$FOUND" -gt 0 ]; then
-        REMOVED_PRIMER=$((REMOVED_PRIMER+1))
+        REMOVED_PRIMER=$((REMOVED_PRIMER + 1))
     else
-        PRIMER_NOT_FOUND=$((PRIMER_NOT_FOUND+1))
+        PRIMER_NOT_FOUND=$((PRIMER_NOT_FOUND + 1))
     fi
+
+    echo "Finished $SAMPLE"
 done
 
 # 統計輸出
+echo ""
+echo "=== 執行結果統計 ==="
 echo "總樣本數：$TOTAL_SAMPLES"
 echo "成功移除 primer 的樣本數：$REMOVED_PRIMER"
 echo "未偵測到 primer 的樣本數：$PRIMER_NOT_FOUND"
@@ -61,4 +67,6 @@ if [ ${#FAILED_SAMPLES[@]} -gt 0 ]; then
     for sample in "${FAILED_SAMPLES[@]}"; do
         echo "  - $sample"
     done
+else
+    echo "所有樣本皆有對應 R2。"
 fi
