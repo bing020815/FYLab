@@ -14,8 +14,6 @@ REMOVED_PRIMER=0
 PRIMER_NOT_FOUND=0
 FAILED_SAMPLES=()
 
-echo "開始進行 primer 去除作業..."
-
 for R1 in raw_fastq/*_R1*.fastq.gz; do
     R2=${R1/_R1/_R2}
 
