@@ -41,7 +41,7 @@ for R1 in raw_fastq/*_R1*.fastq.gz; do
         "$R1" "$R2" > "$LOG"
 
     TOTAL_SAMPLES=$((TOTAL_SAMPLES+1))
-    echo ""
+
 done
 
 # 統計輸出
