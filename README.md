@@ -1,10 +1,10 @@
 # FYLab 
-* 20250728 updated
+* 20250829 updated
 ```
-  + 新增序列模型資料庫: Greengenes, SILVA
-  + Naive Bayesian 模型採用 V3-V4 段提升預測精準度
+  + 新增序列模型資料庫: Greengenes, SILVA [20250728]
+  + Naive Bayesian 模型採用 V3-V4 段提升預測精準度 [20250728]
+  + 新增調整denoise用的fastq長度查詢工具
 ```
-
 ## Folder Management
 * Window -> File WINSCP
 * Mac -> Filezilla
@@ -170,7 +170,7 @@ nohup qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --in
 nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization paired-end-demux.qzv &
 ```
 
-## Denoise 去除雜訊 [標準流程: 270-240]
+## Denoise 去除雜訊 [標準流程: 270-240 (適用於fastq長度 300 bp)]
 * 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
 * (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
 * --p-trim-left-* 的數值應根據使用的 primer 長度設定，無法指定單獨的樣本做。
@@ -180,6 +180,17 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 * 流程會先各自 denoise（F / R）→ 再合併 → 再去 chimera → 再輸出 ASV
 * 不足trucLen的reads會被剃除、去除可能是拼接自高豐度序列的 chimera (default method:consensus)
 * table.qzv - 可以看到Sample的取樣深度
+<details>
+<summary><strong>檢查Fastq實際長度 [2025829 新增]</strong></summary>
+  # 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
+  
+```
+  zcat YourFastq_R1_trimmed.fastq.gz | \
+  awk '(NR%4==2){print length($1)}' | \
+  sort | uniq -c
+```
+</details>
+
 ```
 nohup qiime dada2 denoise-paired \
 --i-demultiplexed-seqs paired-end-demux.qza \
