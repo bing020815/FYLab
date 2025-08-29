@@ -232,6 +232,7 @@ qiime feature-table tabulate-seqs \
 <summary><strong>合併分流專案(optional) [2025829 新增]</strong></summary>
   
   ## 根據實際專案需求，合併不同分流的專案
+  * 分流專案A、分流專案的table.qza, taxonomy.qza複製到獨立資料夾
   * 將分流專案A的table.qza與分流專案B的table.qza合併
   * 將分流專案A的taxonomy.qza與分流專案B的taxonomy.qza合併
 
