@@ -174,16 +174,18 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 * 將qza檔案去完雜訊後，輸出成： table.qza, stats.qza, rep-seqs.qza 
 * (need to take a long process time, use 'top'/'htop' command to check, press 'q' to leave)
 * --p-trim-left-* 的數值應根據使用的 primer 長度設定，無法指定單獨的樣本做。
-* --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 20～30 bp。
-* 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約460 bp，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
+* --p-trunc-len-* 需保留足夠長度供 forward + reverse read 重疊（overlap）至少約 12 bp。
+* 成功合併的條件公式: trunc_f – trim_f  +  trunc_r – trim_r  ≥ amplicon + min-overlap
+* amplicon 則是 PCR 目標要放大的序列斷，可用於對應 reference Database 對照使用 (ex: Greengenes V3V4)
+* 例如：270 + 240 = 510，V3-V4的 amplicon 長度為 約430~460 bp(可通則預設為460)，則 overlap 為 50 bp，屬於合理值(overlap 通常建議 >20-30 bp)
 * (將雙端測序數據處理為高品質的序列數據，並輸出相關結果)
-* 流程會先各自 denoise（F / R）→ 再合併 → 再去 chimera → 再輸出 ASV
+* 流程會先各自: (1)品值篩選 → (2,3) 建立錯誤模型、denoise（F / R）→ (4) 再合併 → (5) 再去 chimera → 再輸出 ASV
 * 不足trucLen的reads會被剃除、去除可能是拼接自高豐度序列的 chimera (default method:consensus)
 * table.qzv - 可以看到Sample的取樣深度
 <details>
 <summary><strong>檢查Fastq實際長度 [2025829 新增]</strong></summary>
   # 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
-  
+  * 如果使用短序列，通常要使用reads數最多的長度作為切點
 ```
   zcat YourFastq_R1_trimmed.fastq.gz | \
   awk '(NR%4==2){print length($1)}' | \
