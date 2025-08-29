@@ -186,6 +186,7 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 <summary><strong>檢查Fastq實際長度 [2025829 新增]</strong></summary>
   # 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
   * 如果使用短序列，通常要使用reads數最多的長度作為切點
+  
 ```
   zcat YourFastq_R1_trimmed.fastq.gz | \
   awk '(NR%4==2){print length($1)}' | \
