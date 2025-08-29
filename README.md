@@ -4,6 +4,7 @@
   + 新增序列模型資料庫: Greengenes, SILVA [20250728]
   + Naive Bayesian 模型採用 V3-V4 段提升預測精準度 [20250728]
   + 新增調整denoise用的fastq長度查詢工具
+  + 新增分流專案合併用工具
 ```
 ## Folder Management
 * Window -> File WINSCP
@@ -226,6 +227,34 @@ qiime feature-table tabulate-seqs \
   --i-data rep-seqs.qza \
   --o-visualization rep-seqs-summary.qzv
 ```
+
+<details>
+<summary><strong>合併分流專案(optional) [2025829 新增]</strong></summary>
+  
+  ## 根據實際專案需求，合併不同分流的專案
+  * 將分流專案A的table.qza與分流專案B的table.qza合併
+  * 將分流專案A的taxonomy.qza與分流專案B的taxonomy.qza合併
+
+### 建立合併後導出用資料夾
+* 後續的dehost/pathway都可以在這個資料夾底下接續做
+```
+  mkdir merge_exported
+```
+```
+  qiime feature-table merge \
+  --i-tables table1.qza \
+  --i-tables table2.qza \
+  --o-merged-table table.qza
+```
+```
+  qiime feature-table merge-taxa \
+  --i-data taxonomy1.qza \
+  --i-data taxonomy2.qza \
+  --o-merged-data taxonomy.qza
+```
+</details>
+
+
 
 
 # Analysis 導出特征表
