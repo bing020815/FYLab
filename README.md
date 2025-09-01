@@ -206,9 +206,11 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 輸出所有長度清單 
 ```
   for f in *.fastq.gz; do
-    len=$(zcat $f | head -2 | tail -1 | wc -c)
-    echo -e "$f\t$len"
-  done > fastq_length_list.txt
+    mode=$(zcat "$f" | \
+      awk 'NR%4==2 {print length($1)}' | \
+      sort | uniq -c | sort -nr | head -1 | awk '{print $2}')
+    echo -e "$f\t$mode"
+  done > fastq_length_mode_list.txt
 ```
 </details>
 
