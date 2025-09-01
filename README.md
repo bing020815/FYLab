@@ -185,13 +185,22 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
 * table.qzv - 可以看到Sample的取樣深度
 <details>
 <summary><strong>檢查Fastq實際長度 [2025829 新增]</strong></summary>
-  # 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
-  * 如果使用短序列，通常要使用reads數最多的長度作為切點
   
+  * 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
+  * 如果使用短序列，通常要使用reads數最多的長度作為切點
+
+抽樣查詢長度  
 ```
   zcat YourFastq_R1_trimmed.fastq.gz | \
   awk '(NR%4==2){print length($1)}' | \
   sort | uniq -c
+```
+輸出所有長度清單 
+```
+  for f in *.fastq.gz; do
+    len=$(zcat $f | head -2 | tail -1 | wc -c)
+    echo -e "$f\t$len"
+  done > fastq_length_list.txt
 ```
 </details>
 
