@@ -232,7 +232,7 @@ qiime feature-table tabulate-seqs \
 <summary><strong>合併分流專案(optional) [2025829 新增]</strong></summary>
   
   ## 根據實際專案需求，合併不同分流的專案
-  * 分流專案A、分流專案的table.qza, taxonomy.qza複製到獨立資料夾
+  * 分流專案A、分流專案的table.qza, taxonomy.qza, rep-seqs.qza 複製到獨立資料夾
   * 將分流專案A的table.qza與分流專案B的table.qza合併
   * 將分流專案A的taxonomy.qza與分流專案B的taxonomy.qza合併
 
@@ -240,18 +240,28 @@ qiime feature-table tabulate-seqs \
 * 後續的dehost/pathway都可以在這個資料夾底下接續做
 ```
   mkdir merge_exported
+  cd merge_exported
 ```
+table.qza
 ```
   qiime feature-table merge \
   --i-tables table1.qza \
   --i-tables table2.qza \
   --o-merged-table table.qza
 ```
+taxonomy.qza
 ```
   qiime feature-table merge-taxa \
   --i-data taxonomy1.qza \
   --i-data taxonomy2.qza \
   --o-merged-data taxonomy.qza
+```
+rep-seqs.qza
+```
+  qiime feature-table merge-seqs \
+  --i-data rep-seqs1.qza \
+  --i-data rep-seqs2.qza \
+  --o-merged-data merged-rep-seqs.qza
 ```
 </details>
 
