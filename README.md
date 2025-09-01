@@ -195,6 +195,14 @@ nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization pair
   awk '(NR%4==2){print length($1)}' | \
   sort | uniq -c
 ```
+查看整批所有長度
+```
+  zcat *.fastq.gz | \
+  awk 'NR%4==2 {print length($0)}' | \
+  sort | uniq -c | \
+  awk '{print $2 "\t" $1}' | \
+  tee >(awk '{sum+=$1*$2; n+=$2; if(min==""||$1<min)min=$1; if($1>max)max=$1} END{print "N="n, "Min="min, "Mean="sum/n, "Max="max}' >&2)
+```
 輸出所有長度清單 
 ```
   for f in *.fastq.gz; do
