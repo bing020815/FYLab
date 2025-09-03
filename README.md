@@ -391,8 +391,10 @@ rep-seqs.qza
   qiime feature-table merge-seqs \
   --i-data rep-seqs1.qza \
   --i-data rep-seqs2.qza \
-  --o-merged-data merged-rep-seqs.qza
+  --o-merged-data rep-seqs.qza
 ```
+[跳回倒出特徵表步驟](#-Analysis-導出特征表)
+
 </details>
 
 
