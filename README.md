@@ -393,7 +393,7 @@ rep-seqs.qza
   --i-data rep-seqs2.qza \
   --o-merged-data rep-seqs.qza
 ```
-[跳回倒出特徵表步驟](#-Analysis-導出特征表)
+[跳回倒出特徵表步驟](#Analysis-導出特征表)
 
 </details>
 
