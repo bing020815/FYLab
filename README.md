@@ -159,7 +159,7 @@ conda activate qiime2-2023.2
 ## FASTQ 匯入轉檔 QIIME 2 可使用的格式 (.qza)
 * (need to wait process time, use 'top' command to check, press 'q' to leave)
 * 會產出 paired-end-demux.qza 檔案
-* 依照manifest.txt將兩段序列配對
+* 依照manifest.txt將兩段序列配對打包封裝起來(未實際拼接兩段序列)
 ```
 nohup qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest.txt --output-path paired-end-demux.qza --input-format PairedEndFastqManifestPhred33 &
 ```
