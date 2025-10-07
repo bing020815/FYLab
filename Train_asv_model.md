@@ -27,7 +27,18 @@ qiime feature-classifier extract-reads \
   --i-sequences gg/gg_13_8_99_RefSeq.qza \
   --p-f-primer CCTACGGGNGGCWGCAG \
   --p-r-primer ATTACCGCGGCTGCTGG \
+  --p-trunc-len 200 \
   --o-reads gg/gg_13_8_99_RefSeq_341-534.qza
+```
+
+### step 1-3.（可選）裁切參考序列為 V4 區段（515F–806R）
+```
+qiime feature-classifier extract-reads \
+  --i-sequences gg/gg_13_8_99_RefSeq.qza \
+  --p-f-primer GTGCCAGCMGCCGCGGTAA \
+  --p-r-primer GGACTACHVGGGTWTCTAAT \
+  --p-trunc-len 250 \
+  --o-reads gg/gg_13_8_99_RefSeq_515-806.qza
 ```
 
 ### step 2. 匯入 taxonomy 為 .qza; 用於訓練nb模型參考使用
@@ -40,13 +51,30 @@ qiime tools import \
 ```
 
 
-### step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+### step 3.訓練V3V4 nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
 ```
 qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads gg/gg_13_8_99_RefSeq_341-805.qza \
   --i-reference-taxonomy gg/gg_13_8_99_Taxonomy.qza \
   --o-classifier gg/gg_13_8_99_NB_classifier_V3V4.qza
 ```
+
+### step 3-1.（可選）訓練V3 nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+```
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads gg/gg_13_8_99_RefSeq_341-534.qza \
+  --i-reference-taxonomy gg/gg_13_8_99_Taxonomy.qza \
+  --o-classifier gg/gg_13_8_99_NB_classifier_V3.qza
+```
+
+### step 3-2.（可選）訓練V4 nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+```
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads gg/gg_13_8_99_RefSeq_341-534.qza \
+  --i-reference-taxonomy gg/gg_13_8_99_Taxonomy.qza \
+  --o-classifier gg/gg_13_8_99_NB_classifier_V4.qza
+```
+
 
 ### 關鍵模型、參考檔案路徑
 ```
@@ -95,9 +123,10 @@ qiime feature-classifier extract-reads \
 ### step 1-2.（可選）裁切參考序列為 V3 區段（341F–534R）
 ```
 qiime feature-classifier extract-reads \
-  --i-sequences gg2/gg2_2022_10_RefSeq.qzaa \
+  --i-sequences gg2/gg2_2022_10_RefSeq.qza \
   --p-f-primer CCTACGGGNGGCWGCAG \
   --p-r-primer ATTACCGCGGCTGCTGG \
+  --p-trunc-len 200 \
   --o-reads gg2/gg2_2022_10_RefSeq_341-534.qza
 ```
 
@@ -110,12 +139,20 @@ qiime tools import \
   --output-path gg2/gg2_2022_10_Taxonomy.qza
 ```
 
-### step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+### step 3.訓練V3V4 nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
 ```
 qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads gg2/gg2_2022_10_RefSeq_341-805.qza \
   --i-reference-taxonomy gg2/gg2_2022_10_Taxonomy.qza \
   --o-classifier gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza
+```
+
+### step 3-1.（可選）訓練V3 nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+```
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads gg2/gg2_2022_10_RefSeq_341-534.qza \
+  --i-reference-taxonomy gg2/gg2_2022_10_Taxonomy.qza \
+  --o-classifier gg2/gg2_2022_10_backbone_NB_classifier_V3.qza
 ```
 
 ### 關鍵模型、參考檔案路徑
@@ -169,6 +206,7 @@ qiime feature-classifier extract-reads \
   --i-sequences SILVA/silva_138_99_RefSeq.qza \
   --p-f-primer CCTACGGGNGGCWGCAG \
   --p-r-primer ATTACCGCGGCTGCTGG \
+  --p-trunc-len 200 \
   --o-reads SILVA/silva_138_99_RefSeq_341-534.qza
 ```
 
@@ -181,7 +219,7 @@ qiime tools import \
   --output-path SILVA/silva_138_99_Taxonomy.qza
 ```
 
-### step 3.訓練 Naive Bayes 模型
+### step 3.訓練V3V4 Naive Bayes 模型
 ```
 qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads SILVA/silva_138_99_RefSeq_341-805.qza \
