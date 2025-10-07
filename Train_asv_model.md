@@ -134,7 +134,7 @@ qiime feature-classifier extract-reads \
 ```
 qiime tools import \
   --type 'FeatureData[Taxonomy]' \
-  --input-path gg2/2023.2/gg2.2022.10.backbone.full-length.fna/data/taxonomy.tsv \
+  --input-path gg2/2023.2/gg2.2022.10.backbone.tax/data/taxonomy.tsv \
   --input-format HeaderlessTSVTaxonomyFormat \
   --output-path gg2/gg2_2022_10_Taxonomy.qza
 ```
