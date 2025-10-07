@@ -21,6 +21,15 @@ qiime feature-classifier extract-reads \
   --o-reads gg/gg_13_8_99_RefSeq_341-805.qza
 ```
 
+### step 1-2.（可選）裁切參考序列為 V3 區段（341F–534R）
+```
+qiime feature-classifier extract-reads \
+  --i-sequences gg/gg_13_8_99_RefSeq.qza \
+  --p-f-primer CCTACGGGNGGCWGCAG \
+  --p-r-primer ATTACCGCGGCTGCTGG \
+  --o-reads gg/gg_13_8_99_RefSeq_341-534.qza
+```
+
 ### step 2. 匯入 taxonomy 為 .qza; 用於訓練nb模型參考使用
 ```
 qiime tools import \
@@ -42,7 +51,9 @@ qiime feature-classifier fit-classifier-naive-bayes \
 ### 關鍵模型、參考檔案路徑
 ```
 /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
-/home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qzaa \
+/home/adprc/classifier/gg/gg_13_8_99_RefSeq_341-805.qza \
+/home/adprc/classifier/gg/gg_13_8_99_RefSeq_341-534.qza \
+/home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qza \
 /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
 ```
 
@@ -53,7 +64,76 @@ qiime feature-classifier fit-classifier-naive-bayes \
 qiime feature-classifier classify-consensus-vsearch \
   --i-query dada2_output/rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qzaa \
+  --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qza \
+  --p-threads 8 \
+  --o-classification taxonomy.qza \
+  --verbose
+```
+
+
+# greengene2 Database
+https://docs.qiime2.org/2023.2/data-resources/
+
+## Naïve Bayesian: 
+### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
+```
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path gg2/2023.2/gg2.2022.10.backbone.full-length.fna/data/dna-sequences.fasta \
+  --output-path gg2/gg2_2022_10_RefSeq.qza
+```
+
+### step 1-1.（可選）裁切參考序列為 V3–V4 區段（341F–805R）
+```
+qiime feature-classifier extract-reads \
+  --i-sequences gg2/gg2_2022_10_RefSeq.qza \
+  --p-f-primer CCTACGGGNGGCWGCAG \
+  --p-r-primer GACTACHVGGGTATCTAATCC \
+  --o-reads gg2/gg2_2022_10_RefSeq_341-805.qza
+```
+
+### step 1-2.（可選）裁切參考序列為 V3 區段（341F–534R）
+```
+qiime feature-classifier extract-reads \
+  --i-sequences gg2/gg2_2022_10_RefSeq.qzaa \
+  --p-f-primer CCTACGGGNGGCWGCAG \
+  --p-r-primer ATTACCGCGGCTGCTGG \
+  --o-reads gg2/gg2_2022_10_RefSeq_341-534.qza
+```
+
+### step 2. 匯入 taxonomy 為 .qza; 用於訓練nb模型參考使用
+```
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-path gg2/2023.2/gg2.2022.10.backbone.full-length.fna/data/taxonomy.tsv \
+  --input-format HeaderlessTSVTaxonomyFormat \
+  --output-path gg2/gg2_2022_10_Taxonomy.qza
+```
+
+### step 3.訓練nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
+```
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads gg2/gg2_2022_10_RefSeq_341-805.qza \
+  --i-reference-taxonomy gg2/gg2_2022_10_Taxonomy.qza \
+  --o-classifier gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza
+```
+
+### 關鍵模型、參考檔案路徑
+```
+/home/adprc/classifier/gg2/gg2_2022_10_RefSeq.qza \
+/home/adprc/classifier/gg2/gg2_2022_10_RefSeq_341-805.qza \
+/home/adprc/classifier/gg2/gg2_2022_10_RefSeq_341-534.qza \
+/home/adprc/classifier/gg2/gg2_2022_10_Taxonomy.qza \
+/home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
+```
+
+## vsearch Method:
+### 使用classify-consensus-vsearch方法，並且參考指定使用reads序列[不需要裁切]、taxanomy
+```
+qiime feature-classifier classify-consensus-vsearch \
+  --i-query dada2_output/rep-seqs.qza \
+  --i-reference-reads /home/adprc/classifier/gg2/gg2_2022_10_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2022_10_Taxonomy.qza \
   --p-threads 8 \
   --o-classification taxonomy.qza \
   --verbose
@@ -83,6 +163,15 @@ qiime feature-classifier extract-reads \
   --o-reads SILVA/silva_138_99_RefSeq_341-805.qza
 ```
 
+### step 1-2.（可選）裁切參考序列為 V3 區段（341F–534R）
+```
+qiime feature-classifier extract-reads \
+  --i-sequences SILVA/silva_138_99_RefSeq.qza \
+  --p-f-primer CCTACGGGNGGCWGCAG \
+  --p-r-primer ATTACCGCGGCTGCTGG \
+  --o-reads SILVA/silva_138_99_RefSeq_341-534.qza
+```
+
 ### step 2. 匯入 taxonomy 為 .qza
 ```
 qiime tools import \
@@ -91,7 +180,6 @@ qiime tools import \
   --input-format HeaderlessTSVTaxonomyFormat \
   --output-path SILVA/silva_138_99_Taxonomy.qza
 ```
-
 
 ### step 3.訓練 Naive Bayes 模型
 ```
@@ -104,6 +192,8 @@ qiime feature-classifier fit-classifier-naive-bayes \
 ### 關鍵模型、參考檔案路徑
 ```
 /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \
+/home/adprc/classifier/SILVA/silva_138_99_RefSeq_341-805.qza \
+/home/adprc/classifier/SILVA/silva_138_99_RefSeq_341-534.qza \
 /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
 /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
 ```
@@ -114,7 +204,7 @@ qiime feature-classifier fit-classifier-naive-bayes \
 qiime feature-classifier classify-consensus-vsearch \
   --i-query dada2_output/rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \ 
-  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
+  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qza \
   --p-threads 8 \
   --o-classification taxonomy.qza \
   --verbose
