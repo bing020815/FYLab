@@ -62,14 +62,14 @@ qiime feature-classifier classify-consensus-vsearch \
 
 
 # SILVA Database
-https://docs.qiime2.org/2024.10/data-resources/
+https://docs.qiime2.org/2023.2/data-resources/
 
 ## Naïve Bayesian: 
 ### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
 ```
 qiime tools import \
   --type 'FeatureData[Sequence]' \
-  --input-path SILVA/2024.10/silva-138-99-seqs/data/dna-sequences.fasta \
+  --input-path SILVA/2023.2/silva-138-99-seqs/data/dna-sequences.fasta \
   --output-path SILVA/silva_138_99_RefSeq.qza
 ```
 
@@ -87,7 +87,7 @@ qiime feature-classifier extract-reads \
 ```
 qiime tools import \
   --type 'FeatureData[Taxonomy]' \
-  --input-path SILVA/2024.10/silva-138-99-tax/data/taxonomy.tsv \
+  --input-path SILVA/2023.2/silva-138-99-tax/data/taxonomy.tsv \
   --input-format HeaderlessTSVTaxonomyFormat \
   --output-path SILVA/silva_138_99_Taxonomy.qza
 ```
