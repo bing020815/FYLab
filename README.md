@@ -164,8 +164,8 @@ sed 's/,/\t/g' manifest.csv > manifest.tsv
   + 2×150 (300-cycle kit): NextSeq, NovaSeq, HiSeq ; V4
   + 2×100 (200-cycle kit): HiSeq; V4
 * 各專案合併解決方法，可以依據目標段區域分類進行特殊狀況處理：
-  1. [分流前處裡、ASV合併、分類](#特殊狀況處理1-(optional))
-  2. [分流前處裡、分流分類、Taxa合併](#特殊狀況處理2-(optional))
+  1. [分流前處裡、ASV合併、分類](#特殊狀況處理1-optional)
+  2. [分流前處裡、分流分類、Taxa合併](#特殊狀況處理2-optional)
 
 ### 依據 [DADA2 官方 Big Data 工作流程](https://benjjneb.github.io/dada2/bigdata.html)
 原文：“recommended to learn the error rates for each run individually … then merging those runs together into a full-study sequence table.” [在說明文件同頁也明講 “Sequences must cover the same gene region … Single-reads must also be truncated to the same length. (this is not necessary for overlapping paired-reads, as truncLen doesn’t affect the region covered by the merged reads)”]，
