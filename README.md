@@ -164,7 +164,7 @@ sed 's/,/\t/g' manifest.csv > manifest.tsv
   + 2×150 (300-cycle kit): NextSeq, NovaSeq, HiSeq ; V4
   + 2×100 (200-cycle kit): HiSeq; V4
 * 各專案合併解決方法，可以依據目標段區域分類進行特殊狀況處理：
-  1. [分流前處裡、ASV合併、分類](#特殊狀況處理1-optional)
+  1. [分流前處裡、ASV切齊、ASV合併、分類](#特殊狀況處理1-optional)
   2. [分流前處裡、分流分類、Taxa合併](#特殊狀況處理2-optional)
 
 ### 依據 [DADA2 官方 Big Data 工作流程](https://benjjneb.github.io/dada2/bigdata.html)
@@ -182,7 +182,7 @@ QIIME 2 論壇（佐證 truncLen 與覆蓋區）:
 1) 「每個 sequencing run 應獨立學習錯誤率並進行樣本推斷（Sample Inference）」
 2) 「各 run 完成後合併為全研究用的 sequence table」
 3) 「合併前需確保序列涵蓋同一基因區（same amplicon region）」
-4) 「嵌合體去除(chimera removal)與分類學指派(classification)可於各 run 或整體階段執行」
+4) 「嵌合體去除 (chimera removal) 與分類學指派 (classification) 可於各 run 或整體階段執行」
 
 <img src="img/qiime2_accross_projects.png" alt="Qiime2 accross projects" width="500">
 
@@ -292,10 +292,22 @@ qiime feature-table tabulate-seqs \
   * 將分流專案A的rep-seqs.qza與分流專案B的rep-seqs.qza合併
 
 ### 建立合併後導出用資料夾
-* 後續的dehost/pathway都可以在這個資料夾底下接續做
+創建合併導出用的資料夾，複製移動必要檔案(table.qza, rep-seqs.qza)，在此資料夾下進行合併、分類等步驟
 ```
   mkdir merge_exported
   cd merge_exported
+```
+根據要合併的專案群決定需要切齊的統一長度(最小的長度)
+```
+qiime cutadapt trim-reads \
+  --i-demultiplexed-sequences rep-seqs1.qza \
+  --p-length 430 \
+  --o-trimmed-sequences rep-seqs1_trimed.qza
+
+qiime cutadapt trim-reads \
+  --i-demultiplexed-sequences rep-seqs2.qza \
+  --p-length 430 \
+  --o-trimmed-sequences rep-seqs2_trimed.qza
 ```
 table.qza: ASV abundance table（特徵豐度表、又稱 feature table，帶有ASV ID）
 ```
@@ -307,8 +319,8 @@ table.qza: ASV abundance table（特徵豐度表、又稱 feature table，帶有
 rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際需要合併，以及用於分類器分類的 input，實際需要合併，以及用於分類器分類的 input
 ```
   qiime feature-table merge-seqs \
-  --i-data rep-seqs1.qza \
-  --i-data rep-seqs2.qza \
+  --i-data rep-seqs1_trimed.qza \
+  --i-data rep-seqs2_trimed.qza \
   --o-merged-data rep-seqs.qza
 ```
 [跳至倒出特徵表步驟](#Analysis-分類導出特征表)
