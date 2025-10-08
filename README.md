@@ -372,21 +372,21 @@ nohup qiime feature-classifier classify-sklearn \
   mkdir merge_exported
   cd merge_exported
 ```
-table.qza
+table.qza: ASV abundance table（特徵豐度表、又稱 feature table，帶有ASV ID）
 ```
   qiime feature-table merge \
   --i-tables table1.qza \
   --i-tables table2.qza \
   --o-merged-table table.qza
 ```
-taxonomy.qza
+taxonomy.qza: 每個 ASV 序列對應到的生物分類（門、綱、目、科、屬、種）
 ```
   qiime feature-table merge-taxa \
   --i-data taxonomy1.qza \
   --i-data taxonomy2.qza \
   --o-merged-data taxonomy.qza
 ```
-rep-seqs.qza
+rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串）
 ```
   qiime feature-table merge-seqs \
   --i-data rep-seqs1.qza \
