@@ -1,10 +1,12 @@
 # FYLab 
-* 20250829 updated
+* 20251008 updated
 ```
-  + 新增序列模型資料庫: Greengenes, SILVA [20250728]
+  + 新增序列模型資料庫: Greengenes2, Greengenes, SILVA [20251008]
   + Naive Bayesian 模型採用 V3-V4 段提升預測精準度 [20250728]
-  + 新增調整denoise用的fastq長度查詢工具
-  + 新增分流專案合併用工具
+  + Naive Bayesian V3 段模型 [20251008]
+  + Naive Bayesian V4 段模型 [20251008]
+  + 新增調整denoise用的fastq長度查詢工具 [20250829]
+  + 新增分流專案合併點 [20251008]
 ```
 ## Folder Management
 * Window -> File WINSCP
@@ -23,16 +25,17 @@ Mac: Terminal
 
 # Table of Content:
 1. [FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
-2. [QIIME2 - Preparation 分析前準備](#QIIME2---Preparation-分析前準備)
-3. [Dehost 排除host基因](#Dehost-排除host基因)
+2. [QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
+2. [QIIME2 - Analysis: 導出分類特徵表](#Analysis-分類導出特征表)
+3. [Dehost - 排除host基因](#Dehost-排除host基因)
 4. [畫圖](#畫圖)
 5. [PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 
 
 # FastQ files Preprocess 前處理Primer
 FastQ現存現象:
-* 舊機型上機(600 cycle): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
-* 新機型上機(600 cycle): 沒有額外設定，序列長度為含primer共計 300 bp
+* 舊機型上機(2×300 (600-cycle kit)): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
+* 新機型上機(2×300 (600-cycle kit)): 沒有額外設定，序列長度為含primer共計 300 bp
 * 解決方法：統一所有FasqQ長度
   + 有prime的序列刪掉要去除掉primer
   + 沒primer的序列則保留不動，不切序列前段
@@ -151,6 +154,25 @@ sed 's/,/\t/g' manifest.csv > manifest.tsv
 ```
 
 # Import Data and Preprocessing
+* 各專案可能長度與定序段:
+  + 2×300 (600-cycle kit): MiSeq; V3–V4 (341F–805R)
+  + 2×250 (500-cycle kit): MiSeq、HiSeq; V3–V4、V4
+  + 2×200 (400-cycle kit): MiniSeq; V4（515F–806R）
+  + 2×150 (300-cycle kit): NextSeq, NovaSeq, HiSeq ; V4
+  + 2×100 (200-cycle kit): HiSeq; V4
+* 各專案合併解決方法：依據目標段區域分類
+  + 分流前處裡、ASV合併、分類
+  + 分流前處裡、分流分類、Taxa合併
+
+### 依據 [DADA2 官方 Big Data 工作流程](https://benjjneb.github.io/dada2/bigdata.html)
+原文：“recommended to learn the error rates for each run individually … then merging those runs together into a full-study sequence table.”（在說明文件同頁也明講 “Sequences must cover the same gene region … Single-reads must also be truncated to the same length.”），整體整理為幾點：
+1) 「不同 run 的錯誤特性不同，建議各 run 各自學習錯誤率並做 Sample Inference」
+2) 「各 run 完成後，把結果合併成全體研究用的 sequence table」
+3) 「序列必須涵蓋同一個基因區（同一套引子，同樣或無 trimLeft）；single-end 還要統一截斷長度」
+4) 「建立全研究的 sequence table 後再做嵌合體(remove chimera)去除與分類學指派(classification)」
+
+<img src="img/qiime2_accross_projects.png" alt="Qiime2 accross projects" width="500">
+
 ## 進入qiime2環境
 ```
 conda activate qiime2-2023.2
@@ -247,8 +269,41 @@ qiime feature-table tabulate-seqs \
   --o-visualization rep-seqs-summary.qzv
 ```
 
-# Analysis 導出特征表
-## 建立導出用資料夾
+### 特殊狀況處理 (optional)
+<details>
+<summary><strong>合併分流專案 [2025829 新增]</strong></summary>
+  
+  ## 根據實際專案需求，合併不同分流的專案
+  * 分流專案A、分流專案的table.qza, taxonomy.qza, rep-seqs.qza 複製到獨立資料夾
+  * 將分流專案A的table.qza與分流專案B的table.qza合併
+  * 將分流專案A的taxonomy.qza與分流專案B的taxonomy.qza合併
+
+### 建立合併後導出用資料夾
+* 後續的dehost/pathway都可以在這個資料夾底下接續做
+```
+  mkdir merge_exported
+  cd merge_exported
+```
+table.qza: ASV abundance table（特徵豐度表、又稱 feature table，帶有ASV ID）
+```
+  qiime feature-table merge \
+  --i-tables table1.qza \
+  --i-tables table2.qza \
+  --o-merged-table table.qza
+```
+rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際需要合併，以及用於分類器分類的 input，實際需要合併，以及用於分類器分類的 input
+```
+  qiime feature-table merge-seqs \
+  --i-data rep-seqs1.qza \
+  --i-data rep-seqs2.qza \
+  --o-merged-data rep-seqs.qza
+```
+[跳至倒出特徵表步驟](#Analysis-分類導出特征表)
+
+</details>
+
+# Analysis 分類導出特征表
+## 建立導出用的資料夾
 ```
 mkdir phyloseq
 ```
@@ -272,9 +327,10 @@ biom convert \
 
 ## 模型分類
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
+以及2022年，GreenGenes 16S rRNA gene database 更新改版的 Greengenes2 比對資料庫。
 
 <details>
-<summary><strong>Greengenes 13_8 16S Self-trained [20250728 新增]</strong></summary>
+<summary><strong>Greengenes 13_8 16S [20250728 新增]</strong></summary>
 
 GreenGenes 16S rRNA gene databas:
   + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多 (約 100,000 條)
@@ -282,10 +338,28 @@ GreenGenes 16S rRNA gene databas:
 
 [Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
 
-### Option1: Naive Bayes 模型分類 (V3-V4)
+### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
 --i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3_len200.qza.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-2: Naive Bayes 模型分類 (V4) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V4_len250.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -305,16 +379,134 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 </details><br>
 
 <details>
-<summary><strong>SILVA 138 16S Self-trained [20250728 新增]</strong></summary>
+<summary><strong>Greengenes2 2022_10 16S [20251008 新增]</strong></summary>
+
+Greengenes2 16S rRNA gene databas:
+  + Greengenes2 從 2022 年起開始重新建構，以backbone技術，採用全基因體（WoL）。
+
+[Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
+### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3_len200.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-2: Naive Bayes 模型分類 (V4) [Official released]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg2/gg2.2022.10.backbone.V4.nb.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option2: vsearch 模型分類 (full-length)
+```
+nohup qiime feature-classifier classify-consensus-vsearch \
+  --i-query rep-seqs.qza \
+  --i-reference-reads /home/adprc/classifier/gg2/gg2_2022_10_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2022_10_Taxonomy.qza \
+  --p-threads 4 \
+  --o-classification taxonomy.qza \
+  --verbose > nohup_vsearch.out 2>&1 &
+```
+
+</details><br>
+
+<details>
+<summary><strong>Greengenes2 2024_09 16S [20251008 新增]</strong></summary>
+
+Greengenes2 16S rRNA gene databas:
+  + Greengenes2 從 2024.09 年再次更新：
+    * 遵照[LTP](https://imedea.uib-csic.es/mmg/ltp/)在 2023.08年發布的命名準則修正， e.g., Firmicutes -> Bacillota
+    * 線粒體 (mitochondria) 葉綠體 (chloroplast) 的序列 在 Naive Bayes 分類器和 backbone taxonomy 中被明確納入
+  + 擴充 ASV 數量 (多一百萬左右的 ASV)，擴充 5000 多筆 Taxanomy(總數維持約33萬筆)
+  + 維持 backbone 樹結構
+
+[Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
+[Greengenes2 2024.09 Cite 參考資訊](https://forum.qiime2.org/t/greengenes2-2024-09/31606/4)
+
+### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3_len200.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-2: Naive Bayes 模型分類 (V4) [official released]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/gg2/gg2.2024.09.backbone.v4.nb.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option2: vsearch 模型分類 (full-length)
+```
+nohup qiime feature-classifier classify-consensus-vsearch \
+  --i-query rep-seqs.qza \
+  --i-reference-reads /home/adprc/classifier/gg2/gg2_2024_09_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2024_09_Taxonomy.qza \
+  --p-threads 4 \
+  --o-classification taxonomy.qza \
+  --verbose > nohup_vsearch.out 2>&1 &
+```
+
+</details><br>
+
+<details>
+<summary><strong>SILVA 138 16S [20250728 新增]</strong></summary>
 
 SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 條)
 
-[Cite 參考資訊](https://docs.qiime2.org/2024.10/data-resources/)
+[Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
   
-### Option1: Naive Bayes 模型分類 (V3-V4)
+### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
 --i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3_len200.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+
+### Option1-2: Naive Bayes 模型分類 (V4) [official released]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/SILVA/silva-138-99-515-806_V4-nb-classifier.zip \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -357,14 +549,13 @@ nohup qiime feature-classifier classify-sklearn \
 
 </details><br>
 
-### 特殊狀況處理 (optional)
+### 特殊狀況處理2 (optional)
 <details>
 <summary><strong>合併分流專案 [2025829 新增]</strong></summary>
   
   ## 根據實際專案需求，合併不同分流的專案
   * 分流專案A、分流專案的table.qza, taxonomy.qza, rep-seqs.qza 複製到獨立資料夾
   * 將分流專案A的table.qza與分流專案B的table.qza合併
-  * 將分流專案A的taxonomy.qza與分流專案B的taxonomy.qza合併
 
 ### 建立合併後導出用資料夾
 * 後續的dehost/pathway都可以在這個資料夾底下接續做
@@ -386,14 +577,14 @@ taxonomy.qza: 每個 ASV 序列對應到的生物分類（門、綱、目、科�
   --i-data taxonomy2.qza \
   --o-merged-data taxonomy.qza
 ```
-rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串）
+rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際需要合併，以及用於分類器分類的 input
 ```
   qiime feature-table merge-seqs \
   --i-data rep-seqs1.qza \
   --i-data rep-seqs2.qza \
   --o-merged-data rep-seqs.qza
 ```
-[跳回倒出特徵表步驟](#Analysis-導出特征表)
+[跳回倒出特徵表步驟](#Analysis-分類導出特征表)
 
 </details>
 
