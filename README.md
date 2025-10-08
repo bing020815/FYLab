@@ -274,12 +274,12 @@ qiime feature-table tabulate-seqs \
 
 ### 特殊狀況處理 (optional)
 <details>
-<summary><strong>合併分流專案 [2025829 新增]</strong></summary>
+<summary><strong>合併分流專案 [20251008 新增]</strong></summary>
   
   ## 根據實際專案需求，合併不同分流的專案
-  * 分流專案A、分流專案的table.qza, taxonomy.qza, rep-seqs.qza 複製到獨立資料夾
+  * 分流專案A、分流專案的table.qza, rep-seqs.qza 複製到獨立資料夾
   * 將分流專案A的table.qza與分流專案B的table.qza合併
-  * 將分流專案A的taxonomy.qza與分流專案B的taxonomy.qza合併
+  * 將分流專案A的rep-seqs.qza與分流專案B的rep-seqs.qza合併
 
 ### 建立合併後導出用資料夾
 * 後續的dehost/pathway都可以在這個資料夾底下接續做
