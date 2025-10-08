@@ -163,9 +163,9 @@ sed 's/,/\t/g' manifest.csv > manifest.tsv
   + 2×200 (400-cycle kit): MiniSeq; V4（515F–806R）
   + 2×150 (300-cycle kit): NextSeq, NovaSeq, HiSeq ; V4
   + 2×100 (200-cycle kit): HiSeq; V4
-* 各專案合併解決方法：依據目標段區域分類
-  + 分流前處裡、ASV合併、分類
-  + 分流前處裡、分流分類、Taxa合併
+* 各專案合併解決方法，可以依據目標段區域分類進行特殊狀況處理：
+  1. [分流前處裡、ASV合併、分類](#特殊狀況處理1-(optional))
+  2. [分流前處裡、分流分類、Taxa合併](#特殊狀況處理2-(optional))
 
 ### 依據 [DADA2 官方 Big Data 工作流程](https://benjjneb.github.io/dada2/bigdata.html)
 原文：“recommended to learn the error rates for each run individually … then merging those runs together into a full-study sequence table.” [在說明文件同頁也明講 “Sequences must cover the same gene region … Single-reads must also be truncated to the same length. (this is not necessary for overlapping paired-reads, as truncLen doesn’t affect the region covered by the merged reads)”]，
@@ -173,7 +173,7 @@ sed 's/,/\t/g' manifest.csv > manifest.tsv
 作者（Ben Callahan）在 GitHub issues 的逐字回覆:
 +	“In order to successfully merge, your amplicons need to cover the same gene region. … So to merge, you need to trim the longer ASVs to exactly the gene region included in the shorter ASV table.”（[Issue #452](https://github.com/benjjneb/dada2/issues/452)） ￼
 +	“As long as the datasets are from amplifying the same gene region, they can be simply merged (i.e. the ASVs will be consistent across the …).”（[Issue #482](https://github.com/benjjneb/dada2/issues/482)） ￼
-+	“Just make sure to trim each run to the same gene region (i.e. same trimLeft for merged paired-end data, and same trimLeft and truncLen for …).”（[Issue #716]((https://github.com/benjjneb/dada2/issues/716))）
++	“Just make sure to trim each run to the same gene region (i.e. same trimLeft for merged paired-end data, and same trimLeft and truncLen for …).”（[Issue #716](https://github.com/benjjneb/dada2/issues/716)）
 
 QIIME 2 論壇（佐證 truncLen 與覆蓋區）:
 +	“It’s fine to use different truncLen … The truncLen setting doesn’t affect the merged amplicon region, it just affects the amount of overlap …”（[QIME 2 Forum]((https://forum.qiime2.org/t/dada2-merging-and-comparing-different-data-sets/18326))） ￼
@@ -282,7 +282,7 @@ qiime feature-table tabulate-seqs \
   --o-visualization rep-seqs-summary.qzv
 ```
 
-### 特殊狀況處理 (optional)
+### 特殊狀況處理1 (optional)
 <details>
 <summary><strong>合併分流專案 [20251008 新增]</strong></summary>
   
