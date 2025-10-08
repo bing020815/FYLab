@@ -168,7 +168,17 @@ sed 's/,/\t/g' manifest.csv > manifest.tsv
   + 分流前處裡、分流分類、Taxa合併
 
 ### 依據 [DADA2 官方 Big Data 工作流程](https://benjjneb.github.io/dada2/bigdata.html)
-原文：“recommended to learn the error rates for each run individually … then merging those runs together into a full-study sequence table.”（在說明文件同頁也明講 “Sequences must cover the same gene region … Single-reads must also be truncated to the same length.”），整體整理為幾點：
+原文：“recommended to learn the error rates for each run individually … then merging those runs together into a full-study sequence table.” [在說明文件同頁也明講 “Sequences must cover the same gene region … Single-reads must also be truncated to the same length. (this is not necessary for overlapping paired-reads, as truncLen doesn’t affect the region covered by the merged reads)”]，
+
+作者（Ben Callahan）在 GitHub issues 的逐字回覆:
++	“In order to successfully merge, your amplicons need to cover the same gene region. … So to merge, you need to trim the longer ASVs to exactly the gene region included in the shorter ASV table.”（[Issue #452](https://github.com/benjjneb/dada2/issues/452)） ￼
++	“As long as the datasets are from amplifying the same gene region, they can be simply merged (i.e. the ASVs will be consistent across the …).”（[Issue #482](https://github.com/benjjneb/dada2/issues/482)） ￼
++	“Just make sure to trim each run to the same gene region (i.e. same trimLeft for merged paired-end data, and same trimLeft and truncLen for …).”（[Issue #716]((https://github.com/benjjneb/dada2/issues/716))）
+
+QIIME 2 論壇（佐證 truncLen 與覆蓋區）:
++	“It’s fine to use different truncLen … The truncLen setting doesn’t affect the merged amplicon region, it just affects the amount of overlap …”（[QIME 2 Forum]((https://forum.qiime2.org/t/dada2-merging-and-comparing-different-data-sets/18326))） ￼
+
+上述出處可以整體整理為幾點處理要點：
 1) 「不同 run 的錯誤特性不同，建議各 run 各自學習錯誤率並做 Sample Inference」
 2) 「各 run 完成後，把結果合併成全體研究用的 sequence table」
 3) 「序列必須涵蓋同一個基因區（同一套引子，同樣或無 trimLeft）；single-end 還要統一截斷長度」
