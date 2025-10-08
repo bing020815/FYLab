@@ -26,10 +26,11 @@ Mac: Terminal
 # Table of Content:
 1. [FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
-2. [QIIME2 - Analysis: 導出分類特徵表](#Analysis-分類導出特征表)
-3. [Dehost - 排除host基因](#Dehost-排除host基因)
-4. [畫圖](#畫圖)
-5. [PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+3. [QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
+4. [QIIME2 - Analysis: 導出分類特徵表](#Analysis-分類導出特征表)
+5. [Dehost - 排除host基因](#Dehost-排除host基因)
+6. [畫圖](#畫圖)
+7. [PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 
 
 # FastQ files Preprocess 前處理Primer
@@ -152,6 +153,8 @@ cp manifest.csv manifest.txt
 ```
 sed 's/,/\t/g' manifest.csv > manifest.tsv
 ```
+
+<p align="center"><a href="#fylab">Top</a></p>
 
 # Import Data and Preprocessing
 * 各專案可能長度與定序段:
