@@ -179,10 +179,10 @@ QIIME 2 論壇（佐證 truncLen 與覆蓋區）:
 +	“It’s fine to use different truncLen … The truncLen setting doesn’t affect the merged amplicon region, it just affects the amount of overlap …”（[QIME 2 Forum]((https://forum.qiime2.org/t/dada2-merging-and-comparing-different-data-sets/18326))） ￼
 
 上述出處可以整體整理為幾點處理要點：
-1) 「不同 run 的錯誤特性不同，建議各 run 各自學習錯誤率並做 Sample Inference」
-2) 「各 run 完成後，把結果合併成全體研究用的 sequence table」
-3) 「序列必須涵蓋同一個基因區（同一套引子，同樣或無 trimLeft）；single-end 還要統一截斷長度」
-4) 「建立全研究的 sequence table 後再做嵌合體(remove chimera)去除與分類學指派(classification)」
+1) 「每個 sequencing run 應獨立學習錯誤率並進行樣本推斷（Sample Inference）」
+2) 「各 run 完成後合併為全研究用的 sequence table」
+3) 「合併前需確保序列涵蓋同一基因區（same amplicon region）」
+4) 「嵌合體去除(chimera removal)與分類學指派(classification)可於各 run 或整體階段執行」
 
 <img src="img/qiime2_accross_projects.png" alt="Qiime2 accross projects" width="500">
 
