@@ -1221,10 +1221,10 @@ nohup add_descriptions.py \
 ```
 # EC path
 ```
-add_descriptions.py \
+nohup add_descriptions.py \
 -i EC_metagenome_out/pred_metagenome_unstrat.tsv.gz \
 -m EC \
--o EC_metagenome_out/path_abun_unstrat_descrip.tsv.gz
+-o EC_metagenome_out/path_abun_unstrat_descrip.tsv.gz  &
 ```
 ```
 nohup add_descriptions.py \
