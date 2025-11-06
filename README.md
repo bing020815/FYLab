@@ -902,7 +902,7 @@ qiime tools export \
 
 # 畫圖
 ## KEGG Pathway 前期準備
-### 4.Phylogeny Tree (此步驟要超級久，可以多線程設定)
+### 1.Phylogeny Tree (此步驟要超級久，可以多線程設定)
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
@@ -931,7 +931,7 @@ nohup qiime phylogeny align-to-tree-mafft-fasttree \
 </details><br>
 
 
-### 5.導出代表序列 (這步完成後，可以跳到 #PICRUSt2，直接啟動picrust2)
+### 2.導出代表序列 (這步完成後，可以跳到 #PICRUSt2，直接啟動picrust2)
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
@@ -954,7 +954,7 @@ qiime tools export --input-path rep-seqs.qza --output-path fastq1/
 <details>
 <summary><strong>點我展開畫進化樹(optional)</strong></summary>
   
-### 6.導出無根進化樹 [optional]
+### 3.導出無根進化樹 [optional]
 ```
 qiime tools export \
 --input-path unrooted-tree.qza \
@@ -962,7 +962,7 @@ qiime tools export \
 cd phyloseq; mv tree.nwk unrooted_tree.nwk; cd ../
 ```
 
-### 7.導出有根進化樹 [optional]
+### 4.導出有根進化樹 [optional]
 ```
 qiime tools export \
 --input-path rooted-tree.qza \
@@ -1090,6 +1090,19 @@ conda deactivate
 
 # PICRUSt2 - Metabolism Pathway
 ![PICRUSt2](img/picrust2_flow.png)
+
+KEGG 功能: 
+1. 建構參考樹(Reference Tree)
+  * 內建 backbone Tree 來自 Greengenes 13_5（約 20,000 條 16S 序列）
+  * 每個 node（菌株）在 IMG(Integrated Microbial Genomes) 資料庫中有功能註解
+2. 樣本序列放置 (EPA-NG placement)
+  * 將 dna-sequences.fasta（DADA2 輸出之代表序列）放到上述 reference tree 上
+  * 根據與參考菌株的演化距離找出最相似節點
+3. 功能推估 (Hidden State Prediction, HSP)
+  * 將該節點對應的 IMG 對照 KEGG 功能表（KO 拷貝數）推估至 ASV 節點
+4. 樣本功能彙整
+  * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出 pred_metagenome_unstrat.tsv(ASV 層級的功能表); path_abun_unstrat.tsv(樣本層級的 KEGG pathway abundance)
+
 ## 啟動PICRUSt2 package
 ```
 conda activate picrust2
