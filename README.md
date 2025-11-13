@@ -1124,7 +1124,7 @@ KEGG 功能:
 conda activate picrust2
 ```
 
-[PICRUSt2-SC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12089645/?utm_source=chatgpt.com)  -->  based on Genome Taxonomy Database (GTDB) r214 所建制的基因組與樹
+[PICRUSt2-SC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12089645/)  -->  based on Genome Taxonomy Database (GTDB) r214 所建制的基因組與樹
 ```
 conda activate picrust2sc
 ```
