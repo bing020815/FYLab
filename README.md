@@ -1104,6 +1104,7 @@ conda deactivate
 <p align="center"><a href="#fylab">Top</a></p>
 
 # PICRUSt2 - Metabolism Pathway
+PICRUSt2 2.5.2
 ![PICRUSt2](img/picrust2_flow.png)
 
 KEGG 功能: 
