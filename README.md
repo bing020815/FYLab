@@ -1104,7 +1104,6 @@ conda deactivate
 <p align="center"><a href="#fylab">Top</a></p>
 
 # PICRUSt2 - Metabolism Pathway
-PICRUSt2 2.5.2
 ![PICRUSt2](img/picrust2_flow.png)
 
 KEGG 功能: 
@@ -1120,6 +1119,7 @@ KEGG 功能:
   * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出 pred_metagenome_unstrat.tsv(ASV 層級的功能表); path_abun_unstrat.tsv(樣本層級的 KEGG pathway abundance)
 
 ## 啟動PICRUSt2 package
+PICRUSt2 2.5.2
 ```
 conda activate picrust2
 ```
