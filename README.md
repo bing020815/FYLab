@@ -1154,6 +1154,11 @@ nohup place_seqs.py \
 </details><br>
 
 ## 2.Hidden-state prediction
+可產生計算好的NSTI資料表，作為路徑預測的QC
+* Weighted NSTI < 0.05: Excellent - 預測非常可靠，人類腸道常見
+* 0.05 <= Weighted NSTI < 0.10: Acceptable - 預測可信度良好，可用於功能路徑分析
+* 0.10 <= Weighted NSTI < 0.15: Borderline - 部分 ASV 缺乏近親基因組，需謹慎解讀
+* Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，不建議使用
 ```
 nohup hsp.py \
 -i 16S \
