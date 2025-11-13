@@ -354,6 +354,8 @@ biom convert \
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
 以及2022年，GreenGenes 16S rRNA gene database 更新改版的 Greengenes2 比對資料庫。
 
+[International Code of Nomenclature of Prokaryotes (ICNP)](https://the-icsp.org/index.php) 
+
 <details>
 <summary><strong>Greengenes 13_8 16S [20250728 新增]</strong></summary>
 
@@ -361,7 +363,17 @@ GreenGenes 16S rRNA gene databas:
   + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多 (約 100,000 條)
   + Greengenes2 從 2022 年起開始重新建構，採用全基因體（WoL），但可參考序列數少 (約 21,000 條)
 
-[Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
+[Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)是由國際微生物學會聯盟（ICSP）制定的命名法律，期原則包含：
+1. 名稱必須雙名制（binomial nomenclature）
+    + 任何物種名稱都要由「屬名 + 種小名」兩部分組成，例如 Escherichia coli。
+2. 屬名（Genus）首字母要大寫，種小名（species epithet）要小寫
+    + Lactobacillus casei
+3. 每個物種名稱必須唯一
+    + 不同屬可共用相同 epithet（例如 Bacteroides faecis、Roseburia faecis），但完整名稱必須唯一。
+4. 名稱要有 type strain（模式株）支持
+    + 每個正式物種名稱都必須有對應的「模式菌株（type strain）」被註冊。
+5. 命名必須經正式發表與認可
+    + 需刊登於《International Journal of Systematic and Evolutionary Microbiology (IJSEM)》並被 ICSP 接受
 
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
