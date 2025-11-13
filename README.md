@@ -374,6 +374,9 @@ GreenGenes 16S rRNA gene databas:
     + 每個正式物種名稱都必須有對應的「模式菌株（type strain）」被註冊。
 5. 命名必須經正式發表與認可
     + 需刊登於《International Journal of Systematic and Evolutionary Microbiology (IJSEM)》並被 ICSP 接受
+  
+菌新舊名查詢：
+* [LPSN - List of Prokaryotic names with Standing in Nomenclature](https://lpsn.dsmz.de/)
 
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
