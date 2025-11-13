@@ -1158,7 +1158,7 @@ nohup place_seqs.py \
 * Weighted NSTI < 0.05: Excellent - 預測非常可靠，人類腸道常見
 * 0.05 <= Weighted NSTI < 0.10: Acceptable - 預測可信度良好，可用於功能路徑分析
 * 0.10 <= Weighted NSTI < 0.15: Borderline - 部分 ASV 缺乏近親基因組，需謹慎解讀
-* Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，不建議使用
+* Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，reference genomoes 涵蓋面不夠全面，需使用 PICRUSt2-SC
 ```
 nohup hsp.py \
 -i 16S \
