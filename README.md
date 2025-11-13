@@ -1193,6 +1193,7 @@ KO
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
+Picrust2使用：
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/filtered_host/dehost_otu_table.biom \
@@ -1201,16 +1202,40 @@ nohup metagenome_pipeline.py \
 -o KO_metagenome_out \
 --strat_out &
 ```
+Picrust2sc使用：
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/filtered_host/dehost_otu_table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f KO_predicted.tsv.gz \
+-o KO_metagenome_out \
+--nsti marker_predicted_and_nsti.tsv.gz \
+--threads 6 \
+--strat_out &
+```
 </details><br>
 <details>
 <summary><strong>未Dehost使用語法</strong></summary>
 
+Picrust2使用：
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/feature-table.biom \
 -m marker_predicted_and_nsti.tsv.gz \
 -f KO_predicted.tsv.gz \
 -o KO_metagenome_out \
+--strat_out &
+```
+
+Picrust2sc使用：
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/feature-table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f KO_predicted.tsv.gz \
+-o KO_metagenome_out \
+--nsti marker_predicted_and_nsti.tsv.gz \
+--threads 6 \
 --strat_out &
 ```
 </details><br>
@@ -1219,6 +1244,7 @@ EC
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
+Picrust2使用：
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/filtered_host/dehost_otu_table.biom \
@@ -1227,16 +1253,41 @@ nohup metagenome_pipeline.py \
 -o EC_metagenome_out \
 --strat_out &
 ```
+
+Picrust2sc使用：
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/filtered_host/dehost_otu_table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f EC_predicted.tsv.gz \
+-o EC_metagenome_out \
+--nsti marker_predicted_and_nsti.tsv.gz \
+--threads 6 \
+--strat_out &
+```
 </details><br>
 <details>
 <summary><strong>未Dehost使用語法</strong></summary>
 
+Picrust2使用：
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/feature-table.biom \
 -m marker_predicted_and_nsti.tsv.gz \
 -f EC_predicted.tsv.gz \
 -o EC_metagenome_out \
+--strat_out &
+```
+
+Picrust2sc使用：
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/feature-table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f EC_predicted.tsv.gz \
+-o EC_metagenome_out \
+--nsti marker_predicted_and_nsti.tsv.gz \
+--threads 6 \
 --strat_out &
 ```
 </details><br>
