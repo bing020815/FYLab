@@ -1337,7 +1337,7 @@ nohup pathway_pipeline.py \
   --input KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
   --out_dir KEGG_pathways_out \
   --no_regroup \
-  --map /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \ &
+  --map /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv &
 ```
 
 Step 2 — Add KEGG pathway descriptions
