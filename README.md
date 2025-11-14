@@ -1189,7 +1189,12 @@ nohup hsp.py \
 ```
 
 ## 3.Generate metagenome predictions
-KO
+### KO
+* 產出檔案在KO_metagenome_out資料夾下:
+  + pred_metagenome_unstrat.tsv.gz: KO 的每個 sample unstratified 預測結果
+  + pred_metagenome_contrib.tsv.gz: 每個 ASV 對每個 KO 的貢獻
+  + EC_metagenome_out/seqtab_norm.tsv.gz: metagenome_pipeline 做的 normalization
+
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
@@ -1240,7 +1245,12 @@ nohup metagenome_pipeline.py \
 ```
 </details><br>
 
-EC
+### EC
+* 產出檔案在EC_metagenome_out資料夾下:
+  + pred_metagenome_unstrat.tsv.gz: EC 的每個 sample unstratified 預測結果
+  + pred_metagenome_contrib.tsv.gz: 每個 ASV 對每個 EC 的貢獻
+  + EC_metagenome_out/seqtab_norm.tsv.gz: metagenome_pipeline 做的 normalization
+  
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
@@ -1295,6 +1305,11 @@ nohup metagenome_pipeline.py \
 
 ## 4.KEGG pathway
 # KEGG pathway - overview
+
+<details>
+<summary><strong>Picrust2使用語法</strong></summary>
+
+Step 1 — Pathway abundance prediction
 ```
 nohup pathway_pipeline.py \
 -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
@@ -1303,19 +1318,39 @@ nohup pathway_pipeline.py \
 --map /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \
 -p 2 &
 ```
+
+Step 2 — Add KEGG pathway descriptions
 ```
 nohup add_descriptions.py \
 -i KEGG_pathways_out/path_abun_unstrat.tsv.gz \
 --custom_map_table /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz \
 -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz &
 ```
-# EC path
+</details><br>
+
+<details>
+<summary><strong>Picrust2sc使用語法</strong></summary>
+  
+Step 1 — Pathway abundance prediction
+```
+nohup pathway_pipeline.py \
+-i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
+-o KEGG_pathways_out \
+--no_regroup \
+--map /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \
+-p 2 &
+```
+
+Step 2 — Add KEGG pathway descriptions
 ```
 nohup add_descriptions.py \
--i EC_metagenome_out/pred_metagenome_unstrat.tsv.gz \
--m EC \
--o EC_metagenome_out/path_abun_unstrat_descrip.tsv.gz  &
+-i KEGG_pathways_out/path_abun_unstrat.tsv.gz \
+--custom_map_table /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz \
+-o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz &
 ```
+</details><br>
+
+# EC: Add descriptions
 ```
 nohup add_descriptions.py \
   -i EC_metagenome_out/pred_metagenome_unstrat.tsv.gz \
@@ -1323,7 +1358,7 @@ nohup add_descriptions.py \
   -o EC_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz  &
 ```
 
-# KO pathway - KO under Pathway
+# KO: Add descriptions
 ```
 nohup add_descriptions.py \
   -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
