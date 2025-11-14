@@ -1331,11 +1331,18 @@ nohup add_descriptions.py \
 
 <details>
 <summary><strong>Picrust2sc使用語法</strong></summary>
+
+Step 0 - Fix 'ko:' prefix issue
+```
+zcat pred_metagenome_unstrat.tsv.gz | \
+    sed 's/^ko://g' | \
+    gzip > pred_metagenome_unstrat.no_prefix.tsv.gz
+```
   
 Step 1 — Pathway abundance prediction
 ```
 nohup pathway_pipeline.py \
-  --input KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
+  --input KO_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz \
   --out_dir KEGG_pathways_out \
   --no_regroup \
   --map /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv &
