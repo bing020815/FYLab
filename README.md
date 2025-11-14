@@ -1308,7 +1308,7 @@ nohup metagenome_pipeline.py \
 
 
 ## 4.KEGG pathway
-# KEGG pathway - overview
+### KEGG pathway - overview
 
 <details>
 <summary><strong>Picrust2使用語法</strong></summary>
@@ -1354,7 +1354,7 @@ nohup add_descriptions.py \
 ```
 </details><br>
 
-# EC: Add descriptions
+## 5.EC: Add descriptions
 ```
 nohup add_descriptions.py \
   -i EC_metagenome_out/pred_metagenome_unstrat.tsv.gz \
@@ -1362,7 +1362,7 @@ nohup add_descriptions.py \
   -o EC_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz  &
 ```
 
-# KO: Add descriptions
+## 6.KO: Add descriptions
 ```
 nohup add_descriptions.py \
   -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
@@ -1374,6 +1374,7 @@ nohup add_descriptions.py \
 <p align="center"><a href="#fylab">Top</a></p>
 
 # Key files relationship
+### File description
 * rep_seqs.qza: QIIME2 .qza 物件, 代表性序列（代表每個 feature 的 DNA 序列, 建立分類器、taxonomy 指派、畫 phylogeny
 * taxonomy.qza: QIIME2 .qza 物件, 每條序列對應到的分類資訊（Domain → Species）, 繪製分類組成圖、群落分析
 * otu_table.qza: QIIME2 .qza 物件, 每筆樣本與每條 feature 的 abundance 表（ASV/OTU 數量）,多樣性分析、群落結構比較
@@ -1388,43 +1389,36 @@ DADA2 / Deblur 處理原始 FASTQ 檔案
        └──→ rep_seqs.qza ──→ classify-sklearn → taxonomy.qza
 ```
 
-# QIIME2
-rep_seqs.qza           → 代表性序列（每條 ASV 的 DNA）
-otu_table.qza          → ASV abundance table（數量）
-taxonomy.qza           → 分類資訊（非 PICRUSt2 用）
+### QIIME2
+* rep_seqs.qza           → 代表性序列（每條 ASV 的 DNA）
+* otu_table.qza          → ASV abundance table（數量）
+* taxonomy.qza           → 分類資訊（非 PICRUSt2 用）
 
-# 手動匯出
-dna-sequences.fasta    → rep_seqs.qza 匯出，給 PICRUSt2（place_seqs）
-dehost_otu_table.biom  → otu_table.qza 匯出，PICRUSt2 的 abundance table input
+### 手動匯出
+* dna-sequences.fasta    → rep_seqs.qza 匯出，給 PICRUSt2（place_seqs）
+* dehost_otu_table.biom  → otu_table.qza 匯出，PICRUSt2 的 abundance table input
 
-# PICRUSt2 STEP A - SEQUENCE PLACEMENT
-out.tre                → ASV placement tree（ASV 放到 reference tree）
+### PICRUSt2 STEP A - SEQUENCE PLACEMENT
+* out.tre                → ASV placement tree（ASV 放到 reference tree）
 
-# PICRUSt2 STEP B - HSP（Hidden State Prediction）
-marker_predicted.tsv.gz            → 每條 ASV 預測的 marker genes（功能基因）
-marker_predicted_and_nsti.tsv.gz   → 上面＋每條 ASV 的 NSTI（序列距離指標）
-KO_predicted.tsv.gz                → 每條 ASV 的 KO abundance（功能基因代碼）
-EC_predicted.tsv.gz                → 每條 ASV 的 EC abundance（酵素編碼）
+### PICRUSt2 STEP B - HSP（Hidden State Prediction）
+* marker_predicted.tsv.gz            → 每條 ASV 預測的 marker genes（功能基因）
+* marker_predicted_and_nsti.tsv.gz   → 上面＋每條 ASV 的 NSTI（序列距離指標）
+* KO_predicted.tsv.gz                → 每條 ASV 的 KO abundance（功能基因代碼）
+* EC_predicted.tsv.gz                → 每條 ASV 的 EC abundance（酵素編碼）
 
-# PICRUSt2 STEP C - FUNCTION PREDICTION PER SAMPLE
-KO_metagenome_out/pred_metagenome_unstrat.tsv.gz   
-EC_metagenome_out/pred_metagenome_unstrat.tsv.gz   
-    → 各樣本的 KO/EC 總量（整合 ASV × abundance）
-
-KO_metagenome_out/pred_metagenome_contrib.tsv.gz   
-EC_metagenome_out/pred_metagenome_contrib.tsv.gz   
-    → ASV 分別貢獻哪些 KO/EC（用於 LEfSe、貢獻分析）
-
-KO_metagenome_out/weighted_nsti.tsv.gz             
-EC_metagenome_out/weighted_nsti.tsv.gz             
-    → 每個樣本的加權 NSTI（QC 重要指標）
-
-# PICRUSt2 STEP D - PATHWAY PREDICTION
-KEGG_pathways_out/path_abun_unstrat.tsv.gz
-    → pathway abundance（每個樣本的 metabolic pathway 量）
-
-KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz
-    → pathway + 描述資訊
+### PICRUSt2 STEP C - FUNCTION PREDICTION PER SAMPLE
+* KO_metagenome_out/pred_metagenome_unstrat.tsv.gz   → 各樣本的 KO 總量（整合 ASV × abundance） 
+* EC_metagenome_out/pred_metagenome_unstrat.tsv.gz   → 各樣本的 EC 總量（整合 ASV × abundance）
+* KO_metagenome_out/pred_metagenome_contrib.tsv.gz   → ASV 分別貢獻哪些 KO（用於 LEfSe、貢獻分析）
+* EC_metagenome_out/pred_metagenome_contrib.tsv.gz   → ASV 分別貢獻哪些 EC（用於 LEfSe、貢獻分析）
+* KO_metagenome_out/weighted_nsti.tsv.gz             → 每個樣本的加權 NSTI（QC 重要指標）
+* EC_metagenome_out/weighted_nsti.tsv.gz             → 每個樣本的加權 NSTI（QC 重要指標）
+    
+### PICRUSt2 STEP D - PATHWAY PREDICTION
+* KEGG_pathways_out/path_abun_unstrat.tsv.gz    → pathway abundance（每個樣本的 metabolic pathway 量）
+* KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz    → pathway + 描述資訊
+    
 ```
 DADA2 / Deblur  
     ↓
