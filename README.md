@@ -1214,13 +1214,12 @@ nohup metagenome_pipeline.py \
 Picrust2sc使用：
 ```
 nohup metagenome_pipeline.py \
--i phyloseq/filtered_host/dehost_otu_table.biom \
--m marker_predicted_and_nsti.tsv.gz \
--f KO_predicted.tsv.gz \
--o KO_metagenome_out \
---nsti marker_predicted_and_nsti.tsv.gz \
---threads 6 \
---strat_out &
+  --input phyloseq/filtered_host/dehost_otu_table.biom \
+  --marker marker_predicted_and_nsti.tsv.gz \
+  --function KO_predicted.tsv.gz \
+  --out_dir KO_metagenome_out \
+  --max_nsti 2.0 \
+  --strat_out &
 ```
 </details><br>
 <details>
@@ -1239,13 +1238,12 @@ nohup metagenome_pipeline.py \
 Picrust2sc使用：
 ```
 nohup metagenome_pipeline.py \
--i phyloseq/feature-table.biom \
--m marker_predicted_and_nsti.tsv.gz \
--f KO_predicted.tsv.gz \
--o KO_metagenome_out \
---nsti marker_predicted_and_nsti.tsv.gz \
---threads 6 \
---strat_out &
+  --input phyloseq/feature-table.biom \
+  --marker marker_predicted_and_nsti.tsv.gz \
+  --function KO_predicted.tsv.gz \
+  --out_dir KO_metagenome_out \
+  --max_nsti 2.0 \
+  --strat_out &
 ```
 </details><br>
 
@@ -1271,13 +1269,12 @@ nohup metagenome_pipeline.py \
 Picrust2sc使用：
 ```
 nohup metagenome_pipeline.py \
--i phyloseq/filtered_host/dehost_otu_table.biom \
--m marker_predicted_and_nsti.tsv.gz \
--f EC_predicted.tsv.gz \
--o EC_metagenome_out \
---nsti marker_predicted_and_nsti.tsv.gz \
---threads 6 \
---strat_out &
+  --input phyloseq/filtered_host/dehost_otu_table.biom \
+  --marker marker_predicted_and_nsti.tsv.gz \
+  --function EC_predicted.tsv.gz \
+  --out_dir EC_metagenome_out \
+  --max_nsti 2.0 \
+  --strat_out &
 ```
 </details><br>
 <details>
@@ -1296,13 +1293,12 @@ nohup metagenome_pipeline.py \
 Picrust2sc使用：
 ```
 nohup metagenome_pipeline.py \
--i phyloseq/feature-table.biom \
--m marker_predicted_and_nsti.tsv.gz \
--f EC_predicted.tsv.gz \
--o EC_metagenome_out \
---nsti marker_predicted_and_nsti.tsv.gz \
---threads 6 \
---strat_out &
+  --input phyloseq/feature-table.biom \
+  --marker marker_predicted_and_nsti.tsv.gz \
+  --function EC_predicted.tsv.gz \
+  --out_dir EC_metagenome_out \
+  --max_nsti 2.0 \
+  --strat_out &
 ```
 </details><br>
 
