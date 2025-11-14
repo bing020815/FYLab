@@ -1,6 +1,7 @@
 # FYLab 
-* 20251008 updated
+* 20251114 updated
 ```
+  + 新增 Picrust2sc 環境預測路徑 [20251114]
   + 新增序列模型資料庫: Greengenes2, Greengenes, SILVA [20251008]
   + Naive Bayesian 模型採用 V3-V4 段提升預測精準度 [20250728]
   + Naive Bayesian V3 段模型 [20251008]
