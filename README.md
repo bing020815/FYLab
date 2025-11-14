@@ -1163,6 +1163,8 @@ nohup place_seqs.py \
 * 0.05 <= Weighted NSTI < 0.10: Acceptable - 預測可信度良好，可用於功能路徑分析
 * 0.10 <= Weighted NSTI < 0.15: Borderline - 部分 ASV 缺乏近親基因組，需謹慎解讀
 * Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，reference genomoes 涵蓋面不夠全面，需使用 PICRUSt2-SC
+
+預測 ASV 所對應的 marker gene（如 16S 或特定 HMM marker）、NSTI 
 ```
 nohup hsp.py \
 -i 16S \
@@ -1171,7 +1173,8 @@ nohup hsp.py \
 -p 2 \
 -n &
 ```
-KO
+
+預測每個 ASV 可能擁有的 KO（KEGG Orthologs）功能基因
 ```
 nohup hsp.py \
 -i KO \
@@ -1179,7 +1182,8 @@ nohup hsp.py \
 -o KO_predicted.tsv.gz \
 -p 2 &
 ```
-EC
+
+預測每個 ASV 可能擁有的 EC（Enzyme Commission）代謝酵素
 ```
 nohup hsp.py \
 -i EC \
@@ -1384,6 +1388,87 @@ DADA2 / Deblur 處理原始 FASTQ 檔案
        └──→ rep_seqs.qza ──→ classify-sklearn → taxonomy.qza
 ```
 
+# QIIME2
+rep_seqs.qza           → 代表性序列（每條 ASV 的 DNA）
+otu_table.qza          → ASV abundance table（數量）
+taxonomy.qza           → 分類資訊（非 PICRUSt2 用）
+
+# 手動匯出
+dna-sequences.fasta    → rep_seqs.qza 匯出，給 PICRUSt2（place_seqs）
+dehost_otu_table.biom  → otu_table.qza 匯出，PICRUSt2 的 abundance table input
+
+# PICRUSt2 STEP A - SEQUENCE PLACEMENT
+out.tre                → ASV placement tree（ASV 放到 reference tree）
+
+# PICRUSt2 STEP B - HSP（Hidden State Prediction）
+marker_predicted.tsv.gz            → 每條 ASV 預測的 marker genes（功能基因）
+marker_predicted_and_nsti.tsv.gz   → 上面＋每條 ASV 的 NSTI（序列距離指標）
+KO_predicted.tsv.gz                → 每條 ASV 的 KO abundance（功能基因代碼）
+EC_predicted.tsv.gz                → 每條 ASV 的 EC abundance（酵素編碼）
+
+# PICRUSt2 STEP C - FUNCTION PREDICTION PER SAMPLE
+KO_metagenome_out/pred_metagenome_unstrat.tsv.gz   
+EC_metagenome_out/pred_metagenome_unstrat.tsv.gz   
+    → 各樣本的 KO/EC 總量（整合 ASV × abundance）
+
+KO_metagenome_out/pred_metagenome_contrib.tsv.gz   
+EC_metagenome_out/pred_metagenome_contrib.tsv.gz   
+    → ASV 分別貢獻哪些 KO/EC（用於 LEfSe、貢獻分析）
+
+KO_metagenome_out/weighted_nsti.tsv.gz             
+EC_metagenome_out/weighted_nsti.tsv.gz             
+    → 每個樣本的加權 NSTI（QC 重要指標）
+
+# PICRUSt2 STEP D - PATHWAY PREDICTION
+KEGG_pathways_out/path_abun_unstrat.tsv.gz
+    → pathway abundance（每個樣本的 metabolic pathway 量）
+
+KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz
+    → pathway + 描述資訊
+```
+DADA2 / Deblur  
+    ↓
+rep_seqs.qza  → (export) → dna-sequences.fasta → place_seqs.py → out.tre
+    ↓
+otu_table.qza → (export) → dehost_otu_table.biom
+    ↓
+taxonomy.qza（僅用於分類顯示，不參與功能預測）
+
+         ┌─────────────────────────────────────────────────────┐
+         │                  PICRUSt2 Pipeline                  │
+         └─────────────────────────────────────────────────────┘
+
+【Step A — Sequence placement】
+dna-sequences.fasta + pro_ref.tre  
+     → place_seqs.py  
+     → out.tre（ASV placement tree）
+
+【Step B — Hidden-state prediction (HSP)】
+out.tre + dna-sequences.fasta  
+     → hsp.py  
+     → marker_predicted.tsv.gz（marker 基因）
+     → marker_predicted_and_nsti.tsv.gz（含 ASV NSTI）
+     → KO_predicted.tsv.gz（ASV × KO）
+     → EC_predicted.tsv.gz（ASV × EC）
+
+【Step C — Metagenome prediction（樣本層級）】
+dehost_otu_table.biom + KO_predicted.tsv.gz  
+     → metagenome_pipeline.py  
+     → KO_metagenome_out/pred_metagenome_unstrat.tsv.gz（每樣本 KO abundance）
+     → KO_metagenome_out/weighted_nsti.tsv.gz（每樣本 weighted NSTI）
+
+dehost_otu_table.biom + EC_predicted.tsv.gz  
+     → EC_metagenome_out/pred_metagenome_unstrat.tsv.gz（每樣本 EC abundance）
+
+【Step D — Pathway prediction】
+KO_metagenome_out/pred_metagenome_unstrat.tsv.gz  
+     → pathway_pipeline.py  
+     → KEGG_pathways_out/path_abun_unstrat.tsv.gz（pathway abundance）
+     → add_descriptions.py
+     → 全 pathway 描述
+```
+
+
 # raw_data structure  [optional]
 ```
  . 
@@ -1409,27 +1494,30 @@ DADA2 / Deblur 處理原始 FASTQ 檔案
 │                              └── PopulationTable_reads.csv
 │             └── Qiime2 
 │                    └── *Qiime_ver
-│                            └── *SampleTable
-│                            └── TabularTable
-│                                    └── microbes_tabular_level_type_Qiimer_ver.csv
-│                                    └── pathway_tabular__Qiimer_ver.csv
-│                                    └── enzyme_tabular__Qiimer_ver.csv
-│                            └── PopulationTable
-│                                    └── PopulationTable_abundance.csv
-│                                    └── PopulationTable_reads.csv  
-│                                    └── PopulationTable_pathway.csv
-│                                    └── PopulationTable_enzyme.csv
-│                            └── EC_metagenome_out
-│                                    └── pred_metagenome_unstrat_descrip.tsv.gz
-│                            └── KEGG_pathways_out
-│                                    └── path_abun_unstrat_descrip.tsv.gz
-│                            └── KO_metagenome_out
-│                            └── raw
-│                                    └── otu_table.tsv
-│                                    └── taxonomy.tsv
-│                                    └── dehost_otu_table.tsv
-│                                    └── dehost_taxonomy.tsv
-│                                    └── dna-sequences.fasta
-│                                    └── denoise_settings.txt
+│                            └── ReferenceDB_ver
+│                                    └── *SampleTable
+│                                            └── sampleID.csv [in taxonomy summary format]
+│                                    └── TabularTable
+│                                            └── microbes_tabular_level_type_Qiimer_ver.csv
+│                                            └── pathway_tabular.csv
+│                                            └── enzyme_tabular.csv
+│                                    └── PopulationTable
+│                                            └── PopulationTable_abundance.csv
+│                                            └── PopulationTable_reads.csv  
+│                                            └── PopulationTable_pathway.csv
+│                                            └── PopulationTable_enzyme.csv
+│                                    └── EC_metagenome_out
+│                                            └── pred_metagenome_unstrat_descrip.tsv.gz
+│                                    └── KO_metagenome_out
+│                                            └── pred_metagenome_unstrat_descrip.tsv.gz
+│                                    └── KEGG_pathways_out
+│                                            └── path_abun_unstrat_descrip.tsv.gz
+│                                    └── raw
+│                                            └── otu_table.tsv
+│                                            └── taxonomy.tsv
+│                                            └── dehost_otu_table.tsv
+│                                            └── dehost_taxonomy.tsv
+│                                            └── dna-sequences.fasta
+│                                            └── denoise_settings.txt
 └── 商業案-廠商A 
 ```
