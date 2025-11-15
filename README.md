@@ -1159,11 +1159,7 @@ nohup place_seqs.py \
 </details><br>
 
 ## 2.Hidden-state prediction
-可產生計算好的NSTI資料表，作為路徑預測的QC
-* Weighted NSTI < 0.05: Excellent - 預測非常可靠，人類腸道常見
-* 0.05 <= Weighted NSTI < 0.10: Acceptable - 預測可信度良好，可用於功能路徑分析
-* 0.10 <= Weighted NSTI < 0.15: Borderline - 部分 ASV 缺乏近親基因組，需謹慎解讀
-* Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，reference genomoes 涵蓋面不夠全面，需使用 PICRUSt2-SC
+* 可產生計算好的NSTI資料表，作為路徑預測的QC
 
 預測 ASV 所對應的 marker gene（如 16S 或特定 HMM marker）、NSTI 
 ```
@@ -1313,6 +1309,18 @@ nohup metagenome_pipeline.py \
   --strat_out &
 ```
 </details><br>
+
+## 3.5 Picrust QC
+### Weighted NSTI
+* Weighted NSTI < 0.05: Excellent - 預測非常可靠，人類腸道常見
+* 0.05 <= Weighted NSTI < 0.10: Acceptable - 預測可信度良好，可用於功能路徑分析
+* 0.10 <= Weighted NSTI < 0.15: Borderline - 部分 ASV 缺乏近親基因組，需謹慎解讀
+* Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，reference genomoes 涵蓋面不夠全面，需使用 PICRUSt2-SC
+
+```
+zcat marker_predicted_and_nsti.tsv.gz \
+| awk 'NR>1{num += $2*$3; den += $2} END{print num/den}'
+```
 
 
 ## 4.KEGG pathway
