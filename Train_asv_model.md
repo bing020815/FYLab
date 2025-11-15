@@ -321,6 +321,46 @@ qiime feature-classifier classify-consensus-vsearch \
   --verbose
 ```
 
+# SILVA Dada2 Zendo Database
+[Silva Dada2 Zendo 138.2](https://zenodo.org/records/14169026)
+
+## Naïve Bayesian: 
+### step 1. 匯入 99% OTU 的參考序列 fasta 為 .qza; 用於訓練nb模型參考使用
+```
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path SILVA/2023.2/silva_dada2_zenodo_138.2/dna-sequences.fasta \
+  --output-path SILVA/silva_dada2_zenodo_138.2_RefSeq.qza
+```
+
+### step 1-1.（可選）裁切參考序列為 V3–V4 區段（341F–805R）
+--p-trunc-len 可選，加上可避免過長尾端造成模型過擬合
+```
+qiime feature-classifier extract-reads \
+  --i-sequences SILVA/silva_dada2_zenodo_138.2_RefSeq.qza \
+  --p-f-primer CCTACGGGNGGCWGCAG \
+  --p-r-primer GACTACHVGGGTATCTAATCC \
+  --o-reads SILVA/silva_dada2_zenodo_138.2_RefSeq_341-805.qza
+```
+
+### step 2. 匯入 taxonomy 為 .qza
+```
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-path SILVA/2023.2/silva_dada2_zenodo_138.2/data/taxonomy.tsv \
+  --input-format HeaderlessTSVTaxonomyFormat \
+  --output-path SILVA/silva_dada2_zenodo_138.2_Taxonomy.qza
+```
+
+### step 3. 訓練V3V4 Naive Bayes 模型
+```
+nohup qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads SILVA/silva_dada2_zenodo_138.2_RefSeq_341-805.qza \
+  --i-reference-taxonomy SILVA/silva_dada2_zenodo_138.2_Taxonomy.qza \
+  --o-classifier silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza &
+```
+
+
 ### 關鍵模型、參考檔案路徑
 ```
 /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \
