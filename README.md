@@ -1,6 +1,7 @@
 # FYLab 
-* 20251114 updated
+* 20251115 updated
 ```
+  + 新增序列模型資料庫: SILVA Dada2 Zenodo [20251115]
   + 新增 Picrust2sc 環境預測路徑 [20251114]
   + 新增序列模型資料庫: Greengenes2, Greengenes, SILVA [20251008]
   + Naive Bayesian 模型採用 V3-V4 段提升預測精準度 [20250728]
@@ -566,6 +567,24 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 ```
 
 </details><br>
+
+<details>
+<summary><strong>SILVA DaDa2 Zenodo 138.2 16S [20251115 新增]</strong></summary>
+
+由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 資料庫 138.2 版本建立 (約42萬條序列)
+
+[SILVA DaDa2 Zenodo 138.2 Cite 參考資訊](https://zenodo.org/records/14169026)
+  
+### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
+```
+nohup qiime feature-classifier classify-sklearn \
+--i-classifier /home/adprc/classifier/SILVA/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy.qza \
+--p-n-jobs 2 > nohup.out 2>&1 &
+```
+</details><br>
+
 
 <details>
 <summary><strong>Greengenes 13_8 16S full-length</strong></summary>
