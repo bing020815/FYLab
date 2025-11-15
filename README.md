@@ -1201,9 +1201,8 @@ nohup hsp.py \
   + EC_metagenome_out/seqtab_norm.tsv.gz: metagenome_pipeline 做的 normalization
 
 <details>
-<summary><strong>Dehost使後用語法</strong></summary>
+<summary><strong>Picrust2 Dehost使後用語法</strong></summary>
 
-Picrust2使用：
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/filtered_host/dehost_otu_table.biom \
@@ -1212,7 +1211,24 @@ nohup metagenome_pipeline.py \
 -o KO_metagenome_out \
 --strat_out &
 ```
-Picrust2sc使用：
+</details><br>
+
+<details>
+<summary><strong>Picrust2 未Dehost使用語法</strong></summary>
+
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/feature-table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f KO_predicted.tsv.gz \
+-o KO_metagenome_out \
+--strat_out &
+```
+</details><br>
+
+<details>
+<summary><strong>Picrust2sc Dehost使後用語法</strong></summary>
+
 ```
 nohup metagenome_pipeline.py \
   --input phyloseq/filtered_host/dehost_otu_table.biom \
@@ -1223,20 +1239,10 @@ nohup metagenome_pipeline.py \
   --strat_out &
 ```
 </details><br>
+
 <details>
-<summary><strong>未Dehost使用語法</strong></summary>
+<summary><strong>Picrust2sc 未Dehost使用語法</strong></summary>
 
-Picrust2使用：
-```
-nohup metagenome_pipeline.py \
--i phyloseq/feature-table.biom \
--m marker_predicted_and_nsti.tsv.gz \
--f KO_predicted.tsv.gz \
--o KO_metagenome_out \
---strat_out &
-```
-
-Picrust2sc使用：
 ```
 nohup metagenome_pipeline.py \
   --input phyloseq/feature-table.biom \
@@ -1255,9 +1261,8 @@ nohup metagenome_pipeline.py \
   + EC_metagenome_out/seqtab_norm.tsv.gz: metagenome_pipeline 做的 normalization
   
 <details>
-<summary><strong>Dehost使後用語法</strong></summary>
+<summary><strong>Picrust2 Dehost使後用語法</strong></summary>
 
-Picrust2使用：
 ```
 nohup metagenome_pipeline.py \
 -i phyloseq/filtered_host/dehost_otu_table.biom \
@@ -1266,8 +1271,24 @@ nohup metagenome_pipeline.py \
 -o EC_metagenome_out \
 --strat_out &
 ```
+</details><br>
 
-Picrust2sc使用：
+<details>
+<summary><strong>Picrust2 未Dehost使用語法</strong></summary>
+
+```
+nohup metagenome_pipeline.py \
+-i phyloseq/feature-table.biom \
+-m marker_predicted_and_nsti.tsv.gz \
+-f EC_predicted.tsv.gz \
+-o EC_metagenome_out \
+--strat_out &
+```
+</details><br>
+
+<details>
+<summary><strong>Picrust2sc Dehost使後用語法</strong></summary>
+
 ```
 nohup metagenome_pipeline.py \
   --input phyloseq/filtered_host/dehost_otu_table.biom \
@@ -1278,20 +1299,10 @@ nohup metagenome_pipeline.py \
   --strat_out &
 ```
 </details><br>
+
 <details>
-<summary><strong>未Dehost使用語法</strong></summary>
+<summary><strong>Picrust2sc 未Dehost使用語法</strong></summary>
 
-Picrust2使用：
-```
-nohup metagenome_pipeline.py \
--i phyloseq/feature-table.biom \
--m marker_predicted_and_nsti.tsv.gz \
--f EC_predicted.tsv.gz \
--o EC_metagenome_out \
---strat_out &
-```
-
-Picrust2sc使用：
 ```
 nohup metagenome_pipeline.py \
   --input phyloseq/feature-table.biom \
@@ -1366,12 +1377,28 @@ nohup add_descriptions.py \
 ```
 
 ## 6.KO: Add descriptions
+
+<details>
+<summary><strong>Picrust2使用語法</strong></summary>
+
 ```
 nohup add_descriptions.py \
   -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
   -m KO \
   -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz &
 ```
+</details><br>
+
+<details>
+<summary><strong>Picrust2sc使用語法</strong></summary>
+
+```
+nohup add_descriptions.py \
+  -i KO_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz \
+  -m KO \
+  -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz &
+```
+</details><br>
 
 
 <p align="center"><a href="#fylab">Top</a></p>
