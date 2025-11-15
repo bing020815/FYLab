@@ -1109,7 +1109,7 @@ conda deactivate
 
 KEGG 功能: 
 1. 建構參考樹(Reference Tree)
-  * 內建 backbone Tree 來自 Greengenes 13_5（約 20,000 條 16S 序列）
+  * 內建 backbone Tree 來自 Greengenes 13_5（約 20,000 條序列）
   * 每個 node（菌株）在 IMG(Integrated Microbial Genomes) 資料庫中有功能註解
 2. 樣本序列放置 (EPA-NG placement)
   * 將 dna-sequences.fasta（DADA2 輸出之代表序列）放到上述 reference tree 上
@@ -1310,18 +1310,35 @@ nohup metagenome_pipeline.py \
 ```
 </details><br>
 
-## 3.5 Picrust QC
+## 3.5 Picrust QC [Optional]
 ### Weighted NSTI
+可在Terminal執行、downstream分析執行
 * Weighted NSTI < 0.05: Excellent - 預測非常可靠，人類腸道常見
 * 0.05 <= Weighted NSTI < 0.10: Acceptable - 預測可信度良好，可用於功能路徑分析
 * 0.10 <= Weighted NSTI < 0.15: Borderline - 部分 ASV 缺乏近親基因組，需謹慎解讀
 * Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，reference genomoes 涵蓋面不夠全面，需使用 PICRUSt2-SC
 
+Step 1：把 abundance 表整理成「ASV、總 abundance」兩欄
 ```
-zcat marker_predicted_and_nsti.tsv.gz \
-| awk 'NR>1{num += $2*$3; den += $2} END{print num/den}'
+awk -F'\t' 'NR==1 {next}
+{
+    sum = 0;
+    for (i=2; i<=NF; i++) sum += $i;
+    print $1 "\t" sum
+}' otu_table.tsv \
+> total_abundance.tsv
 ```
 
+Step 2：把 NSTI 解壓縮、合併abundance、計算weighted NSTI
+```
+zcat marker_predicted_and_nsti.tsv.gz > nsti.tsv
+
+awk -F'\t' 'NR==1 {next} {print $1 "\t" $3}' nsti.tsv > nsti_only.tsv
+
+join -t $'\t' <(sort total_abundance.tsv) <(sort nsti_only.tsv) > nsti_merged.tsv
+
+awk -F'\t' '{num += $2*$3; den += $2} END {print num/den}' nsti_merged.tsv
+```
 
 ## 4.KEGG pathway
 ### KEGG pathway - overview
