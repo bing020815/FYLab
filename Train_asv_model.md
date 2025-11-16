@@ -298,7 +298,7 @@ qiime tools import \
 nohup qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads SILVA/silva_138_99_RefSeq_341-805.qza \
   --i-reference-taxonomy SILVA/silva_138_99_Taxonomy.qza \
-  --o-classifier silva_138_99_NB_classifier_V3V4.qza &
+  --o-classifier SILVA/silva_138_99_NB_classifier_V3V4.qza &
 ```
 
 ### step 3-1. (可選）訓練V3 nb模型，並且參考使用reads序列[可用已裁切參考序列]、taxanomy
@@ -306,7 +306,7 @@ nohup qiime feature-classifier fit-classifier-naive-bayes \
 nohup qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads SILVA/silva_138_99_RefSeq_341-534_len200.qza \
   --i-reference-taxonomy SILVA/silva_138_99_Taxonomy.qza \
-  --o-classifier silva_138_99_NB_classifier_V3_len200.qza &
+  --o-classifier SILVA/silva_138_99_NB_classifier_V3_len200.qza &
 ```
 
 ## vsearch Method:
@@ -357,7 +357,7 @@ qiime tools import \
 nohup qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads SILVA/silva_dada2_zenodo_138.2_RefSeq_341-805.qza \
   --i-reference-taxonomy SILVA/silva_dada2_zenodo_138.2_Taxonomy.qza \
-  --o-classifier silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza &
+  --o-classifier SILVA/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza &
 ```
 
 
