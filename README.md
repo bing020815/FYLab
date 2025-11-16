@@ -376,7 +376,8 @@ biom convert \
 <summary><strong>Greengenes 13_8 16S [20250728 新增]</strong></summary>
 
 GreenGenes 16S rRNA gene databas:
-  + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多 (約 100,000 條)
+  + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多
+    * ASV 數量約40萬筆，Taxanomy 總數維持約20.3萬筆
   + Greengenes2 從 2022 年起開始重新建構，採用全基因體（WoL）
 
 [Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
@@ -426,6 +427,7 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 
 Greengenes2 16S rRNA gene databas:
   + Greengenes2 從 2022 年起開始重新建構，以backbone技術，採用全基因體（WoL）。
+  + ASV 數量約66萬筆，Taxanomy 總數維持約33.1萬筆
 
 [Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
@@ -475,7 +477,7 @@ Greengenes2 16S rRNA gene databas:
   + Greengenes2 從 2024.09 年再次更新：
     * 遵照[LTP](https://imedea.uib-csic.es/mmg/ltp/)在 2023.08年發布的命名準則修正， e.g., Firmicutes -> Bacillota
     * 線粒體 (mitochondria) 葉綠體 (chloroplast) 的序列 在 Naive Bayes 分類器和 backbone taxonomy 中被明確納入
-  + 擴充 ASV 數量 (多一百萬左右的 ASV)，擴充 5000 多筆 Taxanomy(總數維持約33萬筆)
+  + 擴充 ASV 數量 (多一萬左右的 ASV，總數約67萬筆)，擴充 5000 多筆 Taxanomy(總數約33.7萬筆)
   + 維持 backbone 樹結構
 
 [Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
@@ -525,6 +527,7 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 <summary><strong>SILVA 138 16S [20250728 新增]</strong></summary>
 
 SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 條)
+* ASV 數量約87.3萬筆，Taxanomy 總數維持約43.6萬筆
 
 [Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
   
@@ -572,6 +575,7 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 <summary><strong>SILVA DaDa2 Zenodo 138.2 16S [20251115 新增]</strong></summary>
 
 由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 資料庫 138.2 版本建立 (約42萬條序列)
+* ASV 數量約90.4萬筆，Taxanomy 總數維持約45.2萬筆
 
 [SILVA DaDa2 Zenodo 138.2 Cite 參考資訊](https://zenodo.org/records/14169026)
   
@@ -1414,6 +1418,7 @@ nohup add_descriptions.py \
 </details><br>
 
 ## 5.EC: Add descriptions
+
 ```
 nohup add_descriptions.py \
   -i EC_metagenome_out/pred_metagenome_unstrat.tsv.gz \
