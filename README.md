@@ -1343,15 +1343,34 @@ nohup metagenome_pipeline.py \
 * Weighted NSTI > 0.15: Low reliability - 預測可信度艱難，reference genomoes 涵蓋面不夠全面，需使用 PICRUSt2-SC
 
 Step 1：把 abundance 表整理成「ASV、總 abundance」兩欄
+
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
 ```
 awk -F'\t' 'NR==1 {next}
 {
     sum = 0;
     for (i=2; i<=NF; i++) sum += $i;
     print $1 "\t" sum
-}' otu_table.tsv \
+}' phyloseq/filtered_host/dehost_taxonomy.tsv \
 > total_abundance.tsv
 ```
+</details><br>
+
+<details>
+<summary><strong>未Dehost使用語法</strong></summary>
+
+```
+awk -F'\t' 'NR==1 {next}
+{
+    sum = 0;
+    for (i=2; i<=NF; i++) sum += $i;
+    print $1 "\t" sum
+}' phyloseq/taxonomy.tsv \
+> total_abundance.tsv
+```
+</details><br>
 
 Step 2：把 NSTI 解壓縮、合併abundance、計算weighted NSTI
 ```
