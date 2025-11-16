@@ -347,7 +347,7 @@ qiime feature-classifier extract-reads \
 ```
 qiime tools import \
   --type 'FeatureData[Taxonomy]' \
-  --input-path SILVA/2023.2/silva_dada2_zenodo_138.2/data/taxonomy.tsv \
+  --input-path SILVA/2023.2/silva_dada2_zenodo_138.2/taxonomy.tsv \
   --input-format HeaderlessTSVTaxonomyFormat \
   --output-path SILVA/silva_dada2_zenodo_138.2_Taxonomy.qza
 ```
