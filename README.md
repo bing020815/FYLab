@@ -1144,6 +1144,8 @@ KEGG 功能:
   * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出 pred_metagenome_unstrat.tsv(ASV 層級的功能表); path_abun_unstrat.tsv(樣本層級的 KEGG pathway abundance)
 
 ## 啟動PICRUSt2 package
+則一環境啟動即可。
+
 [PICRUSt2 2.5.2](https://github.com/picrust/picrust2/wiki/PICRUSt2-Tutorial-(v2.5.2)) --> ~20,000 筆序列建製 reference database
 ```
 conda activate picrust2
