@@ -26,13 +26,14 @@ Mac: Terminal
 
 
 # Table of Content:
-1. [FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
-2. [QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
-3. [QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
-4. [QIIME2 - Analysis: 導出分類特徵表](#Analysis-分類導出特征表)
-5. [Dehost - 排除host基因](#Dehost-排除host基因)
-6. [畫圖](#畫圖)
-7. [PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
+2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
+3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
+4. [|Post-upstream| QIIME2 - Analysis: 導出分類特徵表](#Analysis-分類導出特征表)
+5. [|Post-upstream| Dehost - 排除host基因](#Dehost-排除host基因)
+6. [|Post-upstream| 畫圖](#畫圖)
+7. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+9. [|Downstream taxonomy analysis| 下游分析處理]()
 
 
 # FastQ files Preprocess 前處理Primer
