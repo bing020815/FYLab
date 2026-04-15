@@ -43,7 +43,7 @@ FastQ現存現象:
 * 解決方法：統一所有FasqQ長度
   + 有prime的序列刪掉要去除掉primer
   + 沒primer的序列則保留不動，不切序列前段
-![Primer](img/primer-idx.png)
+![Primer](../img/primer-idx.png)
 
 ## 啟用cutadapt環境
 ```
@@ -85,7 +85,7 @@ mv -f trimmed_fastq/*.fastq.gz .
 <p align="center"><a href="#fylab">Top</a></p>
 
 # QIIME2 - Preparation 分析前準備
-![QIIME2](img/QIIME2_flow.png)
+![QIIME2](../img/QIIME2_flow.png)
 ## 對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
 ```
 find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -exec realpath {} \; > file_path.txt
@@ -187,7 +187,7 @@ QIIME 2 論壇（佐證 truncLen 與覆蓋區）:
 3) 「合併前需確保序列涵蓋同一基因區（same amplicon region）」
 4) 「嵌合體去除 (chimera removal) 與分類學指派 (classification) 可於各 run 或整體階段執行」
 
-<img src="img/qiime2_accross_projects.png" alt="Qiime2 accross projects" width="500">
+<img src="../img/qiime2_accross_projects.png" alt="Qiime2 accross projects" width="500">
 
 ## 進入qiime2環境
 ```
@@ -1130,7 +1130,7 @@ conda deactivate
 <p align="center"><a href="#fylab">Top</a></p>
 
 # PICRUSt2 - Metabolism Pathway
-![PICRUSt2](img/picrust2_flow.png)
+![PICRUSt2](../img/picrust2_flow.png)
 
 KEGG 功能: 
 1. 建構參考樹(Reference Tree)
