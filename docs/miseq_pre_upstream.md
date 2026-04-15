@@ -1,16 +1,5 @@
-* 20251115 updated
-```
-  + 新增序列模型資料庫: SILVA Dada2 Zenodo [20251115]
-  + 新增 Picrust2sc 環境預測路徑 [20251114]
-  + 新增序列模型資料庫: Greengenes2, Greengenes, SILVA [20251008]
-  + Naive Bayesian 模型採用 V3-V4 段提升預測精準度 [20250728]
-  + Naive Bayesian V3 段模型 [20251008]
-  + Naive Bayesian V4 段模型 [20251008]
-  + 新增調整denoise用的fastq長度查詢工具 [20250829]
-  + 新增分流專案合併點 [20251008]
-```
-
 # Table of Content:
+此步驟流程只適用於Miseq短序列流程: V3, V4, V3-V4
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
