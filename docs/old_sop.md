@@ -327,7 +327,7 @@ rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際
   --i-data rep-seqs2_trimed.qza \
   --o-merged-data rep-seqs.qza
 ```
-[跳至倒出特徵表步驟](#Analysis-分類導出特征表)
+[跳至倒出特徵表步驟](#Analysis-導出特徵表前準備)
 
 </details>
 <p align="center"><a href="#fylab">Top</a></p>
