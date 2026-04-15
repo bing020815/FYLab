@@ -14,15 +14,15 @@
 * Window -> File WINSCP
 * Mac -> Filezilla
 
-主機名稱：140.127.97.45
+主機名稱：140.127.97.66
 使⽤者名稱：adprc
 
 ## Puty/terminal
 Windos: Putty
-  + IP: adprc@140.127.97.45
+  + IP: adprc@140.127.97.66
 
 Mac: Terminal
-  + run: ssh adprc@140.127.97.45
+  + run: ssh adprc@140.127.97.66
 
 
 # Table of Content:
