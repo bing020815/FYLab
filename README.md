@@ -48,7 +48,6 @@ NOTE:
 - rep-seqs.qza
 - metadata.tsv
 - otu_table.tsv
-- taxonomy.qza
 
 ### 資料庫預測代表序列
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
