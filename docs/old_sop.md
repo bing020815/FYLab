@@ -29,10 +29,11 @@ Mac: Terminal
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
-4. [|Post-upstream| QIIME2 - Analysis: 導出分類特徵表](#Analysis-分類導出特征表)
-5. [|Post-upstream| Dehost - 排除host基因](#Dehost-排除host基因)
-6. [|Post-upstream| 畫圖](#畫圖)
-7. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+4. [|Post-upstream| QIIME2 - Analysis: 導出特征表前準備](#Analysis-導出特征表前準備)
+5. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
+6. [|Post-upstream| Dehost - 排除host基因](#Dehost-排除host基因)
+7. [|Post-upstream| 畫圖](#畫圖)
+8. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 9. [|Downstream taxonomy analysis| 下游分析處理]()
 
 
@@ -331,7 +332,7 @@ rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際
 </details>
 <p align="center"><a href="#fylab">Top</a></p>
 
-# Analysis 分類導出特征表
+# Analysis 導出特徵表前準備
 ## 建立導出用的資料夾
 ```
 mkdir phyloseq
@@ -354,7 +355,7 @@ biom convert \
 --to-tsv
 ```
 
-## 模型分類
+# Analysis 模型分類導出特征表
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
 以及2022年，GreenGenes 16S rRNA gene database 更新改版的 Greengenes2 比對資料庫。
 
