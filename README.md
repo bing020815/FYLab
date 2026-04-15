@@ -27,8 +27,7 @@ Mac: Terminal
 
 
 # 序列前處理與導入
-## Pre-upstream
-請依資料來源選擇平台：
+Pre-upstream 步驟請依資料來源選擇平台：
 1. [|Pre-upstream| MiSeq / Illumina: 前處理與導入](./docs/miseq_pre_upstream.md)
 2. [|Pre-upstream| PacBio HiFi 16S: 前處理與導入](./docs/miseq_pre_upstream.md)
 
