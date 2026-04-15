@@ -1,6 +1,12 @@
 # FYLab 分析流程
 基因定序上游分析流程使用說明
 
+* 20260415 updated
+```
+  + 分流Pre-upstrean [20260415]
+```
+或是使用[舊流程觀看對照](./docs/old_sop.md)
+
 # Table of Content:
 0. [|Pre-upstream| 初始設定](#Preset)
 1. [|Pre-upstream| 序列前處理與導入](#序列前處理與導入)
