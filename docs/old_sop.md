@@ -29,7 +29,7 @@ Mac: Terminal
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
-4. [|Post-upstream| QIIME2 - Analysis: 導出特征表前準備](#Analysis-導出特征表前準備)
+4. [|Post-upstream| QIIME2 - Analysis: 導出特徵表前準備](#Analysis-導出特徵表前準備)
 5. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
 6. [|Post-upstream| Dehost - 排除host基因](#Dehost-排除host基因)
 7. [|Post-upstream| 畫圖](#畫圖)
