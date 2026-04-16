@@ -1,5 +1,5 @@
 # PacBio HiFi 16S pre-upstream SOP
-此文件用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
+用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
 
 
 # Table of Content:
@@ -163,7 +163,6 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
 預設 session 命名規則如下：
 `pacbio_<user>_<project>_<yyyymmdd_HHMMSS>`
 
-若未特別指定，腳本會自動依上述規則建立不重複的 session 名稱。  
 若需要自行命名，可使用 `TMUX_SESSION_NAME` 指定。
 
 
