@@ -89,27 +89,36 @@ extract_step_line() {
         return
     fi
 
-    local env_line
-    env_line="$(printf '%s\n' "${recent_text}" | grep 'Creating env using conda:' | tail -n 1 || true)"
-    if [ -n "${env_line}" ]; then
-        echo "${env_line}"
-        return
-    fi
+    # 從最新往回找，優先抓最有代表性的狀態
+    while IFS= read -r line; do
+        # 跳過空白行
+        if [ -z "$(printf '%s' "${line}" | tr -d '[:space:]')" ]; then
+            continue
+        fi
 
-    local process_line
-    process_line="$(printf '%s\n' "${recent_text}" | grep -o 'pb16S:[A-Za-z0-9_]\+' | tail -n 1 || true)"
-    if [ -n "${process_line}" ]; then
-        echo "${process_line}"
-        return
-    fi
+        # 1. 若最近有建立 conda 環境，優先顯示
+        if printf '%s\n' "${line}" | grep -q 'Creating env using conda:'; then
+            echo "${line}"
+            return
+        fi
 
-    local last_line
-    last_line="$(printf '%s\n' "${recent_text}" | sed '/^[[:space:]]*$/d' | tail -n 1)"
-    if [ -n "${last_line}" ]; then
-        echo "${last_line}"
-    else
-        echo "EMPTY_LOG"
-    fi
+        # 2. 若是 Nextflow workflow 節點狀態列，抓出 pb16S:xxxx
+        if printf '%s\n' "${line}" | grep -q 'pb16S:'; then
+            printf '%s\n' "${line}" | grep -Eo 'pb16S:[[:alnum:]_]+' | head -n 1
+            return
+        fi
+
+        # 3. 跳過泛用摘要行，避免誤判成 step
+        if printf '%s\n' "${line}" | grep -q '^Plus [0-9]\+ more processes waiting for tasks'; then
+            continue
+        fi
+
+        # 4. 其他非空白行，作為最後 fallback
+        echo "${line}"
+        return
+    done < <(printf '%s\n' "${recent_text}" | tac)
+
+    echo "EMPTY_LOG"
 }
 
 print_session_report_full() {
