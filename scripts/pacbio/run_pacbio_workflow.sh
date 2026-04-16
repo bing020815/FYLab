@@ -4,6 +4,7 @@ set -euo pipefail
 PROJECT_DIR="${1:-$(pwd)}"
 ENV_NAME="pacbio16s"
 WORKFLOW_DIR="${HOME}/tools/HiFi-16S-workflow"
+TIMEZONE="${TIMEZONE:-Asia/Taipei}"
 
 SAMPLES_TSV="${PROJECT_DIR}/samples.tsv"
 METADATA_TSV="${PROJECT_DIR}/metadata.tsv"
@@ -16,7 +17,7 @@ RESUME="${RESUME:-false}"
 EXTRA_ARGS="${EXTRA_ARGS:-}"
 RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
 
-DEFAULT_SESSION_NAME="pacbio_$(date +%Y%m%d_%H%M%S)"
+DEFAULT_SESSION_NAME="pacbio_$(TZ="${TIMEZONE}" date +%Y%m%d_%H%M%S)"
 TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-${DEFAULT_SESSION_NAME}}"
 
 STDOUT_LOG="${LOGS_DIR}/nextflow.stdout.log"
@@ -52,7 +53,7 @@ write_inner_script() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-START_TIME="\$(date '+%Y-%m-%d %H:%M:%S')"
+START_TIME="\$(TZ='${TIMEZONE}' date '+%Y-%m-%d %H:%M:%S')"
 START_EPOCH="\$(date +%s)"
 
 cat > "${STATUS_FILE}" <<EOSTATUS
@@ -67,6 +68,7 @@ session_name=${TMUX_SESSION_NAME}
 project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
+timezone=${TIMEZONE}
 EOSTATUS
 
 source "\$(conda info --base)/etc/profile.d/conda.sh"
@@ -87,7 +89,7 @@ nextflow run "${WORKFLOW_DIR}/main.nf" \\
 EXIT_CODE=\$?
 set -e
 
-END_TIME="\$(date '+%Y-%m-%d %H:%M:%S')"
+END_TIME="\$(TZ='${TIMEZONE}' date '+%Y-%m-%d %H:%M:%S')"
 END_EPOCH="\$(date +%s)"
 DURATION_SECONDS=\$((END_EPOCH - START_EPOCH))
 
@@ -109,6 +111,7 @@ session_name=${TMUX_SESSION_NAME}
 project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
+timezone=${TIMEZONE}
 EOSTATUS
 
 exit "\${EXIT_CODE}"
@@ -125,6 +128,7 @@ echo "[INFO] CPU         = ${CPU}"
 echo "[INFO] RESUME      = ${RESUME}"
 echo "[INFO] RUN_IN_TMUX = ${RUN_IN_TMUX}"
 echo "[INFO] EXTRA_ARGS  = ${EXTRA_ARGS}"
+echo "[INFO] TIMEZONE    = ${TIMEZONE}"
 echo "[INFO] STATUS_FILE = ${STATUS_FILE}"
 
 if [ "${RUN_IN_TMUX}" = "true" ]; then
