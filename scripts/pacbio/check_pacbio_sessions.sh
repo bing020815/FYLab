@@ -82,7 +82,7 @@ extract_active_cmd() {
         | grep "${project_dir}" \
         | grep -v grep \
         | awk '{print $2}' \
-        | grep -E 'seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|python|perl|awk|sed' \
+        | grep -E 'seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|R|python|perl|awk|sed|bash' \
         | sort -u \
         | paste -sd ',' - \
         | sed 's/,/, /g'
@@ -157,13 +157,6 @@ extract_current_task() {
         fi
     fi
 
-    local env_line
-    env_line="$(printf '%s\n' "${block}" | grep 'Creating env using conda:' | tail -n 1 || true)"
-    if [ -n "${env_line}" ]; then
-        echo "${env_line}"
-        return
-    fi
-
     echo "NA"
 }
 
@@ -215,19 +208,19 @@ print_session_report_full() {
     local stderr_log="${project_dir}/logs/nextflow.stderr.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local run_status start_time elapsed_time active_cmd env_building
-    local executor_block executor_name current_task pending_tasks
+    local run_status start_time elapsed_time active_cmd
+    local executor_block executor_name current_task pending_tasks env_building
 
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
     active_cmd="$(extract_active_cmd "${project_dir}")"
-    env_building="$(extract_env_building "${stdout_log}")"
 
     executor_block="$(extract_latest_executor_block "${stdout_log}")"
     executor_name="$(extract_executor_name "${executor_block}")"
     current_task="$(extract_current_task "${executor_block}")"
     pending_tasks="$(extract_pending_tasks "${executor_block}")"
+    env_building="$(extract_env_building "${stdout_log}")"
 
     if [ -z "${run_status}" ]; then
         run_status="UNKNOWN"
@@ -247,7 +240,7 @@ print_session_report_full() {
     echo "[INFO] CURRENT_TASK  : ${current_task}"
     echo "[INFO] ACTIVE_CMD    : ${active_cmd}"
     echo "[INFO] PENDING_TASKS : ${pending_tasks}"
-    if [ -n "${env_building}" ]; then
+    if [ "${current_task}" = "NA" ] && [ -n "${env_building}" ]; then
         echo "[INFO] ENV_BUILD     : ${env_building}"
     fi
     echo
