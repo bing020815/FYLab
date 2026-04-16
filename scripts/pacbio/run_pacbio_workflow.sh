@@ -16,9 +16,7 @@ RESUME="${RESUME:-false}"
 EXTRA_ARGS="${EXTRA_ARGS:-}"
 RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
 
-USER_NAME="${USER:-$(whoami)}"
-PROJECT_NAME="$(basename "${PROJECT_DIR}")"
-DEFAULT_SESSION_NAME="pacbio_${PROJECT_NAME}_$(date +%Y%m%d_%H%M%S)"
+DEFAULT_SESSION_NAME="pacbio_$(date +%Y%m%d_%H%M%S)"
 TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-${DEFAULT_SESSION_NAME}}"
 
 mkdir -p "${OUTDIR}" "${LOGS_DIR}" "${WORK_DIR}"
