@@ -49,17 +49,19 @@ nextflow run main.nf --download_db
 
 # 建立專案
 基本專案資料夾
-    •   raw_fastq/：原始 PacBio .fastq.gz
-    •   samples.tsv：官方 workflow 的樣本輸入清單
-    •   metadata.tsv：樣本分組與描述資料
-    •   pacbio_results/：官方 workflow 原始輸出自動輸出
-    •   logs/：Nextflow 執行紀錄自動產出
-    •   work/：Nextflow 中間資料夾自動產出
+
+* raw_fastq/：原始 PacBio .fastq.gz
+* samples.tsv：官方 workflow 的樣本輸入清單
+* metadata.tsv：樣本分組與描述資料
+* pacbio_results/：官方 workflow 
+* logs/：Nextflow 執行紀錄
+* work/：Nextflow 中間資料夾
+
 ```
 project_name/
 ├─ raw_fastq/        << 自行建立
 ├─ samples.tsv       << 系統產出
-├─ metadata.tsv      << 自行建立
+├─ metadata.tsv      << 系統產出
 ├─ pacbio_results/   << 系統產出
 ├─ logs/             << 系統產出
 └─ work/             << 系統產出
