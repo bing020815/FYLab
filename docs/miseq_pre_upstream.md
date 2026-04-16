@@ -76,7 +76,7 @@ find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -
 <details>
 <summary>(Optional) 確認file_path.txt檔案與處理資料</summary>
 
-(option)確認'file_path.txt'的資料紀錄是否存在
+確認'file_path.txt'的資料紀錄是否存在
 ```
 cat file_path.txt
 ```
