@@ -141,11 +141,11 @@ chmod +x run_pacbio_workflow.sh
 
 Step2. 啟動執行 workflow
 * `CPU` 可調整
-* 需要前景除錯資訊可改:`RUN_IN_TMUX=false`
+* 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
 * 需要補充官方 workflow 參數:
-    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim"`
-    + 改 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY"`
-    + filter條件: `EXTRA_ARGS="--filterQ 20 --min_len 1200 --max_len 1550 --max_ee 2"`
+    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./run_pacbio_workflow.sh .`
+    + 改 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./run_pacbio_workflow.sh .`
+    + filter條件: `EXTRA_ARGS="--filterQ 20 --min_len 1200 --max_len 1550 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
