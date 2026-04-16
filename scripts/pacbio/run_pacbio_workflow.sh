@@ -2,9 +2,14 @@
 set -euo pipefail
 
 PROJECT_DIR="${1:-$(pwd)}"
+PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
+
 ENV_NAME="pacbio16s"
 WORKFLOW_DIR="${HOME}/tools/HiFi-16S-workflow"
 TIMEZONE="${TIMEZONE:-Asia/Taipei}"
+
+NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR:-/home/adprc/nf_conda}"
+export NXF_CONDA_CACHEDIR
 
 SAMPLES_TSV="${PROJECT_DIR}/samples.tsv"
 METADATA_TSV="${PROJECT_DIR}/metadata.tsv"
@@ -69,10 +74,12 @@ project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
 timezone=${TIMEZONE}
+nxf_conda_cachedir=${NXF_CONDA_CACHEDIR}
 EOSTATUS
 
 source "\$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${ENV_NAME}"
+export NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR}"
 
 set +e
 nextflow run "${WORKFLOW_DIR}/main.nf" \\
@@ -112,6 +119,7 @@ project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
 timezone=${TIMEZONE}
+nxf_conda_cachedir=${NXF_CONDA_CACHEDIR}
 EOSTATUS
 
 exit "\${EXIT_CODE}"
@@ -122,14 +130,16 @@ EOF
 
 write_inner_script
 
-echo "[INFO] PROJECT_DIR = ${PROJECT_DIR}"
-echo "[INFO] OUTDIR      = ${OUTDIR}"
-echo "[INFO] CPU         = ${CPU}"
-echo "[INFO] RESUME      = ${RESUME}"
-echo "[INFO] RUN_IN_TMUX = ${RUN_IN_TMUX}"
-echo "[INFO] EXTRA_ARGS  = ${EXTRA_ARGS}"
-echo "[INFO] TIMEZONE    = ${TIMEZONE}"
-echo "[INFO] STATUS_FILE = ${STATUS_FILE}"
+echo "[INFO] PROJECT_DIR        = ${PROJECT_DIR}"
+echo "[INFO] WORKFLOW_DIR       = ${WORKFLOW_DIR}"
+echo "[INFO] OUTDIR             = ${OUTDIR}"
+echo "[INFO] CPU                = ${CPU}"
+echo "[INFO] RESUME             = ${RESUME}"
+echo "[INFO] RUN_IN_TMUX        = ${RUN_IN_TMUX}"
+echo "[INFO] EXTRA_ARGS         = ${EXTRA_ARGS}"
+echo "[INFO] TIMEZONE           = ${TIMEZONE}"
+echo "[INFO] NXF_CONDA_CACHEDIR = ${NXF_CONDA_CACHEDIR}"
+echo "[INFO] STATUS_FILE        = ${STATUS_FILE}"
 
 if [ "${RUN_IN_TMUX}" = "true" ]; then
     if ! command -v tmux >/dev/null 2>&1; then
