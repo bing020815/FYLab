@@ -11,7 +11,9 @@
 6. [|Pre-upstream| Taxonomy 檔案資料整理](#Taxonomy-檔案資料整理)
 7. [|Pre-upstream| 接續模型分類流程](#接續模型分類流程)
 
-1. 建立 pacbio16s conda 環境
+
+# 建立環境
+建立 pacbio16s conda 環境
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/setup_pacbio_env.sh
 chmod +x setup_pacbio_env.sh
@@ -22,7 +24,8 @@ chmod +x setup_pacbio_env.sh
 conda activate pacbio16s
 ```
 
-2. 下載 PacBio 官方 workflow
+# 建立官方 workflow
+下載 PacBio 官方 workflow
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/setup_pacbio_workflow.sh
 chmod +x setup_pacbio_workflow.sh
@@ -33,7 +36,8 @@ workflow預設放在
 ~/tools/HiFi-16S-workflow
 ```
 
-3. 下載官方資料庫
+# 建立官方資料庫
+下載官方資料庫
 ```bash
 conda activate pacbio16s
 cd ~/tools/HiFi-16S-workflow
