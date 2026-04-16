@@ -30,6 +30,7 @@ Windos: Putty
 
 Mac: Terminal
   + run: ssh adprc@140.127.97.66
+<p align="center"><a href="#fylab">Top</a></p>
 
 
 # 序列前處理與導入
@@ -349,8 +350,6 @@ rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際
 
 </details>
 
-
-
 ## qza格式轉檔
 *  將分類好的輸出檔案taxonomy.qza轉黨為成taxonomy.tsv，存至phyloseq
 ```
@@ -366,8 +365,8 @@ qiime tools export \
   --input-path rep-seqs.qza \
   --output-path phyloseq
 ```
-
 <p align="center"><a href="#fylab">Top</a></p>
+
 
 # Dehost 排除host基因
 ## 啟動host-tools package 
@@ -1166,9 +1165,8 @@ nohup add_descriptions.py \
   -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz &
 ```
 </details><br>
-
-
 <p align="center"><a href="#fylab">Top</a></p>
+
 
 # Key files relationship
 ### File description
