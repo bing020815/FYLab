@@ -1,70 +1,82 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-show_last_lines() {
-    local file="$1"
-    local n="${2:-8}"
+TAIL_STDOUT_LINES="${TAIL_STDOUT_LINES:-8}"
+TAIL_STDERR_LINES="${TAIL_STDERR_LINES:-5}"
 
-    if [ -f "$file" ]; then
-        tail -n "$n" "$file"
+show_last_lines() {
+    local file_path="$1"
+    local n_lines="$2"
+
+    if [ -f "${file_path}" ]; then
+        tail -n "${n_lines}" "${file_path}"
     else
-        echo "[WARN] 找不到檔案: $file"
+        echo "[WARN] 找不到檔案：${file_path}"
     fi
 }
 
-extract_status() {
+extract_status_line() {
     local stdout_log="$1"
 
-    if [ ! -f "$stdout_log" ]; then
+    if [ ! -f "${stdout_log}" ]; then
         echo "NO_STDOUT_LOG"
         return
     fi
 
-    local last_line
-    last_line="$(tail -n 20 "$stdout_log" | sed '/^[[:space:]]*$/d' | tail -n 1)"
+    local status_line
+    status_line="$(tail -n 20 "${stdout_log}" | sed '/^[[:space:]]*$/d' | tail -n 1)"
 
-    if [ -z "$last_line" ]; then
+    if [ -z "${status_line}" ]; then
         echo "EMPTY_LOG"
-        return
+    else
+        echo "${status_line}"
     fi
-
-    echo "$last_line"
 }
 
-printf "\n[INFO] PacBio tmux session 狀態總覽\n\n"
+print_session_report() {
+    local session_name="$1"
+    local project_dir="$2"
 
-found_any=false
+    local stdout_log="${project_dir}/logs/nextflow.stdout.log"
+    local stderr_log="${project_dir}/logs/nextflow.stderr.log"
+    local status_line
 
-while IFS='|' read -r session_name project_dir; do
-    found_any=true
-
-    stdout_log="${project_dir}/logs/nextflow.stdout.log"
-    stderr_log="${project_dir}/logs/nextflow.stderr.log"
-
-    status_line="$(extract_status "$stdout_log")"
+    status_line="$(extract_status_line "${stdout_log}")"
 
     echo "=================================================="
-    echo "SESSION   : ${session_name}"
-    echo "PROJECT   : ${project_dir}"
-    echo "STATUS    : ${status_line}"
+    echo "[INFO] SESSION : ${session_name}"
+    echo "[INFO] PROJECT : ${project_dir}"
+    echo "[INFO] STATUS  : ${status_line}"
     echo
 
-    echo "[stdout 最後 8 行]"
-    show_last_lines "$stdout_log" 8
+    echo "[INFO] stdout 最後 ${TAIL_STDOUT_LINES} 行"
+    show_last_lines "${stdout_log}" "${TAIL_STDOUT_LINES}"
     echo
 
-    if [ -f "$stderr_log" ] && [ -s "$stderr_log" ]; then
-        echo "[stderr 最後 5 行]"
-        tail -n 5 "$stderr_log"
-        echo
+    echo "[INFO] stderr 最後 ${TAIL_STDERR_LINES} 行"
+    if [ -f "${stderr_log}" ] && [ -s "${stderr_log}" ]; then
+        tail -n "${TAIL_STDERR_LINES}" "${stderr_log}"
     else
-        echo "[stderr]"
-        echo "目前無錯誤輸出或檔案為空"
-        echo
+        echo "[INFO] 目前無錯誤輸出或檔案為空"
     fi
+    echo
+}
 
-done < <(tmux list-panes -a -F '#S|#{pane_current_path}' 2>/dev/null | grep '^pacbio_' || true)
+main() {
+    echo
+    echo "[INFO] PacBio tmux session 狀態總覽"
+    echo
 
-if [ "$found_any" = false ]; then
-    echo "[INFO] 目前沒有 pacbio_* 的 tmux session"
-fi
+    local found_any="false"
+
+    while IFS='|' read -r session_name project_dir; do
+        found_any="true"
+        print_session_report "${session_name}" "${project_dir}"
+    done < <(tmux list-panes -a -F '#S|#{pane_current_path}' 2>/dev/null | grep '^pacbio_' || true)
+
+    if [ "${found_any}" = "false" ]; then
+        echo "[INFO] 目前沒有 pacbio_* 的 tmux session"
+    fi
+}
+
+main "$@"
