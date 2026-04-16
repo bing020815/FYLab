@@ -74,37 +74,41 @@ Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
-資料格式範例(不用執行):
+資料格式範例:
 ```bash
+(不需執行)
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_13.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
 ```
 
-Step3. 建立sample.tsv檔案
+Step3. 建立sample和metadata檔案
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/make_manifest_pacbio.sh
 chmod +x make_manifest_pacbio.sh
 ./make_manifest_pacbio.sh .
 ```
 
-Step4. 檢查sample檔案
+Step4. 檢查`sample.tsv`檔案
 ```bash
 cat samples.tsv
 ```
-範例格式(不用執行)：
+範例格式：
 ```bash
+(不需執行)
 sample-id   absolute-filepath
 sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
 sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
 ```
 
-Step5. 建立 metadata.tsv
+Step5. 檢查`metadata.tsv`檔案
 ```bash
 cat metadata.tsv
 ```
-範例格式(不用執行)：
+範例格式：
+* condition 官方也把它設成 HTML report 裡會拿來做不同群組的區分
 ```bash
+(不需執行)
 sample_name condition
 sample1 Control
 sample2 Treatment
