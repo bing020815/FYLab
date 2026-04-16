@@ -73,28 +73,9 @@ get_elapsed_time() {
     fi
 }
 
-extract_last_node() {
-    local stdout_log="$1"
-
-    if [ ! -f "${stdout_log}" ]; then
-        echo "NO_STDOUT_LOG"
-        return
-    fi
-
-    local node
-    node="$(grep -Eo 'pb16S:[[:alnum:]_]+' "${stdout_log}" | tail -n 1 || true)"
-
-    if [ -n "${node}" ]; then
-        echo "${node}"
-    else
-        echo "NA"
-    fi
-}
-
 extract_active_cmd() {
     local project_dir="$1"
 
-    # 抓和該專案路徑有關的 process，再過濾常見命令
     local cmds
     cmds="$(
         ps -eo pid,args --no-headers 2>/dev/null \
@@ -108,6 +89,104 @@ extract_active_cmd() {
 
     if [ -n "${cmds}" ]; then
         echo "${cmds}"
+    else
+        echo "NA"
+    fi
+}
+
+extract_latest_executor_block() {
+    local stdout_log="$1"
+
+    if [ ! -f "${stdout_log}" ]; then
+        return 0
+    fi
+
+    awk '
+        /^executor[[:space:]]*>/ {start=NR}
+        {lines[NR]=$0}
+        END {
+            if (start > 0) {
+                for (i=start; i<=NR; i++) print lines[i]
+            }
+        }
+    ' "${stdout_log}"
+}
+
+extract_executor_name() {
+    local block="$1"
+
+    local executor_line
+    executor_line="$(printf '%s\n' "${block}" | grep '^executor[[:space:]]*>' | tail -n 1 || true)"
+
+    if [ -n "${executor_line}" ]; then
+        echo "${executor_line}"
+    else
+        echo "NA"
+    fi
+}
+
+extract_current_task() {
+    local block="$1"
+
+    if [ -z "${block}" ]; then
+        echo "NA"
+        return
+    fi
+
+    # 優先找第一個未完成且不是純等待符號 [-        ] 的 pb16S 行
+    local current_line
+    current_line="$(
+        printf '%s\n' "${block}" \
+        | grep 'pb16S:' \
+        | grep -v '✔' \
+        | grep -v '^\[-' \
+        | head -n 1 || true
+    )"
+
+    if [ -n "${current_line}" ]; then
+        local task_name progress
+        task_name="$(printf '%s\n' "${current_line}" | grep -Eo 'pb16S:[[:alnum:]_]+' | head -n 1 || true)"
+        progress="$(printf '%s\n' "${current_line}" | grep -Eo '\|[[:space:]]*[0-9]+ of [0-9]+' | sed 's/^|[[:space:]]*//' || true)"
+
+        if [ -n "${task_name}" ] && [ -n "${progress}" ]; then
+            echo "${task_name} | ${progress}"
+            return
+        elif [ -n "${task_name}" ]; then
+            echo "${task_name}"
+            return
+        fi
+    fi
+
+    # 如果沒有找到未完成的明確 task，再找最近的 env 建立訊息
+    local env_line
+    env_line="$(printf '%s\n' "${block}" | grep 'Creating env using conda:' | tail -n 1 || true)"
+    if [ -n "${env_line}" ]; then
+        echo "${env_line}"
+        return
+    fi
+
+    echo "NA"
+}
+
+extract_pending_tasks() {
+    local block="$1"
+
+    if [ -z "${block}" ]; then
+        echo "NA"
+        return
+    fi
+
+    local pending
+    pending="$(
+        printf '%s\n' "${block}" \
+        | grep '^\[-' \
+        | grep -Eo 'pb16S:[[:alnum:]_]+' \
+        | head -n 6 \
+        | paste -sd ', ' -
+    )"
+
+    if [ -n "${pending}" ]; then
+        echo "${pending}"
     else
         echo "NA"
     fi
@@ -136,13 +215,19 @@ print_session_report_full() {
     local stderr_log="${project_dir}/logs/nextflow.stderr.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local run_status start_time elapsed_time last_node active_cmd env_building
+    local run_status start_time elapsed_time active_cmd env_building
+    local executor_block executor_name current_task pending_tasks
+
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
-    last_node="$(extract_last_node "${stdout_log}")"
     active_cmd="$(extract_active_cmd "${project_dir}")"
     env_building="$(extract_env_building "${stdout_log}")"
+
+    executor_block="$(extract_latest_executor_block "${stdout_log}")"
+    executor_name="$(extract_executor_name "${executor_block}")"
+    current_task="$(extract_current_task "${executor_block}")"
+    pending_tasks="$(extract_pending_tasks "${executor_block}")"
 
     if [ -z "${run_status}" ]; then
         run_status="UNKNOWN"
@@ -153,15 +238,17 @@ print_session_report_full() {
     fi
 
     echo "=================================================="
-    echo "[INFO] SESSION     : ${session_name}"
-    echo "[INFO] PROJECT     : ${project_dir}"
-    echo "[INFO] STATUS      : ${run_status}"
-    echo "[INFO] START_TIME  : ${start_time}"
-    echo "[INFO] ELAPSED     : ${elapsed_time}"
-    echo "[INFO] LAST_NODE   : ${last_node}"
-    echo "[INFO] ACTIVE_CMD  : ${active_cmd}"
+    echo "[INFO] SESSION      : ${session_name}"
+    echo "[INFO] PROJECT      : ${project_dir}"
+    echo "[INFO] STATUS       : ${run_status}"
+    echo "[INFO] START_TIME   : ${start_time}"
+    echo "[INFO] ELAPSED      : ${elapsed_time}"
+    echo "[INFO] EXECUTOR     : ${executor_name}"
+    echo "[INFO] CURRENT_TASK : ${current_task}"
+    echo "[INFO] ACTIVE_CMD   : ${active_cmd}"
+    echo "[INFO] PENDING_TASK : ${pending_tasks}"
     if [ -n "${env_building}" ]; then
-        echo "[INFO] ENV_BUILD   : ${env_building}"
+        echo "[INFO] ENV_BUILD    : ${env_building}"
     fi
     echo
 
@@ -185,12 +272,17 @@ print_session_report_brief() {
     local stdout_log="${project_dir}/logs/nextflow.stdout.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local run_status start_time elapsed_time last_node active_cmd
+    local run_status start_time elapsed_time active_cmd
+    local executor_block executor_name current_task
+
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
-    last_node="$(extract_last_node "${stdout_log}")"
     active_cmd="$(extract_active_cmd "${project_dir}")"
+
+    executor_block="$(extract_latest_executor_block "${stdout_log}")"
+    executor_name="$(extract_executor_name "${executor_block}")"
+    current_task="$(extract_current_task "${executor_block}")"
 
     if [ -z "${run_status}" ]; then
         run_status="UNKNOWN"
@@ -200,7 +292,7 @@ print_session_report_brief() {
         start_time="NA"
     fi
 
-    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${last_node} | ${active_cmd}"
+    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${executor_name} | ${current_task} | ${active_cmd}"
 }
 
 main() {
