@@ -165,8 +165,11 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
 
 此腳本預設會使用 `tmux` 建立背景 session，以避免遠端 terminal 斷線導致任務中止。
-預設 session 命名規則如下：
-`pacbio_<user>_<project>_<yyyymmdd_HHMMSS>`
+預設 session 命名規則:
+```
+# 範例格式，無需執行
+pacbio_<project>_<yyyymmdd_HHMMSS>
+```
 
 若需要自行命名，可使用 `TMUX_SESSION_NAME` 指定。
 
