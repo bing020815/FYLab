@@ -21,6 +21,8 @@ TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-${DEFAULT_SESSION_NAME}}"
 
 STDOUT_LOG="${LOGS_DIR}/nextflow.stdout.log"
 STDERR_LOG="${LOGS_DIR}/nextflow.stderr.log"
+STATUS_FILE="${LOGS_DIR}/run_pacbio.status"
+INNER_SCRIPT="${LOGS_DIR}/run_pacbio_inner.sh"
 
 mkdir -p "${OUTDIR}" "${LOGS_DIR}" "${WORK_DIR}"
 
@@ -45,32 +47,71 @@ if ! command -v conda >/dev/null 2>&1; then
     exit 1
 fi
 
-build_workflow_cmd() {
-    local cmd=""
-    cmd+="cd \"${PROJECT_DIR}\" && "
-    cmd+="source \"\$(conda info --base)/etc/profile.d/conda.sh\" && "
-    cmd+="conda activate \"${ENV_NAME}\" && "
-    cmd+="nextflow run \"${WORKFLOW_DIR}/main.nf\" "
-    cmd+="--input \"${SAMPLES_TSV}\" "
-    cmd+="--metadata \"${METADATA_TSV}\" "
-    cmd+="--dada2_cpu \"${CPU}\" "
-    cmd+="--vsearch_cpu \"${CPU}\" "
-    cmd+="--outdir \"${OUTDIR}\" "
-    cmd+="--publish_dir_mode copy "
-    cmd+="-work-dir \"${WORK_DIR}\" "
+write_inner_script() {
+    cat > "${INNER_SCRIPT}" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
 
-    if [ "${RESUME}" = "true" ]; then
-        cmd+="-resume "
-    fi
+START_TIME="\$(date '+%Y-%m-%d %H:%M:%S')"
+START_EPOCH="\$(date +%s)"
 
-    if [ -n "${EXTRA_ARGS}" ]; then
-        cmd+="${EXTRA_ARGS} "
-    fi
+cat > "${STATUS_FILE}" <<EOSTATUS
+status=running
+start_time=\${START_TIME}
+end_time=
+duration_seconds=
+exit_code=
+session_name=${TMUX_SESSION_NAME}
+project_dir=${PROJECT_DIR}
+stdout_log=${STDOUT_LOG}
+stderr_log=${STDERR_LOG}
+EOSTATUS
 
-    printf "%s" "${cmd}"
+source "\$(conda info --base)/etc/profile.d/conda.sh"
+conda activate "${ENV_NAME}"
+
+set +e
+nextflow run "${WORKFLOW_DIR}/main.nf" \
+  --input "${SAMPLES_TSV}" \
+  --metadata "${METADATA_TSV}" \
+  --dada2_cpu "${CPU}" \
+  --vsearch_cpu "${CPU}" \
+  --outdir "${OUTDIR}" \
+  --publish_dir_mode copy \
+  -work-dir "${WORK_DIR}" \
+  $( [ "${RESUME}" = "true" ] && printf '%s' "-resume" ) \
+  ${EXTRA_ARGS} \
+  > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
+EXIT_CODE=\$?
+set -e
+
+END_TIME="\$(date '+%Y-%m-%d %H:%M:%S')"
+END_EPOCH="\$(date +%s)"
+DURATION_SECONDS=\$((END_EPOCH - START_EPOCH))
+
+if [ "\${EXIT_CODE}" -eq 0 ]; then
+    FINAL_STATUS="completed"
+else
+    FINAL_STATUS="failed"
+fi
+
+cat > "${STATUS_FILE}" <<EOSTATUS
+status=\${FINAL_STATUS}
+start_time=\${START_TIME}
+end_time=\${END_TIME}
+duration_seconds=\${DURATION_SECONDS}
+exit_code=\${EXIT_CODE}
+session_name=${TMUX_SESSION_NAME}
+project_dir=${PROJECT_DIR}
+stdout_log=${STDOUT_LOG}
+stderr_log=${STDERR_LOG}
+EOSTATUS
+
+exit "\${EXIT_CODE}"
+EOF
+
+    chmod +x "${INNER_SCRIPT}"
 }
-
-WORKFLOW_CMD="$(build_workflow_cmd)"
 
 echo "[INFO] PROJECT_DIR = ${PROJECT_DIR}"
 echo "[INFO] OUTDIR      = ${OUTDIR}"
@@ -78,6 +119,9 @@ echo "[INFO] CPU         = ${CPU}"
 echo "[INFO] RESUME      = ${RESUME}"
 echo "[INFO] RUN_IN_TMUX = ${RUN_IN_TMUX}"
 echo "[INFO] EXTRA_ARGS  = ${EXTRA_ARGS}"
+echo "[INFO] STATUS_FILE = ${STATUS_FILE}"
+
+write_inner_script
 
 if [ "${RUN_IN_TMUX}" = "true" ]; then
     if ! command -v tmux >/dev/null 2>&1; then
@@ -93,31 +137,25 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
         exit 1
     fi
 
-    TMUX_CMD=$(cat <<EOF
-bash -lc '${WORKFLOW_CMD} > "${STDOUT_LOG}" 2> "${STDERR_LOG}"'
-EOF
-)
-
-    tmux new-session -d -s "${TMUX_SESSION_NAME}" "${TMUX_CMD}"
+    tmux new-session -d -s "${TMUX_SESSION_NAME}" "bash '${INNER_SCRIPT}'"
 
     echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
     echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
-    echo "[INFO] 本腳本的輸出已導向 log 檔，請用以下方式監看進度："
+    echo "[INFO] 請以以下檔案監看進度："
     echo "[INFO]   tail -f ${STDOUT_LOG}"
     echo "[INFO]   tail -f ${STDERR_LOG}"
+    echo "[INFO]   cat ${STATUS_FILE}"
     echo "[INFO] 若需檢查 session 是否仍存在：tmux ls"
     echo "[INFO] 若需手動接回 session：tmux attach -t ${TMUX_SESSION_NAME}"
     echo "[INFO] 注意：attach 後畫面可能為空白，屬正常現象，請以 log 檔為主"
-    echo "[INFO] 注意：若需關閉 session：tmux kill-session -t  ${TMUX_SESSION_NAME}"
+    echo "[INFO] 若需關閉 session：tmux kill-session -t ${TMUX_SESSION_NAME}"
 
 else
-    source "$(conda info --base)/etc/profile.d/conda.sh"
-    conda activate "${ENV_NAME}"
-
     echo "[INFO] 前景執行 workflow"
-    bash -lc "${WORKFLOW_CMD}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
+    bash "${INNER_SCRIPT}"
 
     echo "[INFO] 執行完成"
     echo "[INFO] stdout log: ${STDOUT_LOG}"
     echo "[INFO] stderr log: ${STDERR_LOG}"
+    echo "[INFO] status file: ${STATUS_FILE}"
 fi
