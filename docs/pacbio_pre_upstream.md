@@ -162,9 +162,14 @@ workflow 輸出會導向：
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
 chmod +x check_pacbio_sessions.sh
 ```
-* 簡短狀態進度可加: `MODE=brief `
+* 簡短狀態進度可加: `MODE=brief`
 ``` bash
 ./check_pacbio_sessions.sh
+```
+
+查看workflow任務結論狀態
+```
+cat logs/run_pacbio.status
 ```
 
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
