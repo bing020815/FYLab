@@ -122,7 +122,7 @@ sample2 Treatment
 ```bash
 pacbio_<project>_<yyyymmdd_HHMMSS>
 ```
-官方 nextflow 流程步驟包含:
+[PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程步驟包含:
 1. samples.tsv 與 metadata.tsv
 2. 初始 QC
 3. Primer trimming 與方向統一
