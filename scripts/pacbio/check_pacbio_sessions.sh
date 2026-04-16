@@ -78,13 +78,14 @@ extract_active_cmd() {
 
     local cmds
     cmds="$(
-        ps -eo pid,args --no-headers 2>/dev/null \
+        ps -eo pid,comm,args --no-headers 2>/dev/null \
         | grep "${project_dir}" \
-        | grep -E 'seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|python|perl|awk|sed' \
         | grep -v grep \
-        | sed -E 's#.*(seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|python|perl|awk|sed).*#\1#' \
+        | awk '{print $2}' \
+        | grep -E 'seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|python|perl|awk|sed' \
         | sort -u \
-        | paste -sd ',' -
+        | paste -sd ',' - \
+        | sed 's/,/, /g'
     )"
 
     if [ -n "${cmds}" ]; then
@@ -133,7 +134,6 @@ extract_current_task() {
         return
     fi
 
-    # 優先找第一個未完成且不是純等待符號 [-        ] 的 pb16S 行
     local current_line
     current_line="$(
         printf '%s\n' "${block}" \
@@ -157,7 +157,6 @@ extract_current_task() {
         fi
     fi
 
-    # 如果沒有找到未完成的明確 task，再找最近的 env 建立訊息
     local env_line
     env_line="$(printf '%s\n' "${block}" | grep 'Creating env using conda:' | tail -n 1 || true)"
     if [ -n "${env_line}" ]; then
@@ -182,7 +181,8 @@ extract_pending_tasks() {
         | grep '^\[-' \
         | grep -Eo 'pb16S:[[:alnum:]_]+' \
         | head -n 6 \
-        | paste -sd ', ' -
+        | paste -sd ',' - \
+        | sed 's/,/, /g'
     )"
 
     if [ -n "${pending}" ]; then
@@ -238,17 +238,17 @@ print_session_report_full() {
     fi
 
     echo "=================================================="
-    echo "[INFO] SESSION      : ${session_name}"
-    echo "[INFO] PROJECT      : ${project_dir}"
-    echo "[INFO] STATUS       : ${run_status}"
-    echo "[INFO] START_TIME   : ${start_time}"
-    echo "[INFO] ELAPSED      : ${elapsed_time}"
-    echo "[INFO] EXECUTOR     : ${executor_name}"
-    echo "[INFO] CURRENT_TASK : ${current_task}"
-    echo "[INFO] ACTIVE_CMD   : ${active_cmd}"
-    echo "[INFO] PENDING_TASK : ${pending_tasks}"
+    echo "[INFO] SESSION       : ${session_name}"
+    echo "[INFO] PROJECT       : ${project_dir}"
+    echo "[INFO] STATUS        : ${run_status}"
+    echo "[INFO] START_TIME    : ${start_time}"
+    echo "[INFO] ELAPSED       : ${elapsed_time}"
+    echo "[INFO] EXECUTOR      : ${executor_name}"
+    echo "[INFO] CURRENT_TASK  : ${current_task}"
+    echo "[INFO] ACTIVE_CMD    : ${active_cmd}"
+    echo "[INFO] PENDING_TASKS : ${pending_tasks}"
     if [ -n "${env_building}" ]; then
-        echo "[INFO] ENV_BUILD    : ${env_building}"
+        echo "[INFO] ENV_BUILD     : ${env_building}"
     fi
     echo
 
