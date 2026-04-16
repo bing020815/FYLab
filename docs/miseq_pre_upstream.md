@@ -7,7 +7,7 @@
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
 4. [|Post-upstream| QIIME2 - Analysis: 導出特徵表前準備](#Analysis-導出特徵表前準備)
-5. [|Pre-upstream| 接續模型分類流程](#接續模型分類流程)
+5. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
 
 
 # FastQ files Preprocess 前處理Primer
