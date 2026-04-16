@@ -1,5 +1,8 @@
+# Miseq SOP
+適用於Miseq短序列流程: V3, V4, V3-V4
+
+
 # Table of Content:
-此步驟流程只適用於Miseq短序列流程: V3, V4, V3-V4
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
@@ -326,4 +329,4 @@ biom convert \
 
 [接續回到主要共同步驟](../README.md)
 
-<p align="center"><a href="#fylab">Top</a></p>
+<p align="center"><a href="#miseq-sop">Top</a></p>
