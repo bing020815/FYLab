@@ -13,7 +13,7 @@
 3. [|Post-upstream| Dehost - 排除host基因](#Dehost-排除host基因)
 4. [|Post-upstream| 畫圖](#畫圖)
 5. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
-6. [|Downstream taxonomy analysis| 下游分析處理]()
+6. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
 
 # Preset
 ## Folder Management
