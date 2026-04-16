@@ -10,6 +10,7 @@ TIMEZONE="${TIMEZONE:-Asia/Taipei}"
 
 NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR:-/home/adprc/nf_conda}"
 export NXF_CONDA_CACHEDIR
+mkdir -p "${NXF_CONDA_CACHEDIR}"
 
 SAMPLES_TSV="${PROJECT_DIR}/samples.tsv"
 METADATA_TSV="${PROJECT_DIR}/metadata.tsv"
@@ -75,6 +76,10 @@ stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
 timezone=${TIMEZONE}
 nxf_conda_cachedir=${NXF_CONDA_CACHEDIR}
+cpu=${CPU}
+resume=${RESUME}
+extra_args=${EXTRA_ARGS}
+workflow_dir=${WORKFLOW_DIR}
 EOSTATUS
 
 source "\$(conda info --base)/etc/profile.d/conda.sh"
@@ -90,7 +95,7 @@ nextflow run "${WORKFLOW_DIR}/main.nf" \\
   --outdir "${OUTDIR}" \\
   --publish_dir_mode copy \\
   -work-dir "${WORK_DIR}" \\
-  $( [ "${RESUME}" = "true" ] && printf '%s' "-resume" ) \\
+  $( [ "${RESUME}" = "true" ] && printf '%s ' "-resume" ) \\
   ${EXTRA_ARGS} \\
   > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
 EXIT_CODE=\$?
@@ -120,6 +125,10 @@ stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
 timezone=${TIMEZONE}
 nxf_conda_cachedir=${NXF_CONDA_CACHEDIR}
+cpu=${CPU}
+resume=${RESUME}
+extra_args=${EXTRA_ARGS}
+workflow_dir=${WORKFLOW_DIR}
 EOSTATUS
 
 exit "\${EXIT_CODE}"
