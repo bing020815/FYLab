@@ -77,7 +77,7 @@ Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
 ls raw_fastq/*.fastq.gz
 ```
 ```bash
- # 範例格式，無需執行
+# 範例格式，無需執行
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_13.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
@@ -95,7 +95,7 @@ Step4. 檢查`sample.tsv`檔案
 cat samples.tsv
 ```
 ```bash
- # 範例格式，無需執行
+# 範例格式，無需執行
 sample-id   absolute-filepath
 sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
 sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
@@ -106,7 +106,7 @@ Step5. 檢查`metadata.tsv`檔案
 cat metadata.tsv
 ```
 ```bash
- # 範例格式，無需執行
+# 範例格式，無需執行
 sample_name condition
 sample1 Control
 sample2 Treatment
@@ -147,19 +147,15 @@ EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_p
 腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
 預設 session 命名規則：
 ```bash
-pacbio_<project>_<yyyymmdd_HHMMSS>
+# 範例格式，無需執行
+pacbio_<yyyymmdd_HHMMSS>
 ```
 使用 `run_pacbio_workflow.sh` 預設 tmux 模式時，
 tmux 的主要用途是讓長時間任務在遠端斷線後仍持續執行。
 workflow 輸出會導向：
 - logs/nextflow.stdout.log 日誌
-```bash
-tail -f logs/nextflow.stdout.log
-```
 - logs/nextflow.stderr.log 監看與除錯
-```bash
-tail -f logs/nextflow.stderr.log
-```
+
 查看session進度狀態
 ``` bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
