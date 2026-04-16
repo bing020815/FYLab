@@ -1,13 +1,12 @@
 # FYLab 分析流程
-基因定序上游分析流程使用說明
+基因定序上游分析流程使用說明，或是使用[舊流程觀看對照](./docs/old_sop.md)
 
 * 20260415 updated
 ```
   + 分流Pre-upstrean [20260415]
 ```
-或是使用[舊流程觀看對照](./docs/old_sop.md)
 
-# Table of Content:
+# Table of Contents:
 0. [|Pre-upstream| 初始設定](#Preset)
 1. [|Pre-upstream| 序列前處理與導入](#序列前處理與導入)
 2. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
