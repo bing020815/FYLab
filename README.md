@@ -824,7 +824,7 @@ conda deactivate
 <p align="center"><a href="#fylab">Top</a></p>
 
 # PICRUSt2 - Metabolism Pathway
-![PICRUSt2](../img/picrust2_flow.png)
+![PICRUSt2](img/picrust2_flow.png)
 
 KEGG 功能: 
 1. 建構參考樹(Reference Tree)
