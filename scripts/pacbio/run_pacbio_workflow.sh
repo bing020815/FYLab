@@ -19,6 +19,9 @@ RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
 DEFAULT_SESSION_NAME="pacbio_$(date +%Y%m%d_%H%M%S)"
 TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-${DEFAULT_SESSION_NAME}}"
 
+STDOUT_LOG="${LOGS_DIR}/nextflow.stdout.log"
+STDERR_LOG="${LOGS_DIR}/nextflow.stderr.log"
+
 mkdir -p "${OUTDIR}" "${LOGS_DIR}" "${WORK_DIR}"
 
 if [ ! -f "${SAMPLES_TSV}" ]; then
@@ -68,9 +71,6 @@ build_workflow_cmd() {
 }
 
 WORKFLOW_CMD="$(build_workflow_cmd)"
-STDOUT_LOG="${LOGS_DIR}/nextflow.stdout.log"
-STDERR_LOG="${LOGS_DIR}/nextflow.stderr.log"
-TEE_LOG="${LOGS_DIR}/run_pacbio.tmux.log"
 
 echo "[INFO] PROJECT_DIR = ${PROJECT_DIR}"
 echo "[INFO] OUTDIR      = ${OUTDIR}"
@@ -94,7 +94,7 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
     fi
 
     TMUX_CMD=$(cat <<EOF
-bash -lc '${WORKFLOW_CMD} > "${STDOUT_LOG}" 2> "${STDERR_LOG}" 2>&1 | tee "${TEE_LOG}"'
+bash -lc '${WORKFLOW_CMD} > "${STDOUT_LOG}" 2> "${STDERR_LOG}"'
 EOF
 )
 
@@ -106,7 +106,6 @@ EOF
     echo "[INFO] 若要離開畫面但不中止工作，請按：Ctrl+b 然後按 d"
     echo "[INFO] stdout log: ${STDOUT_LOG}"
     echo "[INFO] stderr log: ${STDERR_LOG}"
-    echo "[INFO] tee log   : ${TEE_LOG}"
 
 else
     source "$(conda info --base)/etc/profile.d/conda.sh"
