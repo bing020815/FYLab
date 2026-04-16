@@ -836,7 +836,9 @@ KEGG 功能:
 3. 功能推估 (Hidden State Prediction, HSP)
   * 將該節點對應的 IMG 對照 KEGG 功能表（KO 拷貝數）推估至 ASV 節點
 4. 樣本功能彙整
-  * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出 pred_metagenome_unstrat.tsv(ASV 層級的功能表); path_abun_unstrat.tsv(樣本層級的 KEGG pathway abundance)
+  * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出
+    + pred_metagenome_unstrat.tsv(ASV 層級的功能表)
+    + path_abun_unstrat.tsv(樣本層級的 KEGG pathway abundance)
 
 ## 啟動PICRUSt2 package
 則一環境啟動即可。
