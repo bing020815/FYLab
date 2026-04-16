@@ -76,9 +76,8 @@ Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
-資料格式範例:
 ```bash
-(不需執行)
+ # 範例格式，無需執行
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_13.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
@@ -95,9 +94,8 @@ Step4. 檢查`sample.tsv`檔案
 ```bash
 cat samples.tsv
 ```
-範例格式：
 ```bash
-(不需執行)
+ # 範例格式，無需執行
 sample-id   absolute-filepath
 sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
 sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
@@ -107,14 +105,15 @@ Step5. 檢查`metadata.tsv`檔案
 ```bash
 cat metadata.tsv
 ```
-範例格式：
-* condition 官方也把它設成 HTML report 裡會拿來做不同群組的區分
 ```bash
-(不需執行)
+ # 範例格式，無需執行
 sample_name condition
 sample1 Control
 sample2 Treatment
 ```
+* condition 官方也把它設成 HTML report 裡會拿來做不同群組的區分
+* condition 預設為 `Unknown`，若後續需要正式分組分析，需再手動修改。
+
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 官方nextflow
