@@ -58,7 +58,9 @@ START_EPOCH="\$(date +%s)"
 cat > "${STATUS_FILE}" <<EOSTATUS
 status=running
 start_time=\${START_TIME}
+start_epoch=\${START_EPOCH}
 end_time=
+end_epoch=
 duration_seconds=
 exit_code=
 session_name=${TMUX_SESSION_NAME}
@@ -71,16 +73,16 @@ source "\$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${ENV_NAME}"
 
 set +e
-nextflow run "${WORKFLOW_DIR}/main.nf" \
-  --input "${SAMPLES_TSV}" \
-  --metadata "${METADATA_TSV}" \
-  --dada2_cpu "${CPU}" \
-  --vsearch_cpu "${CPU}" \
-  --outdir "${OUTDIR}" \
-  --publish_dir_mode copy \
-  -work-dir "${WORK_DIR}" \
-  $( [ "${RESUME}" = "true" ] && printf '%s' "-resume" ) \
-  ${EXTRA_ARGS} \
+nextflow run "${WORKFLOW_DIR}/main.nf" \\
+  --input "${SAMPLES_TSV}" \\
+  --metadata "${METADATA_TSV}" \\
+  --dada2_cpu "${CPU}" \\
+  --vsearch_cpu "${CPU}" \\
+  --outdir "${OUTDIR}" \\
+  --publish_dir_mode copy \\
+  -work-dir "${WORK_DIR}" \\
+  $( [ "${RESUME}" = "true" ] && printf '%s' "-resume" ) \\
+  ${EXTRA_ARGS} \\
   > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
 EXIT_CODE=\$?
 set -e
@@ -98,7 +100,9 @@ fi
 cat > "${STATUS_FILE}" <<EOSTATUS
 status=\${FINAL_STATUS}
 start_time=\${START_TIME}
+start_epoch=\${START_EPOCH}
 end_time=\${END_TIME}
+end_epoch=\${END_EPOCH}
 duration_seconds=\${DURATION_SECONDS}
 exit_code=\${EXIT_CODE}
 session_name=${TMUX_SESSION_NAME}
@@ -113,6 +117,8 @@ EOF
     chmod +x "${INNER_SCRIPT}"
 }
 
+write_inner_script
+
 echo "[INFO] PROJECT_DIR = ${PROJECT_DIR}"
 echo "[INFO] OUTDIR      = ${OUTDIR}"
 echo "[INFO] CPU         = ${CPU}"
@@ -120,8 +126,6 @@ echo "[INFO] RESUME      = ${RESUME}"
 echo "[INFO] RUN_IN_TMUX = ${RUN_IN_TMUX}"
 echo "[INFO] EXTRA_ARGS  = ${EXTRA_ARGS}"
 echo "[INFO] STATUS_FILE = ${STATUS_FILE}"
-
-write_inner_script
 
 if [ "${RUN_IN_TMUX}" = "true" ]; then
     if ! command -v tmux >/dev/null 2>&1; then
@@ -141,7 +145,7 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
 
     echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
     echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
-    echo "[INFO] 請以以下檔案監看進度："
+    echo "[INFO] 請以以下方式監看進度："
     echo "[INFO]   tail -f ${STDOUT_LOG}"
     echo "[INFO]   tail -f ${STDERR_LOG}"
     echo "[INFO]   cat ${STATUS_FILE}"
