@@ -163,7 +163,7 @@ chmod +x check_pacbio_sessions.sh
 ```
 * 簡短狀態進度可加: `MODE=brief `
 ``` bash
-./scripts/pacbio/check_pacbio_sessions.sh
+./check_pacbio_sessions.sh
 ```
 
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
