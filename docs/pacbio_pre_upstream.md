@@ -9,7 +9,7 @@
 4. [|Pre-upstream| 建立專案](#建立專案)
 5. [|Pre-upstream| 官方nextflow](#官方nextflow)
 6. [|Pre-upstream| Taxonomy 檔案資料整理](#Taxonomy-檔案資料整理)
-7. [|Pre-upstream| 接續模型分類流程](#接續模型分類流程)
+7. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
 
 
 # 建立環境
