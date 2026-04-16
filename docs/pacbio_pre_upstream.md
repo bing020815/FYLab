@@ -1,260 +1,195 @@
-# ASV Pipeline
+# PacBio HiFi 16S pre-upstream SOP
 
-A. PacBio SOP 的定位
-
-用途：PacBio HiFi full-length 16S upstream analysis
-輸入：.hifi_reads.fastq.gz + metadata.tsv
-核心工具：Nextflow + PacBio HiFi-16S-workflow + Singularity/Docker
-輸出：ASV table、rep seqs、taxonomy、biom、qzv、report
-
-B. FYLab common downstream SOP 的定位
-
-用途：平台無關的共用分析
-輸入：table.qza, rep-seqs.qza, taxonomy.tsv, metadata.tsv
-核心工具：QIIME2 export、PICRUSt2、R/Python plotting
-輸出：統計圖、pathway、heatmap、barplot、後續報告
-
-### Repo Structure:
-FYLab/
-├─ README.md
-├─ docs/
-│  ├─ miseq_pre_upstream.md
-│  ├─ pacbio_pre_upstream.md
-│  ├─ common_post_upstream.md
-│  └─ downstream_taxonomy.md
-├─ scripts/
-│  ├─ miseq/
-│  │  ├─ trim_all.sh
-│  │  ├─ make_manifest_miseq.sh
-│  │  └─ run_miseq_qiime2.sh
-│  ├─ pacbio/
-│  │  ├─ setup_pacbio_env.sh
-│  │  ├─ download_pacbio_workflow.sh
-│  │  ├─ make_manifest_pacbio.sh
-│  │  ├─ run_pacbio_workflow.sh
-│  │  └─ collect_pacbio_output.sh
-│  └─ common/
-│     ├─ summarize_qiime2.sh
-│     ├─ export_qiime2_artifacts.sh
-│     └─ prepare_downstream_taxonomy.sh
+此說明文件用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
+PacBio 分流完成後，會先將官方 workflow 的輸出集中於專案資料夾下的 `pacbio_results/`，  
+再使用 `collect_pacbio_output.sh` 將 FYLab 後續共用所需檔案整理到專案根目錄。
 
 
-### setup_pacbio_env.sh
+## 一、第一次安裝
+1. 建立 pacbio16s conda 環境
+```bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/setup_pacbio_env.sh
+chmod +x setup_pacbio_env.sh
+./setup_pacbio_env.sh
 ```
-#!/usr/bin/env bash
-set -euo pipefail
-
-ENV_NAME="pacbio16s"
-
-if ! command -v conda >/dev/null 2>&1; then
-    echo "[ERROR] 找不到 conda，請先安裝或先載入 conda。"
-    exit 1
-fi
-
-if conda env list | awk '{print $1}' | grep -qx "${ENV_NAME}"; then
-    echo "[INFO] conda 環境 ${ENV_NAME} 已存在，略過建立。"
-else
-    echo "[INFO] 建立 conda 環境: ${ENV_NAME}"
-    conda create -n "${ENV_NAME}" -c conda-forge -c bioconda nextflow openjdk=17 git wget curl -y
-fi
-
-echo "[INFO] 完成。請使用以下指令啟動環境："
-echo "conda activate ${ENV_NAME}"
+完成後可用啟動環境
+```bash
+conda activate pacbio16s
 ```
 
-### setup_pacbio_workflow.sh
+2. 下載 PacBio 官方 workflow
+```bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/setup_pacbio_workflow.sh
+chmod +x setup_pacbio_workflow.sh
+./setup_pacbio_workflow.sh
 ```
-#!/usr/bin/env bash
-set -euo pipefail
-
-TOOLS_DIR="${HOME}/tools"
-WORKFLOW_DIR="${TOOLS_DIR}/HiFi-16S-workflow"
-
-mkdir -p "${TOOLS_DIR}"
-
-if [ -d "${WORKFLOW_DIR}/.git" ]; then
-    echo "[INFO] 官方 workflow 已存在：${WORKFLOW_DIR}"
-    echo "[INFO] 如需更新，請手動執行："
-    echo "cd ${WORKFLOW_DIR} && git pull"
-else
-    echo "[INFO] 下載 PacBio 官方 workflow 到 ${WORKFLOW_DIR}"
-    git clone https://github.com/PacificBiosciences/HiFi-16S-workflow.git "${WORKFLOW_DIR}"
-fi
-
-echo "[INFO] 完成。workflow 位置：${WORKFLOW_DIR}"
+workflow預設放在
+```bash
+~/tools/HiFi-16S-workflow
 ```
 
-### make_manifest_pacbio.sh
+3. 下載官方資料庫
+```bash
+conda activate pacbio16s
+cd ~/tools/HiFi-16S-workflow
+nextflow run main.nf --download_db
 ```
-#!/usr/bin/env bash
-set -euo pipefail
 
-PROJECT_DIR="${1:-$(pwd)}"
-RAW_DIR="${PROJECT_DIR}/raw_fastq"
-SAMPLES_TSV="${PROJECT_DIR}/samples.tsv"
-METADATA_TSV="${PROJECT_DIR}/metadata.tsv"
+4. tumx session 使用(optional)
+會花較久時間的任務，建議使用 tmux 執行:
+```bash
+tmux new -s session_name
+```
 
-if [ ! -d "${RAW_DIR}" ]; then
-    echo "[ERROR] 找不到資料夾：${RAW_DIR}"
-    exit 1
-fi
+若要離開畫面但不中止工作:
+```
+Ctrl+b 然後按 d
+```
 
-FASTQ_COUNT=$(find "${RAW_DIR}" -maxdepth 1 -name "*.fastq.gz" | wc -l)
+若要回到該 session:
+```bash
+tmux attach -t session_name
+```
 
-if [ "${FASTQ_COUNT}" -eq 0 ]; then
-    echo "[ERROR] ${RAW_DIR} 內沒有 fastq.gz 檔案"
-    exit 1
-fi
+## 二、每次新專案
+# 建立專案
+基本專案資料夾
+    •   raw_fastq/：原始 PacBio .fastq.gz
+    •   samples.tsv：官方 workflow 的樣本輸入清單
+    •   metadata.tsv：樣本分組與描述資料
+    •   pacbio_results/：官方 workflow 原始輸出自動輸出
+    •   logs/：Nextflow 執行紀錄自動產出
+    •   work/：Nextflow 中間資料夾自動產出
+```
+project_name/
+├─ raw_fastq/        << 自行建立
+├─ samples.tsv       << 系統產出
+├─ metadata.tsv      << 自行建立
+├─ pacbio_results/   << 系統產出
+├─ logs/             << 系統產出
+└─ work/             << 系統產出
+```
 
-echo -e "sample-id\tabsolute-filepath" > "${SAMPLES_TSV}"
-echo -e "sample_name\tcondition" > "${METADATA_TSV}"
+Step1. 啟動環境
+```bash
+conda activate pacbio16s
+```
 
-for f in "${RAW_DIR}"/*.fastq.gz; do
-    base=$(basename "${f}")
-    sample=$(echo "${base}" | sed 's/\.hifi_reads\.fastq\.gz$//')
-    abs=$(realpath "${f}")
+Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
+```bash
+ls raw_fastq/*.fastq.gz
+```
+資料格式範例:
+```bash
+m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_13.hifi_reads.fastq.gz
+m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
+m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
+```
 
-    echo -e "${sample}\t${abs}" >> "${SAMPLES_TSV}"
-    echo -e "${sample}\tUnknown" >> "${METADATA_TSV}"
-done
+Step3. 建立sample.tsv檔案
+```bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/make_manifest_pacbio.sh
+chmod +x make_manifest_pacbio.sh
+./make_manifest_pacbio.sh .
+```
 
-echo "[INFO] 已建立：${SAMPLES_TSV}"
-echo "[INFO] 已建立：${METADATA_TSV}"
-echo "[INFO] 請確認 metadata.tsv 的 condition 是否需要手動修改。"
+Step4. 檢查sample檔案
+```bash
+cat samples.tsv
+```
+範例格式：
+```bash
+sample-id   absolute-filepath
+sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
+sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
+```
+
+Step5. 建立 metadata.tsv
+```bash
+cat metadata.tsv
+```
+範例格式：
+```bash
+sample_name condition
+sample1 Control
+sample2 Treatment
 ```
 
 
-### run_pacbio_official.sh
+# 官方nextflow
+腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
+預設 session 命名規則：
+```bash
+pacbio_<project>_<yyyymmdd_HHMMSS>
 ```
-#!/usr/bin/env bash
-set -euo pipefail
+官方 nextflow 流程步驟包含:
+1. samples.tsv 與 metadata.tsv
+2. 初始 QC
+3. Primer trimming 與方向統一
+4. 匯入 QIIME 2
+5. DADA2 去噪生成 ASV
+6. Rarefaction 與 diversity 相關輸出
+7. Taxonomy classification
+    * Naive Bayes：會產出 best_taxonomy_withDB.tsv、best_tax_merged_freq_tax.tsv、feature-table-tax.biom
+    * VSEARCH：會產出 vsearch_merged_freq_tax.tsv、feature-table-tax_vsearch.biom、taxonomy_barplot_vsearch.qzv
 
-PROJECT_DIR="${1:-$(pwd)}"
-ENV_NAME="pacbio16s"
-WORKFLOW_DIR="${HOME}/tools/HiFi-16S-workflow"
-
-SAMPLES_TSV="${PROJECT_DIR}/samples.tsv"
-METADATA_TSV="${PROJECT_DIR}/metadata.tsv"
-RESULTS_DIR="${PROJECT_DIR}/results"
-LOGS_DIR="${PROJECT_DIR}/logs"
-WORK_DIR="${PROJECT_DIR}/work"
-
-CPU="${CPU:-8}"
-
-mkdir -p "${RESULTS_DIR}" "${LOGS_DIR}" "${WORK_DIR}"
-
-if [ ! -f "${SAMPLES_TSV}" ]; then
-    echo "[ERROR] 找不到 ${SAMPLES_TSV}"
-    exit 1
-fi
-
-if [ ! -f "${METADATA_TSV}" ]; then
-    echo "[ERROR] 找不到 ${METADATA_TSV}"
-    exit 1
-fi
-
-if [ ! -d "${WORKFLOW_DIR}" ]; then
-    echo "[ERROR] 找不到官方 workflow：${WORKFLOW_DIR}"
-    echo "請先執行 setup_pacbio_workflow.sh"
-    exit 1
-fi
-
-if ! command -v conda >/dev/null 2>&1; then
-    echo "[ERROR] 找不到 conda"
-    exit 1
-fi
-
-source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate "${ENV_NAME}"
-
-cd "${PROJECT_DIR}"
-
-echo "[INFO] 開始執行 PacBio workflow"
-echo "[INFO] PROJECT_DIR = ${PROJECT_DIR}"
-echo "[INFO] CPU = ${CPU}"
-
-nextflow run "${WORKFLOW_DIR}/main.nf" \
-    --input "${SAMPLES_TSV}" \
-    --metadata "${METADATA_TSV}" \
-    --dada2_cpu "${CPU}" \
-    --vsearch_cpu "${CPU}" \
-    -work-dir "${WORK_DIR}" \
-    > "${LOGS_DIR}/nextflow.stdout.log" \
-    2> "${LOGS_DIR}/nextflow.stderr.log"
-
-echo "[INFO] PacBio workflow 執行完成"
-echo "[INFO] 請查看 logs/ 與 workflow 輸出資料夾"
+Step1. 下載workflow執行檔案
+``` bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/run_pacbio_workflow.sh
+chmod +x run_pacbio_workflow.sh
 ```
 
-### collect_pacbio_output.sh
-```
-#!/usr/bin/env bash
-set -euo pipefail
-
-PROJECT_DIR="${1:-$(pwd)}"
-RESULTS_DIR="${PROJECT_DIR}/results"
-FYLAB_DIR="${PROJECT_DIR}/fylab_results"
-
-mkdir -p "${FYLAB_DIR}"
-
-copy_if_exists () {
-    local src="$1"
-    local dst="$2"
-    if [ -f "$src" ]; then
-        cp "$src" "$dst"
-        echo "[INFO] 已複製: $src -> $dst"
-    else
-        echo "[WARN] 找不到: $src"
-    fi
-}
-
-# 你之後可依實際跑出來的檔案名稱再微調
-copy_if_exists "${RESULTS_DIR}/dada2-ccs_table_filtered.qza" "${FYLAB_DIR}/table.qza"
-copy_if_exists "${RESULTS_DIR}/dada2-ccs_rep_filtered.qza" "${FYLAB_DIR}/rep-seqs.qza"
-copy_if_exists "${RESULTS_DIR}/dada2-ccs_stats.qza" "${FYLAB_DIR}/denoise-stats.qza"
-copy_if_exists "${RESULTS_DIR}/best_taxonomy_withDB.tsv" "${FYLAB_DIR}/taxonomy.tsv"
-copy_if_exists "${RESULTS_DIR}/feature-table-tax.biom" "${FYLAB_DIR}/feature-table-tax.biom"
-
-echo "[INFO] 整理完成"
-echo "[INFO] FYLab 共用結果位於：${FYLAB_DIR}"
+Step2. 啟動執行 workflow
+* `CPU` 可調整
+* 需要前景除錯資訊可改:`RUN_IN_TMUX=false`
+* 需要補充官方 workflow 參數:
+    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim"`
+    + 改 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY"`
+    + filter條件: `EXTRA_ARGS="--filterQ 20 --min_len 1200 --max_len 1550 --max_ee 2"`
+```bash
+EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
 
-### export_pacbio_for_fylab.sh
-```
-#!/usr/bin/env bash
-set -euo pipefail
+# Taxonomy 檔案資料整理
+PacBio workflow 完成後，可依需求選擇兩種整理模式：
+1. `MODE=official`
+   - 沿用 Nextflow workflow 的官方資料庫分類結果
+   - 會將官方 taxonomy 整理成專案根目錄的 `taxonomy.tsv`
 
-mkdir -p results
+2. `MODE=fylab`
+   - 只整理 DADA2 產生的核心中間產物
+   - 官方 taxonomy 僅保留為參考檔
+   - 後續 taxonomy classification 由 FYLab 自訂分類器處理
 
-cp output/dada2/dada2-ccs_table_filtered.qza results/table.qza
-cp output/dada2/dada2-ccs_rep_filtered.qza results/rep-seqs.qza
-cp output/results/feature-table-tax.biom results/feature-table-tax.biom
-cp output/results/best_taxonomy_withDB.tsv results/taxonomy.tsv
-```
+兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
+
+此腳本預設會使用 `tmux` 建立背景 session，以避免遠端 terminal 斷線導致任務中止。
+預設 session 命名規則如下：
+`pacbio_<user>_<project>_<yyyymmdd_HHMMSS>`
+
+若未特別指定，腳本會自動依上述規則建立不重複的 session 名稱。  
+若需要自行命名，可使用 `TMUX_SESSION_NAME` 指定。
 
 
-## PacBio HiFi full-length 16S
-Step 1. 準備 PacBio input
-官方要求 samples.tsv 至少有：
-	•	sample-id
-	•	absolute-filepath
-
-Step 2. 跑官方 workflow
-```
-git clone https://github.com/PacificBiosciences/HiFi-16S-workflow.git
-cd HiFi-16S-workflow
-
-nextflow run main.nf \
-  --input /path/to/samples.tsv \
-  --metadata /path/to/metadata.tsv \
-  --dada2_cpu 8 \
-  --vsearch_cpu 8 \
-  -profile singularity
+Step1. 下載資料整理執行檔
+```bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
+chmod +x collect_pacbio_output.sh
 ```
 
-Step 3. 匯整結果到 FYLab downstream format
-	•	dada2-ccs_table_filtered.qza → table.qza
-	•	dada2-ccs_rep_filtered.qza → rep-seqs.qza
-	•	best_taxonomy_withDB.tsv 或 best_tax_merged_freq_tax.tsv → taxonomy.tsv
-	•	feature-table-tax.biom → feature-table-tax.biom
+使用官方分類模型結果
+```bash
+MODE=official ./collect_pacbio_output.sh .
+```
+
+使用 FYLab 自訂分類模型模式
+```bash
+MODE=fylab ./collect_pacbio_output.sh .
+```
+
+# 接續模型分類流程
+
+[接續回到主要共同步驟](../README.md)
+
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
