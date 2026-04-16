@@ -60,7 +60,7 @@ mv *.fastq.gz raw_fastq/
 
 ## 下載去除primer腳本與執行
 ```
-curl -o trim_all.sh https://raw.githubusercontent.com/bing020815/FYLab/main/trim_all.sh
+curl -o trim_all.sh https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
 ```
 
 ## 賦予執行權限
