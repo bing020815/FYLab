@@ -53,7 +53,7 @@ echo "[INFO] MODE = ${MODE}"
 # 核心中間產物，兩種模式都整理
 copy_if_exists "${PACBIO_RESULTS_DIR}/dada2/dada2-ccs_table_filtered.qza" "${PROJECT_DIR}/table.qza"
 copy_if_exists "${PACBIO_RESULTS_DIR}/dada2/dada2-ccs_rep_filtered.qza" "${PROJECT_DIR}/rep-seqs.qza"
-copy_if_exists "${PACBIO_RESULTS_DIR}/results/feature-table-tax.biom" "${PROJECT_DIR}/feature-table-tax.biom"
+copy_if_exists "${PACBIO_RESULTS_DIR}/results/feature-table-tax.biom" "${PROJECT_DIR}/feature-table.biom"
 
 # 先保留官方 taxonomy 參考檔
 copy_if_exists "${PACBIO_RESULTS_DIR}/results/best_taxonomy_withDB.tsv" "${PROJECT_DIR}/taxonomy_nextflow_reference.tsv"
