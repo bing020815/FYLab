@@ -108,6 +108,7 @@ EOF
     echo "[INFO] 若需檢查 session 是否仍存在：tmux ls"
     echo "[INFO] 若需手動接回 session：tmux attach -t ${TMUX_SESSION_NAME}"
     echo "[INFO] 注意：attach 後畫面可能為空白，屬正常現象，請以 log 檔為主"
+    echo "[INFO] 注意：若需關閉 session：tmux kill-session -t  ${TMUX_SESSION_NAME}"
 
 else
     source "$(conda info --base)/etc/profile.d/conda.sh"
