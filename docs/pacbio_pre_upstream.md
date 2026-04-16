@@ -118,6 +118,7 @@ sample2 Treatment
 
 # 官方nextflow
 [PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程步驟包含:
+
 0. 內層分析環境建立
 1. samples.tsv 與 metadata.tsv
 2. 初始 FASTQ QC
