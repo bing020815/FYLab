@@ -34,20 +34,93 @@ extract_status_line() {
     fi
 }
 
+read_status_value() {
+    local status_file="$1"
+    local key="$2"
+
+    if [ ! -f "${status_file}" ]; then
+        return 0
+    fi
+
+    grep "^${key}=" "${status_file}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
+}
+
+format_elapsed() {
+    local total_seconds="$1"
+
+    if ! [[ "${total_seconds}" =~ ^[0-9]+$ ]]; then
+        echo "NA"
+        return
+    fi
+
+    local hours minutes seconds
+    hours=$((total_seconds / 3600))
+    minutes=$(((total_seconds % 3600) / 60))
+    seconds=$((total_seconds % 60))
+
+    printf "%02d:%02d:%02d" "${hours}" "${minutes}" "${seconds}"
+}
+
+get_elapsed_time() {
+    local status_file="$1"
+
+    if [ ! -f "${status_file}" ]; then
+        echo "NA"
+        return
+    fi
+
+    local status start_epoch duration_seconds now elapsed
+    status="$(read_status_value "${status_file}" "status")"
+    start_epoch="$(read_status_value "${status_file}" "start_epoch")"
+    duration_seconds="$(read_status_value "${status_file}" "duration_seconds")"
+
+    if [ "${status}" = "running" ]; then
+        if [[ "${start_epoch}" =~ ^[0-9]+$ ]]; then
+            now="$(date +%s)"
+            elapsed=$((now - start_epoch))
+            format_elapsed "${elapsed}"
+        else
+            echo "NA"
+        fi
+    else
+        if [[ "${duration_seconds}" =~ ^[0-9]+$ ]]; then
+            format_elapsed "${duration_seconds}"
+        else
+            echo "NA"
+        fi
+    fi
+}
+
 print_session_report_full() {
     local session_name="$1"
     local project_dir="$2"
 
     local stdout_log="${project_dir}/logs/nextflow.stdout.log"
     local stderr_log="${project_dir}/logs/nextflow.stderr.log"
-    local status_line
+    local status_file="${project_dir}/logs/run_pacbio.status"
 
+    local current_step status_line run_status start_time elapsed_time
     status_line="$(extract_status_line "${stdout_log}")"
+    run_status="$(read_status_value "${status_file}" "status")"
+    start_time="$(read_status_value "${status_file}" "start_time")"
+    elapsed_time="$(get_elapsed_time "${status_file}")"
+    current_step="${status_line}"
+
+    if [ -z "${run_status}" ]; then
+        run_status="UNKNOWN"
+    fi
+
+    if [ -z "${start_time}" ]; then
+        start_time="NA"
+    fi
 
     echo "=================================================="
-    echo "[INFO] SESSION : ${session_name}"
-    echo "[INFO] PROJECT : ${project_dir}"
-    echo "[INFO] STATUS  : ${status_line}"
+    echo "[INFO] SESSION    : ${session_name}"
+    echo "[INFO] PROJECT    : ${project_dir}"
+    echo "[INFO] STATUS     : ${run_status}"
+    echo "[INFO] START_TIME : ${start_time}"
+    echo "[INFO] ELAPSED    : ${elapsed_time}"
+    echo "[INFO] STEP       : ${current_step}"
     echo
 
     echo "[INFO] stdout 最後 ${TAIL_STDOUT_LINES} 行"
@@ -68,11 +141,23 @@ print_session_report_brief() {
     local project_dir="$2"
 
     local stdout_log="${project_dir}/logs/nextflow.stdout.log"
-    local status_line
+    local status_file="${project_dir}/logs/run_pacbio.status"
 
+    local status_line run_status start_time elapsed_time
     status_line="$(extract_status_line "${stdout_log}")"
+    run_status="$(read_status_value "${status_file}" "status")"
+    start_time="$(read_status_value "${status_file}" "start_time")"
+    elapsed_time="$(get_elapsed_time "${status_file}")"
 
-    echo "${session_name} | ${project_dir} | ${status_line}"
+    if [ -z "${run_status}" ]; then
+        run_status="UNKNOWN"
+    fi
+
+    if [ -z "${start_time}" ]; then
+        start_time="NA"
+    fi
+
+    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${status_line}"
 }
 
 main() {
