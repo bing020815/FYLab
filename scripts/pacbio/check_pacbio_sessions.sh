@@ -16,24 +16,6 @@ show_last_lines() {
     fi
 }
 
-extract_status_line() {
-    local stdout_log="$1"
-
-    if [ ! -f "${stdout_log}" ]; then
-        echo "NO_STDOUT_LOG"
-        return
-    fi
-
-    local status_line
-    status_line="$(tail -n 20 "${stdout_log}" | sed '/^[[:space:]]*$/d' | tail -n 1)"
-
-    if [ -z "${status_line}" ]; then
-        echo "EMPTY_LOG"
-    else
-        echo "${status_line}"
-    fi
-}
-
 read_status_value() {
     local status_file="$1"
     local key="$2"
@@ -91,6 +73,45 @@ get_elapsed_time() {
     fi
 }
 
+extract_step_line() {
+    local stdout_log="$1"
+
+    if [ ! -f "${stdout_log}" ]; then
+        echo "NO_STDOUT_LOG"
+        return
+    fi
+
+    local recent_text
+    recent_text="$(tail -n 200 "${stdout_log}" 2>/dev/null || true)"
+
+    if [ -z "${recent_text}" ]; then
+        echo "EMPTY_LOG"
+        return
+    fi
+
+    local env_line
+    env_line="$(printf '%s\n' "${recent_text}" | grep 'Creating env using conda:' | tail -n 1 || true)"
+    if [ -n "${env_line}" ]; then
+        echo "${env_line}"
+        return
+    fi
+
+    local process_line
+    process_line="$(printf '%s\n' "${recent_text}" | grep -o 'pb16S:[A-Za-z0-9_]\+' | tail -n 1 || true)"
+    if [ -n "${process_line}" ]; then
+        echo "${process_line}"
+        return
+    fi
+
+    local last_line
+    last_line="$(printf '%s\n' "${recent_text}" | sed '/^[[:space:]]*$/d' | tail -n 1)"
+    if [ -n "${last_line}" ]; then
+        echo "${last_line}"
+    else
+        echo "EMPTY_LOG"
+    fi
+}
+
 print_session_report_full() {
     local session_name="$1"
     local project_dir="$2"
@@ -99,12 +120,11 @@ print_session_report_full() {
     local stderr_log="${project_dir}/logs/nextflow.stderr.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local current_step status_line run_status start_time elapsed_time
-    status_line="$(extract_status_line "${stdout_log}")"
+    local step_line run_status start_time elapsed_time
+    step_line="$(extract_step_line "${stdout_log}")"
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
-    current_step="${status_line}"
 
     if [ -z "${run_status}" ]; then
         run_status="UNKNOWN"
@@ -120,7 +140,7 @@ print_session_report_full() {
     echo "[INFO] STATUS     : ${run_status}"
     echo "[INFO] START_TIME : ${start_time}"
     echo "[INFO] ELAPSED    : ${elapsed_time}"
-    echo "[INFO] STEP       : ${current_step}"
+    echo "[INFO] STEP       : ${step_line}"
     echo
 
     echo "[INFO] stdout 最後 ${TAIL_STDOUT_LINES} 行"
@@ -143,8 +163,8 @@ print_session_report_brief() {
     local stdout_log="${project_dir}/logs/nextflow.stdout.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local status_line run_status start_time elapsed_time
-    status_line="$(extract_status_line "${stdout_log}")"
+    local step_line run_status start_time elapsed_time
+    step_line="$(extract_step_line "${stdout_log}")"
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
@@ -157,7 +177,7 @@ print_session_report_brief() {
         start_time="NA"
     fi
 
-    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${status_line}"
+    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${step_line}"
 }
 
 main() {
