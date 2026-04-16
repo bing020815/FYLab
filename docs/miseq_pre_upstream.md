@@ -2,7 +2,7 @@
 適用於Miseq短序列流程: V3, V4, V3-V4
 
 
-# Table of Content:
+# Table of Contents:
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
