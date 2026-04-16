@@ -23,6 +23,7 @@ chmod +x setup_pacbio_env.sh
 ```bash
 conda activate pacbio16s
 ```
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 建立官方 workflow
 下載 PacBio 官方 workflow
@@ -35,6 +36,7 @@ workflow預設放在
 ```bash
 ~/tools/HiFi-16S-workflow
 ```
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 建立官方資料庫
 下載官方資料庫
@@ -43,7 +45,7 @@ conda activate pacbio16s
 cd ~/tools/HiFi-16S-workflow
 nextflow run main.nf --download_db
 ```
-
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 建立專案
 基本專案資料夾
@@ -107,7 +109,7 @@ sample_name condition
 sample1 Control
 sample2 Treatment
 ```
-
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 官方nextflow
 腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
@@ -142,7 +144,7 @@ Step2. 啟動執行 workflow
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
-
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # Taxonomy 檔案資料整理
 PacBio workflow 完成後，可依需求選擇兩種整理模式：
@@ -180,7 +182,7 @@ MODE=official ./collect_pacbio_output.sh .
 ```bash
 MODE=fylab ./collect_pacbio_output.sh .
 ```
-
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 接續模型分類流程
 
