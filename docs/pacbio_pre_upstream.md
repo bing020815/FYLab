@@ -1,11 +1,16 @@
 # PacBio HiFi 16S pre-upstream SOP
-
-此說明文件用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
-PacBio 分流完成後，會先將官方 workflow 的輸出集中於專案資料夾下的 `pacbio_results/`，  
-再使用 `collect_pacbio_output.sh` 將 FYLab 後續共用所需檔案整理到專案根目錄。
+此文件用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
 
 
-## 一、第一次安裝
+# Table of Content:
+1. [|First-setup| 建立環境](#建立環境)
+2. [|First-setup| 建立官方 workflow](#建立官方-workflow)
+3. [|First-setup| 建立官方資料庫](#建立官方資料庫)
+4. [|Pre-upstream| 建立專案](#建立專案)
+5. [|Pre-upstream| 官方nextflow](#官方nextflow)
+6. [|Pre-upstream| Taxonomy 檔案資料整理](#Taxonomy-檔案資料整理)
+7. [|Pre-upstream| 接續模型分類流程](#接續模型分類流程)
+
 1. 建立 pacbio16s conda 環境
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/setup_pacbio_env.sh
@@ -35,23 +40,7 @@ cd ~/tools/HiFi-16S-workflow
 nextflow run main.nf --download_db
 ```
 
-4. tumx session 使用(optional)
-會花較久時間的任務，建議使用 tmux 執行:
-```bash
-tmux new -s session_name
-```
 
-若要離開畫面但不中止工作:
-```
-Ctrl+b 然後按 d
-```
-
-若要回到該 session:
-```bash
-tmux attach -t session_name
-```
-
-## 二、每次新專案
 # 建立專案
 基本專案資料夾
     •   raw_fastq/：原始 PacBio .fastq.gz
@@ -79,7 +68,7 @@ Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
-資料格式範例:
+資料格式範例(不用執行):
 ```bash
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_13.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
@@ -97,7 +86,7 @@ Step4. 檢查sample檔案
 ```bash
 cat samples.tsv
 ```
-範例格式：
+範例格式(不用執行)：
 ```bash
 sample-id   absolute-filepath
 sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
@@ -108,7 +97,7 @@ Step5. 建立 metadata.tsv
 ```bash
 cat metadata.tsv
 ```
-範例格式：
+範例格式(不用執行)：
 ```bash
 sample_name condition
 sample1 Control
@@ -150,6 +139,7 @@ Step2. 啟動執行 workflow
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
 
+
 # Taxonomy 檔案資料整理
 PacBio workflow 完成後，可依需求選擇兩種整理模式：
 1. `MODE=official`
@@ -186,6 +176,7 @@ MODE=official ./collect_pacbio_output.sh .
 ```bash
 MODE=fylab ./collect_pacbio_output.sh .
 ```
+
 
 # 接續模型分類流程
 
