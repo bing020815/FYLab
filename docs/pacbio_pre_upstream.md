@@ -120,9 +120,9 @@ sample2 Treatment
 [PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程步驟包含:
 
 0. 內層分析環境建立
-1. samples.tsv 與 metadata.tsv
+1. cutadapt primer trimming 與方向統一
 2. 初始 FASTQ QC
-3. cutadapt primer trimming 與方向統一
+3. samples.tsv 與 metadata.tsv
 4. QIIME 2 import / demux summarize
 5. DADA2 denoise 生成 ASV
 6. ASV merge / filter / QC
