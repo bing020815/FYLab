@@ -167,6 +167,7 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/c
 chmod +x check_pacbio_sessions.sh
 ```
 * 簡短狀態進度可加: `MODE=brief`
+* 調整顯示行數：`TAIL_STDOUT_LINES=12 TAIL_STDERR_LINES=10`
 ``` bash
 ./check_pacbio_sessions.sh
 ```
