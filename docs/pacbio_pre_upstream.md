@@ -26,7 +26,7 @@ conda activate pacbio16s
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 建立官方 workflow
-下載 PacBio 官方 workflow
+下載 [PacBio 官方 workflow](https://github.com/pacificbiosciences/HiFi-16S-workflow)
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/setup_pacbio_workflow.sh
 chmod +x setup_pacbio_workflow.sh
