@@ -120,14 +120,17 @@ sample2 Treatment
 [PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程步驟包含:
 0. 內層分析環境建立
 1. samples.tsv 與 metadata.tsv
-2. 初始 QC
-3. Primer trimming 與方向統一
-4. 匯入 QIIME 2
-5. DADA2 去噪生成 ASV
-6. Rarefaction 與 diversity 相關輸出
-7. Taxonomy classification
-    * Naive Bayes：會產出 best_taxonomy_withDB.tsv、best_tax_merged_freq_tax.tsv、feature-table-tax.biom
-    * VSEARCH：會產出 vsearch_merged_freq_tax.tsv、feature-table-tax_vsearch.biom、taxonomy_barplot_vsearch.qzv
+2. 初始 FASTQ QC
+3. cutadapt primer trimming 與方向統一
+4. QIIME 2 import / demux summarize
+5. DADA2 denoise 生成 ASV
+6. ASV merge / filter / QC
+7. Rarefaction 與 diversity 相關輸出
+8. Taxonomy classification
+    * dada2_assignTax = Naive Bayes：會產出 best_taxonomy_withDB.tsv、best_tax_merged_freq_tax.tsv、feature-table-tax.biom
+    * class_tax = VSEARCH：會產出 vsearch_merged_freq_tax.tsv、feature-table-tax_vsearch.biom、taxonomy_barplot_vsearch.qzv
+9. export biom
+10. barplot / report
 
 Step1. 下載workflow執行檔案
 ``` bash
