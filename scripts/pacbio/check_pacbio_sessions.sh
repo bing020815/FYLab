@@ -73,7 +73,7 @@ get_elapsed_time() {
     fi
 }
 
-extract_step_line() {
+extract_last_node() {
     local stdout_log="$1"
 
     if [ ! -f "${stdout_log}" ]; then
@@ -81,44 +81,51 @@ extract_step_line() {
         return
     fi
 
-    local recent_text
-    recent_text="$(tail -n 200 "${stdout_log}" 2>/dev/null || true)"
+    local node
+    node="$(grep -Eo 'pb16S:[[:alnum:]_]+' "${stdout_log}" | tail -n 1 || true)"
 
-    if [ -z "${recent_text}" ]; then
-        echo "EMPTY_LOG"
-        return
+    if [ -n "${node}" ]; then
+        echo "${node}"
+    else
+        echo "NA"
+    fi
+}
+
+extract_active_cmd() {
+    local project_dir="$1"
+
+    # 抓和該專案路徑有關的 process，再過濾常見命令
+    local cmds
+    cmds="$(
+        ps -eo pid,args --no-headers 2>/dev/null \
+        | grep "${project_dir}" \
+        | grep -E 'seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|python|perl|awk|sed' \
+        | grep -v grep \
+        | sed -E 's#.*(seqkit|csvtk|cutadapt|qiime|vsearch|Rscript|python|perl|awk|sed).*#\1#' \
+        | sort -u \
+        | paste -sd ',' -
+    )"
+
+    if [ -n "${cmds}" ]; then
+        echo "${cmds}"
+    else
+        echo "NA"
+    fi
+}
+
+extract_env_building() {
+    local stdout_log="$1"
+
+    if [ ! -f "${stdout_log}" ]; then
+        return 0
     fi
 
-    # 從最新往回找，優先抓最有代表性的狀態
-    while IFS= read -r line; do
-        # 跳過空白行
-        if [ -z "$(printf '%s' "${line}" | tr -d '[:space:]')" ]; then
-            continue
-        fi
+    local env_line
+    env_line="$(grep 'Creating env using conda:' "${stdout_log}" | tail -n 1 || true)"
 
-        # 1. 若最近有建立 conda 環境，優先顯示
-        if printf '%s\n' "${line}" | grep -q 'Creating env using conda:'; then
-            echo "${line}"
-            return
-        fi
-
-        # 2. 若是 Nextflow workflow 節點狀態列，抓出 pb16S:xxxx
-        if printf '%s\n' "${line}" | grep -q 'pb16S:'; then
-            printf '%s\n' "${line}" | grep -Eo 'pb16S:[[:alnum:]_]+' | head -n 1
-            return
-        fi
-
-        # 3. 跳過泛用摘要行，避免誤判成 step
-        if printf '%s\n' "${line}" | grep -q '^Plus [0-9]\+ more processes waiting for tasks'; then
-            continue
-        fi
-
-        # 4. 其他非空白行，作為最後 fallback
-        echo "${line}"
-        return
-    done < <(printf '%s\n' "${recent_text}" | tac)
-
-    echo "EMPTY_LOG"
+    if [ -n "${env_line}" ]; then
+        echo "${env_line}"
+    fi
 }
 
 print_session_report_full() {
@@ -129,11 +136,13 @@ print_session_report_full() {
     local stderr_log="${project_dir}/logs/nextflow.stderr.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local step_line run_status start_time elapsed_time
-    step_line="$(extract_step_line "${stdout_log}")"
+    local run_status start_time elapsed_time last_node active_cmd env_building
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
+    last_node="$(extract_last_node "${stdout_log}")"
+    active_cmd="$(extract_active_cmd "${project_dir}")"
+    env_building="$(extract_env_building "${stdout_log}")"
 
     if [ -z "${run_status}" ]; then
         run_status="UNKNOWN"
@@ -144,12 +153,16 @@ print_session_report_full() {
     fi
 
     echo "=================================================="
-    echo "[INFO] SESSION    : ${session_name}"
-    echo "[INFO] PROJECT    : ${project_dir}"
-    echo "[INFO] STATUS     : ${run_status}"
-    echo "[INFO] START_TIME : ${start_time}"
-    echo "[INFO] ELAPSED    : ${elapsed_time}"
-    echo "[INFO] STEP       : ${step_line}"
+    echo "[INFO] SESSION     : ${session_name}"
+    echo "[INFO] PROJECT     : ${project_dir}"
+    echo "[INFO] STATUS      : ${run_status}"
+    echo "[INFO] START_TIME  : ${start_time}"
+    echo "[INFO] ELAPSED     : ${elapsed_time}"
+    echo "[INFO] LAST_NODE   : ${last_node}"
+    echo "[INFO] ACTIVE_CMD  : ${active_cmd}"
+    if [ -n "${env_building}" ]; then
+        echo "[INFO] ENV_BUILD   : ${env_building}"
+    fi
     echo
 
     echo "[INFO] stdout 最後 ${TAIL_STDOUT_LINES} 行"
@@ -172,11 +185,12 @@ print_session_report_brief() {
     local stdout_log="${project_dir}/logs/nextflow.stdout.log"
     local status_file="${project_dir}/logs/run_pacbio.status"
 
-    local step_line run_status start_time elapsed_time
-    step_line="$(extract_step_line "${stdout_log}")"
+    local run_status start_time elapsed_time last_node active_cmd
     run_status="$(read_status_value "${status_file}" "status")"
     start_time="$(read_status_value "${status_file}" "start_time")"
     elapsed_time="$(get_elapsed_time "${status_file}")"
+    last_node="$(extract_last_node "${stdout_log}")"
+    active_cmd="$(extract_active_cmd "${project_dir}")"
 
     if [ -z "${run_status}" ]; then
         run_status="UNKNOWN"
@@ -186,7 +200,7 @@ print_session_report_brief() {
         start_time="NA"
     fi
 
-    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${step_line}"
+    echo "${session_name} | ${run_status} | ${start_time} | ${elapsed_time} | ${last_node} | ${active_cmd}"
 }
 
 main() {
