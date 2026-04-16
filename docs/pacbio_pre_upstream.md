@@ -157,10 +157,12 @@ workflow 輸出會導向：
 - logs/nextflow.stderr.log 監看與除錯
 
 查看session進度狀態
-* 簡短狀態進度可加: `MODE=brief `
 ``` bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
 chmod +x check_pacbio_sessions.sh
+```
+* 簡短狀態進度可加: `MODE=brief `
+``` bash
 ./scripts/pacbio/check_pacbio_sessions.sh
 ```
 
