@@ -2,7 +2,7 @@
 用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
 
 
-# Table of Content:
+# Table of Contents:
 1. [|First-setup| 建立環境](#建立環境)
 2. [|First-setup| 建立官方 workflow](#建立官方-workflow)
 3. [|First-setup| 建立官方資料庫](#建立官方資料庫)
