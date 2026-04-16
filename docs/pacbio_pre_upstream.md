@@ -117,11 +117,6 @@ sample2 Treatment
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 官方nextflow
-腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
-預設 session 命名規則：
-```bash
-pacbio_<project>_<yyyymmdd_HHMMSS>
-```
 [PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程步驟包含:
 1. samples.tsv 與 metadata.tsv
 2. 初始 QC
@@ -149,6 +144,29 @@ Step2. 啟動執行 workflow
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
+腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
+預設 session 命名規則：
+```bash
+pacbio_<project>_<yyyymmdd_HHMMSS>
+```
+使用 `run_pacbio_workflow.sh` 預設 tmux 模式時，
+tmux 的主要用途是讓長時間任務在遠端斷線後仍持續執行。
+workflow 輸出會導向：
+- logs/nextflow.stdout.log 日誌
+```bash
+tail -f logs/nextflow.stdout.log
+```
+- logs/nextflow.stderr.log 監看與除錯
+```bash
+tail -f logs/nextflow.stderr.log
+```
+查看session進度狀態
+``` bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
+chmod +x check_pacbio_sessions.sh
+./scripts/pacbio/check_pacbio_sessions.sh
+```
+
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # Taxonomy 檔案資料整理
