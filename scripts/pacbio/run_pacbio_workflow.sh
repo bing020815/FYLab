@@ -101,11 +101,13 @@ EOF
     tmux new-session -d -s "${TMUX_SESSION_NAME}" "${TMUX_CMD}"
 
     echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
-    echo "[INFO] 重新接回畫面：tmux attach -t ${TMUX_SESSION_NAME}"
-    echo "[INFO] 查看 session 清單：tmux ls"
-    echo "[INFO] 若要離開畫面但不中止工作，請按：Ctrl+b 然後按 d"
-    echo "[INFO] stdout log: ${STDOUT_LOG}"
-    echo "[INFO] stderr log: ${STDERR_LOG}"
+    echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
+    echo "[INFO] 本腳本的輸出已導向 log 檔，請用以下方式監看進度："
+    echo "[INFO]   tail -f ${STDOUT_LOG}"
+    echo "[INFO]   tail -f ${STDERR_LOG}"
+    echo "[INFO] 若需檢查 session 是否仍存在：tmux ls"
+    echo "[INFO] 若需手動接回 session：tmux attach -t ${TMUX_SESSION_NAME}"
+    echo "[INFO] 注意：attach 後畫面可能為空白，屬正常現象，請以 log 檔為主"
 
 else
     source "$(conda info --base)/etc/profile.d/conda.sh"
