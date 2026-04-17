@@ -185,7 +185,9 @@ MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
   * 根據實際 fastq 長度，調整 trunc 範圍，以防因未達到條件被 dada2 大量去除
   * 如果使用短序列，通常要使用 reads 數最多的長度作為切點
 
-查看整批所有長度
+查看整批所有長度，同時輸出:
+* fastq_length_distribution_all.tsv
+* fastq_length_summary.tsv
 ```
 ./check_fastq_lengths.sh .
 ```
