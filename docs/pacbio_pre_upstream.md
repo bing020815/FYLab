@@ -80,12 +80,12 @@ project_name/
 └─ work/             << 系統產出
 ```
 
-### Step1. 啟動環境
+## Step1. 啟動環境
 ```bash
 conda activate pacbio16s
 ```
 
-### Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
+## Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
@@ -96,14 +96,14 @@ m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
 ```
 
-### Step3. 建立sample和metadata檔案
+## Step3. 建立sample和metadata檔案
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/make_manifest_pacbio.sh
 chmod +x make_manifest_pacbio.sh
 ./make_manifest_pacbio.sh .
 ```
 
-### Step4. 檢查`sample.tsv`檔案
+## Step4. 檢查`sample.tsv`檔案
 ```bash
 cat samples.tsv
 ```
@@ -114,7 +114,7 @@ sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
 sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
 ```
 
-### Step5. 檢查`metadata.tsv`檔案
+## Step5. 檢查`metadata.tsv`檔案
 ```bash
 cat metadata.tsv
 ```
@@ -146,13 +146,13 @@ sample2 Treatment
 9. export biom
 10. barplot / report
 
-### Step1. 下載workflow執行檔案
+## Step1. 下載workflow執行檔案
 ``` bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/run_pacbio_workflow.sh
 chmod +x run_pacbio_workflow.sh
 ```
 
-### Step2. 啟動執行 workflow
+## Step2. 啟動執行 workflow
 * `CPU` 可調整
 * 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
 * 需要補充官方 workflow 參數:
@@ -205,7 +205,7 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
   
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
 
-### Step1. 下載資料整理執行檔
+## Step1. 下載資料整理執行檔
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
 chmod +x collect_pacbio_output.sh
