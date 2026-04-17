@@ -5,11 +5,15 @@
 [----------------------------------------------------]             WGS
 
 16S rRNA gene（約 1500 bp）
-[-------------------- 16S 全長 --------------------]                full-lenght 16S
+[-------------------- 16S 全長 --------------------]                full-length 16S
         [---- V3 ----][---- V4 ----]                               V3-V4（約 460 bp）
 
 真核生物基因體中的 exon 區域
 [--intron--][exon][--intron--][exon][--intron--][exon] ...         WES
+
+註：
+- WGS = whole genome sequencing，分析整個基因體
+- WES = whole exome sequencing，通常用於真核生物 exon 區域，不屬於 16S 菌相分析流程
 ```
 
 
@@ -78,12 +82,12 @@ project_name/
 └─ work/             << 系統產出
 ```
 
-Step1. 啟動環境
+### Step1. 啟動環境
 ```bash
 conda activate pacbio16s
 ```
 
-Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
+### Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
@@ -94,14 +98,14 @@ m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
 ```
 
-Step3. 建立sample和metadata檔案
+### Step3. 建立sample和metadata檔案
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/make_manifest_pacbio.sh
 chmod +x make_manifest_pacbio.sh
 ./make_manifest_pacbio.sh .
 ```
 
-Step4. 檢查`sample.tsv`檔案
+### Step4. 檢查`sample.tsv`檔案
 ```bash
 cat samples.tsv
 ```
@@ -112,7 +116,7 @@ sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
 sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
 ```
 
-Step5. 檢查`metadata.tsv`檔案
+### Step5. 檢查`metadata.tsv`檔案
 ```bash
 cat metadata.tsv
 ```
@@ -128,7 +132,7 @@ sample2 Treatment
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 官方nextflow
-[PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程步驟包含:
+[PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程概念包含:
 
 0. 內層分析環境建立
 1. cutadapt primer trimming 與方向統一
@@ -144,13 +148,15 @@ sample2 Treatment
 9. export biom
 10. barplot / report
 
-Step1. 下載workflow執行檔案
+### Step1. 下載workflow執行檔案
 ``` bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/run_pacbio_workflow.sh
 chmod +x run_pacbio_workflow.sh
 ```
 
-Step2. 啟動執行 workflow
+### Step2. 啟動執行 workflow
+
+PacBio 平台可用於不同長度 amplicons: 
 
 <details>
 <summary><strong>使用 full-length 16S 流程</strong></summary>
@@ -242,7 +248,7 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
    - 後續 taxonomy classification 由 FYLab 自訂分類器處理
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
 
-Step1. 下載資料整理執行檔
+### Step1. 下載資料整理執行檔
 ```bash
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
 chmod +x collect_pacbio_output.sh
