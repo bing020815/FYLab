@@ -19,13 +19,13 @@ Reverse read  <----------------------------- 300 bp
 5. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
 
 
-# FastQ files Preprocess 前處理Primer
+# FastQ files Preprocess 前處理 Primer
 FastQ現存現象:
-* 舊機型上機(2×300 (600-cycle kit)): 有些有設定去除primer，不含primer的序列長度300 bp，但有少部分舊設定保有primer
-* 新機型上機(2×300 (600-cycle kit)): 沒有額外設定，序列長度為含primer共計 300 bp
-* 解決方法：統一所有FasqQ長度
-  + 有prime的序列刪掉要去除掉primer
-  + 沒primer的序列則保留不動，不切序列前段
+* 舊機型上機(2×300 [600-cycle kit]): 有些有設定去除 primer，不含 primer 的序列長度300 bp，但有少部分舊設定保有 primer
+* 新機型上機(2×300 [600-cycle kit]): 沒有額外設定，序列長度為含 primer 共計 300 bp
+* 解決方法：統一所有 FasqQ 長度
+  + 有 primer 的序列刪掉要去除掉 primer
+  + 沒 primer 的序列則保留不動，不切序列前段
 ![Primer](../img/primer-idx.png)
 
 ## 啟用cutadapt環境
@@ -39,25 +39,24 @@ project_name/
 ├─ raw_fastq/        << 原始 paired-end FASTQ
 ├─ trimmed_fastq/    << 去 primer 後 FASTQ
 ├─ manifest.csv      << make_manifest_miseq.sh 產出
-├─ metadata.tsv      << 樣本資訊與分組資料
 ├─ qiime2_results/   << QIIME2 輸出
 └─ logs/             << 執行紀錄
 ```
 
-## 建立一個資料夾放原始fastq檔
-在自己的工作資料夾中，建立raw_fastq資料夾，並且移動所有fastq檔案至raw_fastq資料夾
+## 建立一個資料夾放原始 fastq 檔
+在自己的工作資料夾中，建立 raw_fastq 資料夾，並且移動所有 fastq 檔案至 raw_fastq 資料夾
 ```
 mkdir raw_fastq
 mv *.fastq.gz raw_fastq/
 ```
 
-## 下載去除primer腳本與賦予執行權限
+## 下載去除 primer 腳本與賦予執行權限
 ```
 curl -o https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
 chmod +x trim_all.sh
 ```
 
-## 執行去除primer腳本
+## 執行去除 primer 腳本
 * 腳本會尋找 `raw_fastq/*_R1_*.fastq.gz` 形式的檔案，請確認你已將 FASTQ 放在正確路徑下（raw_fastq/ 資料夾中）
 * 剪完的檔案會輸出至 trimmed_fastq/ 目錄下，並且重新命名為 `*_R1_trimmed.fastq.gz`
 * `raw_fastq/*_R1_*.fastq.gz` 形式的檔案則不會被修改或刪除，需要清理空間時可優先清理這邊
@@ -129,7 +128,7 @@ QIIME 2 論壇（佐證 truncLen 與覆蓋區）:
 
 <img src="../img/qiime2_accross_projects.png" alt="Qiime2 accross projects" width="500">
 
-## 進入qiime2環境
+## 進入 qiime2 環境
 ```
 conda activate qiime2-2023.2
 ```
