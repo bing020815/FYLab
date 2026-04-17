@@ -212,7 +212,7 @@ CMD='qiime dada2 denoise-paired \
 MODE=latest JOB_TYPE=denoise ./check_tmux_jobs.sh
 ```
 
-### 檢查stats檔案denosis狀態圖表
+### 檢查 stats 檔案 denosis 狀態圖表
 * 利用 qza 檔案，轉黨輸出成 qzv，可以畫成可視化報表
 * `stats.qzv` - 確認 denoise 中的資訊。
 * https://view.qiime2.org/
