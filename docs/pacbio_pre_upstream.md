@@ -213,7 +213,7 @@ chmod +x collect_pacbio_output.sh
 
 
 <details>
-<summary><strong>使用官方分類模型結果 [full length 16S]</strong></summary>
+<summary><strong>使用官方分類模型結果</strong></summary>
  
 * 用官方的 Naive Bayes classifier 分類結果接續後面的 Downstream Analysis
 * Naive-Bayes classifier 來做分類會同時使用 3 個資料庫: GreenGenes2、GTDB、Silva
@@ -226,7 +226,7 @@ MODE=official ./collect_pacbio_output.sh .
 </details>
 
 <details>
-<summary><strong>使用 FYLab 自訂分類模型模式 [full length 16S/ V3V4]</strong></summary>
+<summary><strong>使用 FYLab 自訂分類模型模式</strong></summary>
 
 * 接續應用 Lab 客製化 Database 分類器和後面的 Downstream Analysis
 
