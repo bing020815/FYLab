@@ -40,104 +40,49 @@ mkdir raw_fastq
 mv *.fastq.gz raw_fastq/
 ```
 
-## 下載去除primer腳本與執行
+## 下載去除primer腳本與賦予執行權限
 ```
-curl -o trim_all.sh https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
-```
-
-## 賦予執行權限
-```
+curl -o https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
 chmod +x trim_all.sh
 ```
 
 ## 執行去除primer腳本
 * 腳本會尋找 raw_fastq/*_R1_*.fastq.gz 形式的檔案，請確認你已將 FASTQ 放在正確路徑下（raw_fastq/ 資料夾中）
-* 剪完的檔案會輸出至 trimmed_fastq/ 目錄下
+* 剪完的檔案會輸出至 trimmed_fastq/ 目錄下，並且重新命名為 *_R1_trimmed.fastq.gz
 * raw_fastq/*_R1_*.fastq.gz 形式的檔案則不會被修改或刪除，需要清理空間時可優先清理這邊
 ```
 ./trim_all.sh
 ```
-
-## 移動統一格式fastq資料至專案資料夾
-* 將trimmed_fastq/ 目錄下所有剪完的fastq移動回專案資料夾下
-* 會將舊存在的fastq覆蓋掉(原始fastq還是有在raw_fastq裡有保留)
-```
-mv -f trimmed_fastq/*.fastq.gz .
-```
-
 <p align="center"><a href="#fylab">Top</a></p>
+
 
 # QIIME2 - Preparation 分析前準備
 ![QIIME2](../img/QIIME2_flow.png)
-## 對檢體資料清單絕對路徑輸出(更新排除掉'file_path.txt'列入清單)
+## 下載去除primer腳本與賦予執行權限
 ```
-find . -maxdepth 1 -type f \( ! -name 'file_path.txt' ! -name 'trim_all.sh' \) -exec realpath {} \; > file_path.txt
-```
-
-## 留下檢體的絕對路徑資料,按照儲存格式存成manifest.csv
-* (按照順序: R1_forward, R2_reverse)
-``` csv
- # 此為範例格式，無需執行
- sample-id,absolute-filepath,direction
- CH4773,/home/fyadmin/Desktop/Hong-Ying/CL/CH4773_S29_L001_R1_01.fastq.gz,forward
- CH4773,/home/fyadmin/Desktop/Hong-Ying/CL/CH4773_S29_L001_R2_001.fastq.gz,reverse
-```
-<details>
-<summary>(Optional) 確認file_path.txt檔案與處理資料</summary>
-
-確認'file_path.txt'的資料紀錄是否存在
-```
-cat file_path.txt
-```
-  (option1): 去除最後一行資料
-  ```
-  sed -i '$d' file_path.txt
-  ```
-  (option2): 去除最後一行資料
-  ```
-  head -n -1 file_path.txt > temp_file.txt && mv temp_file.txt file_path.txt
-  ```
-  (option3): 手動抓資料下來，移除file_path.txt資料紀錄後上傳上去
-  ```
-  使用excel修改
-  ```
-
-(option)確認file_path.txt的資料紀錄已移除
-```
-cat file_path.txt
-```
-</details><br>
-
-## 生成 manifest.csv
-```
-echo "sample-id,absolute-filepath,direction" > manifest.csv && \
-awk -F'/' '
-BEGIN { OFS="," }
-{
-  file = $NF
-  split(file, parts, "_")
-  sample = parts[1]
-  if (file ~ /_R1_/) dir = "forward"
-  else if (file ~ /_R2_/) dir = "reverse"
-  else next
-
-  key = sample"-"dir
-  if (!seen[key]++) {
-    print sample, $0, dir
-  }
-}' file_path.txt >> manifest.csv
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/make_manifest_miseq.sh
+chmod +x make_manifest_miseq.sh
 ```
 
-## 將表有csv轉成逗號分個的txt檔案
-* (fastq轉黨qiime2用)
-```
-cp manifest.csv manifest.txt
-```
 
-## 把逗號分隔的csv改成製表符\t的tsv
-* (metadata才需要用到)
+
+## 執行 manifest 腳本
+* 腳本會優先尋找 trimmed_fastq/*_R1_trimmed.fastq.gz 形式的檔案，沒有才會找 raw_fastq/*_R1_*.fastq.gz 形式的檔案
+* 自動辨識 R1 / R2
+* 自動建立 manifest.csv，以 R1 / R2 前的主體作為 sample-id
+* 檢查每個 sample 是否成對
+* 檢查是否存在重複的 R1 或 R2
+* 檢查是否有無法辨識命名格式的檔案
 ```
-sed 's/,/\t/g' manifest.csv > manifest.tsv
+./make_manifest_miseq.sh .
+```
+```
+# 此為manifest.csv範例格式，無需執行
+sample-id,absolute-filepath,direction
+sampleA,/path/to/project/trimmed_fastq/sampleA_R1_001_trimmed.fastq.gz,forward
+sampleA,/path/to/project/trimmed_fastq/sampleA_R2_001_trimmed.fastq.gz,reverse
+sampleB,/path/to/project/trimmed_fastq/sampleB_R1_001_trimmed.fastq.gz,forward
+sampleB,/path/to/project/trimmed_fastq/sampleB_R2_001_trimmed.fastq.gz,reverse
 ```
 
 <p align="center"><a href="#fylab">Top</a></p>
