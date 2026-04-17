@@ -1,10 +1,15 @@
 # PacBio HiFi 16S pre-upstream SOP
 用於 PacBio HiFi 16S 原始 fastq.gz 的前段分析。
 ```
-16S 全長：約 1500 bp
-V3–V4n：約 460 bp
-[-------------------- 16S 全長 --------------------]
-        [---- V3 ----][---- V4 ----]
+細菌基因體
+[----------------------------------------------------]             WGS
+
+16S rRNA gene（約 1500 bp）
+[-------------------- 16S 全長 --------------------]                full-lenght 16S
+        [---- V3 ----][---- V4 ----]                               V3-V4（約 460 bp）
+
+真核生物基因體中的 exon 區域
+[--intron--][exon][--intron--][exon][--intron--][exon] ...         WES
 ```
 
 
@@ -174,6 +179,24 @@ EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_p
 * 主要運用於完成 denoise 與產出 ASV（table.qza / rep-seqs.qza），並接續共同步驟的模型分類流程
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 380 --max_len 520 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
+```
+</details>
+
+<details>
+<summary><strong>使用 WGS 流程</strong></summary>
+
+* 未開發
+```bash
+
+```
+</details>
+
+<details>
+<summary><strong>使用 targeted sequencing / target enrichment 流程</strong></summary>
+
+* 未開發
+```bash
+
 ```
 </details>
 
