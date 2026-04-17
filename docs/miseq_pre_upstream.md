@@ -52,7 +52,7 @@ mv *.fastq.gz raw_fastq/
 
 ## 下載去除 primer 腳本與賦予執行權限
 ```
-curl -o https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
 chmod +x trim_all.sh
 ```
 
