@@ -146,6 +146,24 @@ chmod +x run_pacbio_workflow.sh
 ```
 
 Step2. 啟動執行 workflow
+
+<details>
+<summary><strong>使用 full-length 16S 流程</strong></summary>
+
+* `CPU` 可調整
+* 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
+* 需要補充官方 workflow 參數:
+    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./run_pacbio_workflow.sh .`
+    + 預設 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./run_pacbio_workflow.sh .`
+    + 短序列 filter 條件: `EXTRA_ARGS="--filterQ 20 --min_len 380 --max_len 520 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
+```bash
+EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
+```
+</details>
+
+<details>
+<summary><strong>使用 V3–V4 流程</strong></summary>
+
 * `CPU` 可調整
 * 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
 * 需要補充官方 workflow 參數:
@@ -155,6 +173,9 @@ Step2. 啟動執行 workflow
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
+</details>
+
+
 腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
 預設 session 命名規則：
 ```bash
