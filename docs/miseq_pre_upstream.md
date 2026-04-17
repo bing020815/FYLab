@@ -58,13 +58,13 @@ chmod +x trim_all.sh
 
 # QIIME2 - Preparation 分析前準備
 ![QIIME2](../img/QIIME2_flow.png)
-## 下載去除primer腳本與賦予執行權限
+## 下載腳本與賦予執行權限
 ```
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/make_manifest_miseq.sh
-chmod +x make_manifest_miseq.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/run_in_tmux.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_tmux_jobs.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh
 ```
-
-
 
 ## 執行 manifest 腳本
 * 腳本會優先尋找 trimmed_fastq/*_R1_trimmed.fastq.gz 形式的檔案，沒有才會找 raw_fastq/*_R1_*.fastq.gz 形式的檔案
