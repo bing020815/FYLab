@@ -99,7 +99,7 @@ print_summary_line() {
 
 print_detail() {
     local status_file="$1"
-    local session_name job_type job_name status start_time end_time elapsed project_dir stdout_log stderr_log cmd_preview cmd_full exit_code
+    local session_name job_type job_name status start_time end_time elapsed project_dir stdout_log stderr_log cmd_preview cmd_full exit_code pre_cmd_preview pre_cmd
     session_name="$(read_status_value "${status_file}" "session_name")"
     job_type="$(read_status_value "${status_file}" "job_type")"
     job_name="$(read_status_value "${status_file}" "job_name")"
@@ -112,6 +112,8 @@ print_detail() {
     stderr_log="$(read_status_value "${status_file}" "stderr_log")"
     cmd_preview="$(read_status_value "${status_file}" "cmd_preview")"
     cmd_full="$(read_status_value "${status_file}" "cmd_full")"
+    pre_cmd_preview="$(read_status_value "${status_file}" "pre_cmd_preview")"
+    pre_cmd="$(read_status_value "${status_file}" "pre_cmd")"
     exit_code="$(read_status_value "${status_file}" "exit_code")"
 
     echo "=================================================="
@@ -128,8 +130,15 @@ print_detail() {
     echo "[INFO] STATUS_FILE  : ${status_file}"
     echo "[INFO] STDOUT_LOG   : ${stdout_log}"
     echo "[INFO] STDERR_LOG   : ${stderr_log}"
+    if [ -n "${pre_cmd_preview}" ]; then
+        echo "[INFO] PRE_CMD      : ${pre_cmd_preview}"
+    fi
     echo "[INFO] CMD_PREVIEW  : ${cmd_preview}"
+
     if [ "${SHOW_CMD}" = "true" ]; then
+        if [ -n "${pre_cmd}" ]; then
+            echo "[INFO] PRE_CMD_FULL : ${pre_cmd}"
+        fi
         echo "[INFO] CMD_FULL     : ${cmd_full}"
     fi
     echo
