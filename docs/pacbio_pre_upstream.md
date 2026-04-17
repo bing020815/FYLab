@@ -155,7 +155,7 @@ Step2. 啟動執行 workflow
 * 需要補充官方 workflow 參數:
     + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./run_pacbio_workflow.sh .`
     + 預設 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./run_pacbio_workflow.sh .`
-    + 短序列 filter 條件: `EXTRA_ARGS="--filterQ 20 --min_len 380 --max_len 520 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
+    + 預設 filter 條件: `EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
@@ -169,9 +169,9 @@ EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_p
 * 需要補充官方 workflow 參數:
     + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./run_pacbio_workflow.sh .`
     + 改 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./run_pacbio_workflow.sh .`
-    + filter條件: `EXTRA_ARGS="--filterQ 20 --min_len 1200 --max_len 1550 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
+    + 短序列 filter條件: `EXTRA_ARGS="--filterQ 20 --min_len 1200 --max_len 1550 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
 ```bash
-EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
+EXTRA_ARGS="--filterQ 20 --min_len 380 --max_len 520 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
 </details>
 
