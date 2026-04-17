@@ -236,23 +236,11 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
 1. `MODE=official`
    - 沿用 Nextflow workflow 的官方資料庫分類結果
    - 會將官方 taxonomy 整理成專案根目錄的 `taxonomy.tsv`
-
 2. `MODE=fylab`
    - 只整理 DADA2 產生的核心中間產物
    - 官方 taxonomy 僅保留為參考檔
    - 後續 taxonomy classification 由 FYLab 自訂分類器處理
-
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
-
-此腳本預設會使用 `tmux` 建立背景 session，以避免遠端 terminal 斷線導致任務中止。
-預設 session 命名規則:
-```
-# 範例格式，無需執行
-pacbio_<project>_<yyyymmdd_HHMMSS>
-```
-
-若需要自行命名，可使用 `TMUX_SESSION_NAME` 指定。
-
 
 Step1. 下載資料整理執行檔
 ```bash
