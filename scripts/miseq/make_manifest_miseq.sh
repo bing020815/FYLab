@@ -53,15 +53,15 @@ if [ "${#FASTQ_FILES[@]}" -eq 0 ]; then
     exit 1
 fi
 
-declare -A forward_map
-declare -A reverse_map
-declare -A sample_seen
+declare -A forward_map=()
+declare -A reverse_map=()
+declare -A sample_seen=()
 
-declare -a unknown_files
-declare -a missing_r1_samples
-declare -a missing_r2_samples
-declare -a duplicate_r1_samples
-declare -a duplicate_r2_samples
+declare -a unknown_files=()
+declare -a missing_r1_samples=()
+declare -a missing_r2_samples=()
+declare -a duplicate_r1_samples=()
+declare -a duplicate_r2_samples=()
 
 for filepath in "${FASTQ_FILES[@]}"; do
     filename="$(basename "${filepath}")"
@@ -115,7 +115,6 @@ for sample_id in "${sample_ids[@]}"; do
     fi
 done
 
-# duplicate sample 清單去重
 if [ "${#duplicate_r1_samples[@]}" -gt 0 ]; then
     mapfile -t duplicate_r1_samples < <(printf '%s\n' "${duplicate_r1_samples[@]}" | sort -u)
 fi
