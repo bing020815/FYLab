@@ -182,7 +182,7 @@ MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
 * 不足trucLen的reads會被剃除、去除可能是拼接自高豐度序列的 chimera (default method:consensus)
 * table.qzv - 可以看到Sample的取樣深度
 <details>
-<summary><strong>檢查Fastq實際長度 [2025829 新增]</strong></summary>
+<summary><strong>檢查Fastq實際長度 [20260417 新增]</strong></summary>
   
   * 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
   * 如果使用短序列，通常要使用reads數最多的長度作為切點
@@ -194,19 +194,23 @@ MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
 </details>
 
 ```
-nohup qiime dada2 denoise-paired \
---i-demultiplexed-seqs paired-end-demux.qza \
---p-trim-left-f 0 --p-trim-left-r 0 \
---p-trunc-len-f 270 --p-trunc-len-r 240 \
---p-n-threads 2 \
---o-representative-sequences rep-seqs.qza \
---o-table table.qza \
---o-denoising-stats stats.qza > nohup.out 2>&1 &
+JOB_TYPE=denoise \
+PROJECT_DIR=. \
+JOB_NAME=dada2_paired \
+CMD='qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs paired-end-demux.qza \
+  --p-trim-left-f 0 \
+  --p-trim-left-r 0 \
+  --p-trunc-len-f 270 \
+  --p-trunc-len-r 240 \
+  --p-n-threads 2 \
+  --o-representative-sequences rep-seqs.qza \
+  --o-table table.qza \
+  --o-denoising-stats stats.qza' \
+./run_in_tmux.sh
 ```
-## 紀錄denoise設定
 ```
-echo "--p-trim-left-f 0 --p-trim-left-r 0" >> denoise_settings.txt
-echo "--p-trunc-len-f 270 --p-trunc-len-r 240" >> denoise_settings.txt
+MODE=latest JOB_TYPE=denoise ./check_tmux_jobs.sh
 ```
 
 ### 檢查stats檔案denosis狀態圖表
