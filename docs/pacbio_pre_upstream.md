@@ -1,21 +1,10 @@
 # PacBio HiFi 16S pre-upstream SOP
 用於 PacBio HiFi 16S 原始 fastq.gz 的前段分析。
 ```
-細菌基因體
-[----------------------------------------------------]             WGS
-
 16S rRNA gene（約 1500 bp）
-[-------------------- 16S 全長 --------------------]                full-length 16S
-        [---- V3 ----][---- V4 ----]                               V3-V4（約 460 bp）
-
-真核生物基因體中的 exon 區域
-[--intron--][exon][--intron--][exon][--intron--][exon] ...         WES
-
-註：
-- WGS = whole genome sequencing，分析整個基因體
-- WES = whole exome sequencing，通常用於真核生物 exon 區域，不屬於 16S 菌相分析流程
+[-------------------- 16S 全長 --------------------]\
+        [---- V3 ----][---- V4 ----]
 ```
-
 
 # Table of Contents:
 1. [|First-setup| 建立環境](#建立環境)
@@ -25,6 +14,15 @@
 5. [|Pre-upstream| 官方nextflow](#官方nextflow)
 6. [|Pre-upstream| Taxonomy 檔案資料整理](#Taxonomy-檔案資料整理)
 7. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
+
+# HiFi 
+由 PacBio SMRT 定序技術產生的長片段、高準確度基因定序數據。
+* 透過「環形一致性定序（CCS）」技術，將單一 DNA 分子重複讀取並校正，廣泛應用於基因組組裝、變異檢測、以及單倍型定相。
+
+![hifi reads](../img/hifi_reads.png)
+* [Wenger, A.M., Peluso, P., Rowell, W.J. et al. Accurate circular consensus long-read sequencing improves variant detection and assembly of a human genome. Nat Biotechnol 37, 1155–1162 (2019)](https://doi.org/10.1038/s41587-019-0217-9)
+
+<p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 
 # 建立環境
@@ -155,12 +153,6 @@ chmod +x run_pacbio_workflow.sh
 ```
 
 ### Step2. 啟動執行 workflow
-
-PacBio 平台可用於不同長度 amplicons: 
-
-<details>
-<summary><strong>使用 full-length 16S 流程</strong></summary>
-
 * `CPU` 可調整
 * 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
 * 需要補充官方 workflow 參數:
@@ -170,42 +162,6 @@ PacBio 平台可用於不同長度 amplicons:
 ```bash
 EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
 ```
-</details>
-
-<details>
-<summary><strong>使用 V3–V4 流程</strong></summary>
-
-* `CPU` 可調整
-* 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
-* 需要補充官方 workflow 參數:
-    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./run_pacbio_workflow.sh .`
-    + 改 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./run_pacbio_workflow.sh .`
-    + 短序列 filter條件: `EXTRA_ARGS="--filterQ 20 --min_len 380 --max_len 520 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
-* Taxanomy 還是使用內建 Full length 16S classifier
-* 主要運用於完成 denoise 與產出 ASV（table.qza / rep-seqs.qza），並接續共同步驟的模型分類流程
-```bash
-EXTRA_ARGS="--filterQ 20 --min_len 380 --max_len 520 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
-```
-</details>
-
-<details>
-<summary><strong>使用 WGS 流程</strong></summary>
-
-* 未開發
-```bash
-
-```
-</details>
-
-<details>
-<summary><strong>使用 targeted sequencing / target enrichment 流程</strong></summary>
-
-* 未開發
-```bash
-
-```
-</details>
-
 
 腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
 預設 session 命名規則：
