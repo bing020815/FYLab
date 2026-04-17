@@ -41,13 +41,11 @@ Pre-upstream 步驟請依資料來源選擇平台：
 
 # Analysis 模型分類導出特征表
 NOTE:
-本段適用於所有已完成 pre-upstream 的專案。
-無論來源為 MiSeq / Illumina 或 PacBio HiFi 16S，
-只要專案資料夾根目錄下已具備以下共用中繼檔案，即可從此處開始：
-- table.qza
-- rep-seqs.qza
-- metadata.tsv
-- otu_table.tsv
+* 本段適用於所有已完成 pre-upstream 的專案。 
+* 無論來源為 MiSeq / Illumina 或 PacBio HiFi 16S，只要專案資料夾根目錄下已具備以下共用中繼檔案，即可從此處開始：
+  - table.qza >> 合併分流專案檔使用
+  - rep-seqs.qza >> 客製化分類器使用
+  - otu_table.tsv >> dehost使用
 
 ### 資料庫預測代表序列
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
