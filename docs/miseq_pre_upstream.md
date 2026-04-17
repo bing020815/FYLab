@@ -145,7 +145,7 @@ CMD="qiime tools import \
   --type 'SampleData[PairedEndSequencesWithQuality]' \
   --input-path manifest.csv \
   --output-path paired-end-demux.qza \
-  --input-format PairedEndFastqManifestPhred33V2" \
+  --input-format PairedEndFastqManifestPhred33" \
 ./run_in_tmux.sh
 ```
 ```
