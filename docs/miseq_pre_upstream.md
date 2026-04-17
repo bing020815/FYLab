@@ -33,6 +33,17 @@ FastQ現存現象:
 conda activate cutadapt310
 ```
 
+基本專案資料夾
+```bash
+project_name/
+├─ raw_fastq/        << 原始 paired-end FASTQ
+├─ trimmed_fastq/    << 去 primer 後 FASTQ
+├─ manifest.csv      << make_manifest_miseq.sh 產出
+├─ metadata.tsv      << 樣本資訊與分組資料
+├─ qiime2_results/   << QIIME2 輸出
+└─ logs/             << 執行紀錄
+```
+
 ## 建立一個資料夾放原始fastq檔
 在自己的工作資料夾中，建立raw_fastq資料夾，並且移動所有fastq檔案至raw_fastq資料夾
 ```
@@ -63,7 +74,8 @@ chmod +x trim_all.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/make_manifest_miseq.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/run_in_tmux.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_tmux_jobs.sh
-chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_fastq_lengths.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh check_fastq_lengths.sh
 ```
 
 ## 執行 manifest 腳本
@@ -175,28 +187,9 @@ MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
   * 根據實際fastq長度，調整trunc範圍，以防因未達到條件被dada2大量去除
   * 如果使用短序列，通常要使用reads數最多的長度作為切點
 
-抽樣查詢長度  
-```
-  zcat YourFastq_R1_trimmed.fastq.gz | \
-  awk '(NR%4==2){print length($1)}' | \
-  sort | uniq -c
-```
 查看整批所有長度
 ```
-  zcat *.fastq.gz | \
-  awk 'NR%4==2 {print length($0)}' | \
-  sort | uniq -c | \
-  awk '{print $2 "\t" $1}' | \
-  tee >(awk '{sum+=$1*$2; n+=$2; if(min==""||$1<min)min=$1; if($1>max)max=$1} END{print "N="n, "Min="min, "Mean="sum/n, "Max="max}' >&2)
-```
-輸出所有長度清單 
-```
-  for f in *.fastq.gz; do
-    mode=$(zcat "$f" | \
-      awk 'NR%4==2 {print length($1)}' | \
-      sort | uniq -c | sort -nr | head -1 | awk '{print $2}')
-    echo -e "$f\t$mode"
-  done > fastq_length_mode_list.txt
+./check_fastq_lengths.sh .
 ```
 </details>
 
