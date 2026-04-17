@@ -5,6 +5,7 @@ JOB_TYPE="${JOB_TYPE:-}"
 PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 JOB_NAME="${JOB_NAME:-}"
+PRE_CMD="${PRE_CMD:-}"
 CMD="${CMD:-}"
 CMD_FILE="${CMD_FILE:-}"
 RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
@@ -36,10 +37,6 @@ if [ -n "${CMD_FILE}" ] && [ ! -f "${CMD_FILE}" ]; then
     exit 1
 fi
 
-if ! command -v conda >/dev/null 2>&1; then
-    echo "[WARN] 找不到 conda，若任務不需要 conda 可忽略"
-fi
-
 mkdir -p "${LOG_DIR}"
 
 export TZ="${TIMEZONE}"
@@ -68,6 +65,8 @@ else
     CMD_PREVIEW="$(printf '%s' "${CMD}" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-300)"
 fi
 
+PRE_CMD_PREVIEW="$(printf '%s' "${PRE_CMD}" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-300)"
+
 write_status_running() {
     cat > "${STATUS_FILE}" <<EOF
 status=running
@@ -85,6 +84,8 @@ project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
 cmd_source=${CMD_SOURCE}
+pre_cmd=${PRE_CMD}
+pre_cmd_preview=${PRE_CMD_PREVIEW}
 cmd_preview=${CMD_PREVIEW}
 cmd_full=${CMD_FULL}
 timezone=${TIMEZONE}
@@ -137,6 +138,8 @@ project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
 stderr_log=${STDERR_LOG}
 cmd_source=${CMD_SOURCE}
+pre_cmd=${PRE_CMD}
+pre_cmd_preview=${PRE_CMD_PREVIEW}
 cmd_preview=${CMD_PREVIEW}
 cmd_full=${CMD_FULL}
 timezone=${TIMEZONE}
@@ -147,6 +150,16 @@ EOSTATUS
 trap 'finish $?' EXIT
 
 {
+EOF
+
+    if [ -n "${PRE_CMD}" ]; then
+        cat <<EOF
+${PRE_CMD}
+
+EOF
+    fi
+
+    cat <<EOF
 ${CMD_FULL}
 } > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
 EOF
@@ -165,6 +178,9 @@ echo "[INFO] LOG_DIR       = ${LOG_DIR}"
 echo "[INFO] STATUS_FILE   = ${STATUS_FILE}"
 echo "[INFO] STDOUT_LOG    = ${STDOUT_LOG}"
 echo "[INFO] STDERR_LOG    = ${STDERR_LOG}"
+if [ -n "${PRE_CMD}" ]; then
+    echo "[INFO] PRE_CMD       = ${PRE_CMD_PREVIEW}"
+fi
 echo "[INFO] CMD_SOURCE    = ${CMD_SOURCE}"
 echo "[INFO] CMD_PREVIEW   = ${CMD_PREVIEW}"
 
