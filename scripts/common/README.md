@@ -54,7 +54,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-classifier gg2_classifier.qza \
   --o-classification taxonomy_results/taxonomy.qza \
   --p-n-jobs 8' \
-./scripts/common/run_in_tmux.sh
+./run_in_tmux.sh
 ```
 
 ### 範例：使用 CMD_FILE
@@ -64,7 +64,7 @@ PROJECT_DIR=. \
 JOB_NAME=picrust2_run \
 PRE_CMD='mkdir -p picrust2_results' \
 CMD_FILE=./run_picrust2.sh \
-./scripts/common/run_in_tmux.sh
+./run_in_tmux.sh
 ```
 
 ### 執行後會建立的檔案
@@ -112,32 +112,32 @@ taxonomy_20260417_103000
 
 查全部摘要
 ```bash
-./scripts/common/check_tmux_jobs.sh
+./check_tmux_jobs.sh
 ```
 
 查全部歷史詳細資訊
 ```bash
-MODE=all ./scripts/common/check_tmux_jobs.sh
+MODE=all ./check_tmux_jobs.sh
 ```
 
 查最新任務
 ```bash
-MODE=latest ./scripts/common/check_tmux_jobs.sh
+MODE=latest ./check_tmux_jobs.sh
 ```
 
 查某類型最新任務
 ```bash
-MODE=latest JOB_TYPE=taxonomy ./scripts/common/check_tmux_jobs.sh
+MODE=latest JOB_TYPE=taxonomy ./check_tmux_jobs.sh
 ```
 
 查指定 session
 ```bash
-MODE=session SESSION_NAME=taxonomy_20260417_103000 ./scripts/common/check_tmux_jobs.sh
+MODE=session SESSION_NAME=taxonomy_20260417_103000 ./check_tmux_jobs.sh
 ```
 
 顯示完整 PRE_CMD 與 CMD_FULL
 ```bash
-MODE=session SESSION_NAME=taxonomy_20260417_103000 SHOW_CMD=true ./scripts/common/check_tmux_jobs.sh
+MODE=session SESSION_NAME=taxonomy_20260417_103000 SHOW_CMD=true ./check_tmux_jobs.sh
 ```
 
 ## 3. 適合使用的情境
