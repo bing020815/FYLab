@@ -246,6 +246,7 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
    - 只整理 DADA2 產生的核心中間產物
    - 官方 taxonomy 僅保留為參考檔
    - 後續 taxonomy classification 由 FYLab 自訂分類器處理
+  
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
 
 ### Step1. 下載資料整理執行檔
