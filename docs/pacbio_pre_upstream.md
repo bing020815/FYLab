@@ -1,7 +1,8 @@
 # PacBio HiFi 16S pre-upstream SOP
-用於 PacBio HiFi full-length 16S 原始 fastq.gz 的前段分析。
+用於 PacBio HiFi 16S 原始 fastq.gz 的前段分析。
 ```
 16S 全長：約 1500 bp
+V3–V4n：約 460 bp
 [-------------------- 16S 全長 --------------------]
         [---- V3 ----][---- V4 ----]
 ```
