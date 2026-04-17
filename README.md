@@ -43,9 +43,9 @@ Pre-upstream 步驟請依資料來源選擇平台：
 NOTE:
 * 本段適用於所有已完成 pre-upstream 的專案。 
 * 無論來源為 MiSeq / Illumina 或 PacBio HiFi 16S，只要專案資料夾根目錄下已具備以下共用中繼檔案，即可從此處開始：
-  - table.qza >> 合併分流專案檔使用
-  - rep-seqs.qza >> 客製化分類器使用
-  - otu_table.tsv >> dehost使用
+  - `table.qza` >> 合併分流專案檔使用
+  - `rep-seqs.qza` >> 客製化分類器使用
+  - `otu_table.tsv` >> dehost使用
 
 ### 資料庫預測代表序列
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
@@ -296,11 +296,10 @@ wget https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza
 ```
 
 ### Step2. Naive Bayes 模型分類
-* 透過已訓練好的模型gg-13-8-99-nb-classifier.qza來預測，並輸出taxonomy.qza
-* gg-13-8-99-nb-classifier.qza 要放在與 Fastq同層的資料夾，需要一些時間
+* 透過已訓練好的模型`gg-13-8-99-nb-classifier.qza`來預測，並輸出`taxonomy.qza`
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier gg-13-8-99-nb-classifier.qza \
+--i-classifier /home/adprc/classifier/gg/gg-13-8-99-nb-classifier.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -313,8 +312,8 @@ nohup qiime feature-classifier classify-sklearn \
 <summary><strong>合併分流專案 [2025829 新增]</strong></summary>
   
   ## 根據實際專案需求，合併不同分流的專案
-  * 分流專案A、分流專案的table.qza, taxonomy.qza, rep-seqs.qza 複製到獨立資料夾
-  * 將分流專案A的table.qza與分流專案B的table.qza合併
+  * 分流專案A、分流專案的`table.qza`, `taxonomy.qza`, `rep-seqs.qza` 複製到獨立資料夾
+  * 將分流專案A的`table.qza`與分流專案B的`table.qza`合併
 
 ### 建立合併後導出用資料夾
 * 後續的dehost/pathway都可以在這個資料夾底下接續做
@@ -348,15 +347,15 @@ rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際
 </details>
 
 ## qza格式轉檔
-*  將分類好的輸出檔案taxonomy.qza轉黨為成taxonomy.tsv，存至phyloseq
+*  將分類好的輸出檔案`taxonomy.qza`轉黨為成`taxonomy.tsv`，存至phyloseq
 ```
 qiime tools export \
 --input-path taxonomy.qza \
 --output-path phyloseq
 ```
 
-### -- 解壓縮 rep-seqs.qza 檔案，產生dna-sequences.fasta，方便查詢Sequence、篩選350bp長度 --
-* https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes
+### -- 解壓縮 `rep-seqs.qza` 檔案，產生 `dna-sequences.fasta`，方便查詢Sequence、篩選350bp長度 --
+* [NCBI網站查詢序列](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes)
 ```
 qiime tools export \
   --input-path rep-seqs.qza \
@@ -530,7 +529,7 @@ seqkit stats phyloseq/dna-sequences.fasta
 </details><br>
 
 ## samtools 處理宿主基因
-### 1.將 .sam 轉換為 .bam（二進位格式，處理效率更高）
+### 1.將 `.sam` 轉換為 `.bam`（二進位格式，處理效率更高）
 ```
 samtools view -h -b phyloseq/mapping_host_genome.sam -o phyloseq/mapping_host_genome.bam
 ```
@@ -564,14 +563,14 @@ samtools fasta -@ 2 phyloseq/nonhost_sorted.bam -f 4 -0 phyloseq/nonhost.fasta
 cat phyloseq/mapping_host_genome.txt
 ```
 ### 查看host基因佔比 [option2]
-* dna-sequences.fasta: 原始代表性序列（未過濾長度）
-* filtered_dna-sequences.fasta: 只保留長度 350~500 bp 的序列
-* host_reads.fasta: 成功比對到宿主的序列（被剃除）
-* nonhost.fasta: 未比對到宿主的序列（保留分析）
+* `dna-sequences.fasta`: 原始代表性序列（未過濾長度）
+* `filtered_dna-sequences.fasta`: 只保留長度 350~500 bp 的序列
+* `host_reads.fasta`: 成功比對到宿主的序列（被剃除）
+* `nonhost.fasta`: 未比對到宿主的序列（保留分析）
 ```
 seqkit stats -T phyloseq/*.fasta | awk '{print $1, $4}' | column -t
 ```
-## 輸出去除宿主基因otu_table.tsv, taxonomy.tsv
+## 輸出去除宿主基因`otu_table.tsv`, `taxonomy.tsv`
 ### 0.建立filtered資料夾
 ```
 mkdir -p phyloseq/filtered_host
@@ -580,11 +579,11 @@ mkdir -p phyloseq/filtered_host
 ```
 grep '^>' phyloseq/nonhost.fasta | sed 's/^>//' > phyloseq/filtered_host/keep_ids.txt
 ```
-### 2.建立 dehost_taxonomy.tsv
+### 2.建立 `dehost_taxonomy.tsv`
 ```
 awk 'FNR==NR {keep[$1]; next} FNR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/dehost_taxonomy.tsv
 ```
-### 3.建立 dehost_otu_table.tsv
+### 3.建立 `dehost_otu_table.tsv`
 ```
 awk 'FNR==NR {keep[$1]; next} FNR<=2 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/dehost_otu_table.tsv
 ```
@@ -592,7 +591,7 @@ awk 'FNR==NR {keep[$1]; next} FNR<=2 || $1 in keep' phyloseq/filtered_host/keep_
 ```
 conda activate qiime2-2023.2
 ```
-### 1. Dehost pathway 流程前期準備: dehost_otu_table.tsv 轉檔 dehost_otu_table.biom
+### 1. Dehost pathway 流程前期準備: `dehost_otu_table.tsv` 轉檔 `dehost_otu_table.biom`
 ```
 biom convert \
   -i phyloseq/filtered_host/dehost_otu_table.tsv \
@@ -600,7 +599,7 @@ biom convert \
   --to-hdf5 \
   --table-type="OTU table"
 ```
-### 2. Dehost pathway 流程前期準備: 把 dehost_otu_table.biom 匯入為 QIIME2 格式
+### 2. Dehost pathway 流程前期準備: 把 `dehost_otu_table.biom` 匯入為 QIIME2 格式
 ```
 qiime tools import \
   --input-path phyloseq/filtered_host/dehost_otu_table.biom \
@@ -608,14 +607,14 @@ qiime tools import \
   --input-format BIOMV210Format \
   --output-path phyloseq/filtered_host/dehost_otu_table.qza
 ```
-### 3. Dehost pathway 流程前期準備: 從原始 rep-seqs.qza 過濾出 dehost 用的 rep-seqs.qza
+### 3. Dehost pathway 流程前期準備: 從原始 `rep-seqs.qza` 過濾出 dehost 用的 `rep-seqs.qza`
 ```
 qiime feature-table filter-seqs \
   --i-data rep-seqs.qza \
   --i-table phyloseq/filtered_host/dehost_otu_table.qza \
   --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
 ```
-### 4. 把 taxonomy.qza 過濾出與 dehost 一致的分類結果
+### 4. 把 `taxonomy.qza` 過濾出與 dehost 一致的分類結果
 ```
 qiime tools import \
   --input-path phyloseq/filtered_host/dehost_taxonomy.tsv \
@@ -623,7 +622,7 @@ qiime tools import \
   --output-path phyloseq/filtered_host/dehost_taxonomy.qza \
   --input-format HeaderlessTSVTaxonomyFormat
 ```
-### 5. Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 rep-seqs.fasta
+### 5. Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 `rep-seqs.fasta`
 ```
 qiime tools export \
   --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
@@ -667,7 +666,7 @@ nohup qiime phylogeny align-to-tree-mafft-fasttree \
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
-註: 產出dehost過的dna-sequences.fasta 於 `phyloseq/filtered_host/`
+註: 產出dehost過的`dna-sequences.fasta` 於 `phyloseq/filtered_host/`
 ```
 qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
 ```
@@ -675,7 +674,7 @@ qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --out
 <details>
 <summary><strong>未Dehost使後語法</strong></summary>
   
-註: 產出dehost過的dna-sequences.fasta 於 `fastq1/`
+註: 產出dehost過的`dna-sequences.fasta` 於 `fastq1/`
 ```
 qiime tools export --input-path rep-seqs.qza --output-path fastq1/
 ```
@@ -773,7 +772,7 @@ qiime diversity core-metrics-phylogenetic \
 --m-metadata-file metadata.tsv \
 --output-dir metrics
 ```
-註:sample depth - 通常會以table.qzv中，觀察 樣本深度最低的數值做為sample depth的數值，才能取樣到所有樣本，若最低的與其他樣本落差太大，則取倒數第二低的數值。
+註:sample depth - 通常會以`table.qzv`中，觀察 樣本深度最低的數值做為sample depth的數值，才能取樣到所有樣本，若最低的與其他樣本落差太大，則取倒數第二低的數值。
 
 
 ## Alpha Diversity  [optional]
@@ -834,8 +833,8 @@ KEGG 功能:
   * 將該節點對應的 IMG 對照 KEGG 功能表（KO 拷貝數）推估至 ASV 節點
 4. 樣本功能彙整
   * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出
-    + pred_metagenome_unstrat.tsv(ASV 層級的功能表)
-    + path_abun_unstrat.tsv(樣本層級的 KEGG pathway abundance)
+    + `pred_metagenome_unstrat.tsv`(ASV 層級的功能表)
+    + `path_abun_unstrat.tsv`(樣本層級的 KEGG pathway abundance)
 
 ## 啟動PICRUSt2 package
 則一環境啟動即可。
@@ -856,7 +855,7 @@ conda activate picrust2sc
 <summary><strong>Dehost使後用語法</strong></summary>
   
 -p 可改設定核心 能設定為4-6
-+ 就算最後 log 出現 Exit 1，只要產生的 out.tre 與 place_seqs_out/ 資料夾存在且完整，就可繼續執行後續流程
++ 就算最後 log 出現 Exit 1，只要產生的 `out.tre` 與 place_seqs_out/ 資料夾存在且完整，就可繼續執行後續流程
 ```
 nohup place_seqs.py \
 -s phyloseq/filtered_host/dna-sequences.fasta \
@@ -912,9 +911,9 @@ nohup hsp.py \
 ## 3.Generate metagenome predictions
 ### KO
 * 產出檔案在KO_metagenome_out資料夾下:
-  + pred_metagenome_unstrat.tsv.gz: KO 的每個 sample unstratified 預測結果
-  + pred_metagenome_contrib.tsv.gz: 每個 ASV 對每個 KO 的貢獻
-  + EC_metagenome_out/seqtab_norm.tsv.gz: metagenome_pipeline 做的 normalization
+  + `pred_metagenome_unstrat.tsv.gz`: KO 的每個 sample unstratified 預測結果
+  + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 KO 的貢獻
+  + `EC_metagenome_out/seqtab_norm.tsv.gz`: metagenome_pipeline 做的 normalization
 
 <details>
 <summary><strong>Picrust2 Dehost使後用語法</strong></summary>
@@ -972,9 +971,9 @@ nohup metagenome_pipeline.py \
 
 ### EC
 * 產出檔案在EC_metagenome_out資料夾下:
-  + pred_metagenome_unstrat.tsv.gz: EC 的每個 sample unstratified 預測結果
-  + pred_metagenome_contrib.tsv.gz: 每個 ASV 對每個 EC 的貢獻
-  + EC_metagenome_out/seqtab_norm.tsv.gz: metagenome_pipeline 做的 normalization
+  + `pred_metagenome_unstrat.tsv.gz`: EC 的每個 sample unstratified 預測結果
+  + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 EC 的貢獻
+  + `EC_metagenome_out/seqtab_norm.tsv.gz`: metagenome_pipeline 做的 normalization
   
 <details>
 <summary><strong>Picrust2 Dehost使後用語法</strong></summary>
@@ -1169,10 +1168,10 @@ nohup add_descriptions.py \
 
 # Key files relationship
 ### File description
-* rep_seqs.qza: QIIME2 .qza 物件, 代表性序列（代表每個 feature 的 DNA 序列, 建立分類器、taxonomy 指派、畫 phylogeny
-* taxonomy.qza: QIIME2 .qza 物件, 每條序列對應到的分類資訊（Domain → Species）, 繪製分類組成圖、群落分析
-* otu_table.qza: QIIME2 .qza 物件, 每筆樣本與每條 feature 的 abundance 表（ASV/OTU 數量）,多樣性分析、群落結構比較
-* dna-sequences.fasta: FASTA（非 QIIME2 格式）,rep_seqs.qza 轉成人可讀的序列格式, 外部工具使用（如 dehost、seqkit、bowtie2 等）
+* `rep_seqs.qza`: QIIME2 `.qza` 物件, 代表性序列（代表每個 feature 的 DNA 序列, 建立分類器、taxonomy 指派、畫 phylogeny
+* `taxonomy.qza`: QIIME2 `.qza` 物件, 每條序列對應到的分類資訊（Domain → Species）, 繪製分類組成圖、群落分析
+* `otu_table.qza`: QIIME2 `.qza` 物件, 每筆樣本與每條 feature 的 abundance 表（ASV/OTU 數量）,多樣性分析、群落結構比較
+* `dna-sequences.fasta`: FASTA（非 QIIME2 格式）,`rep_seqs.qza` 轉成人可讀的序列格式, 外部工具使用（如 dehost、seqkit、bowtie2 等）
 ```
 DADA2 / Deblur 處理原始 FASTQ 檔案
        │
@@ -1184,34 +1183,34 @@ DADA2 / Deblur 處理原始 FASTQ 檔案
 ```
 
 ### QIIME2
-* rep_seqs.qza           → 代表性序列（每條 ASV 的 DNA）
-* otu_table.qza          → ASV abundance table（數量）
-* taxonomy.qza           → 分類資訊（非 PICRUSt2 用）
+* `rep_seqs.qza`           → 代表性序列（每條 ASV 的 DNA）
+* `otu_table.qza`          → ASV abundance table（數量）
+* `taxonomy.qza`          → 分類資訊（非 PICRUSt2 用）
 
 ### 手動匯出
-* dna-sequences.fasta    → rep_seqs.qza 匯出，給 PICRUSt2（place_seqs）
-* dehost_otu_table.biom  → otu_table.qza 匯出，PICRUSt2 的 abundance table input
+* `dna-sequences.fasta`    → `rep_seqs.qza` 匯出，給 PICRUSt2（place_seqs）
+* `dehost_otu_table.biom·  → `otu_table.qza` 匯出，PICRUSt2 的 abundance table input
 
 ### PICRUSt2 STEP A - SEQUENCE PLACEMENT
-* out.tre                → ASV placement tree（ASV 放到 reference tree）
+* `out.tre`                → ASV placement tree（ASV 放到 reference tree）
 
 ### PICRUSt2 STEP B - HSP（Hidden State Prediction）
-* marker_predicted.tsv.gz            → 每條 ASV 預測的 marker genes（功能基因）
-* marker_predicted_and_nsti.tsv.gz   → 上面＋每條 ASV 的 NSTI（序列距離指標）
-* KO_predicted.tsv.gz                → 每條 ASV 的 KO abundance（功能基因代碼）
-* EC_predicted.tsv.gz                → 每條 ASV 的 EC abundance（酵素編碼）
+* `marker_predicted.tsv.gz`            → 每條 ASV 預測的 marker genes（功能基因）
+* `marker_predicted_and_nsti.tsv.gz`   → 上面＋每條 ASV 的 NSTI（序列距離指標）
+* `KO_predicted.tsv.gz`                → 每條 ASV 的 KO abundance（功能基因代碼）
+* `EC_predicted.tsv.gz`                → 每條 ASV 的 EC abundance（酵素編碼）
 
 ### PICRUSt2 STEP C - FUNCTION PREDICTION PER SAMPLE
-* KO_metagenome_out/pred_metagenome_unstrat.tsv.gz   → 各樣本的 KO 總量（整合 ASV × abundance） 
-* EC_metagenome_out/pred_metagenome_unstrat.tsv.gz   → 各樣本的 EC 總量（整合 ASV × abundance）
-* KO_metagenome_out/pred_metagenome_contrib.tsv.gz   → ASV 分別貢獻哪些 KO（用於 LEfSe、貢獻分析）
-* EC_metagenome_out/pred_metagenome_contrib.tsv.gz   → ASV 分別貢獻哪些 EC（用於 LEfSe、貢獻分析）
-* KO_metagenome_out/weighted_nsti.tsv.gz             → 每個樣本的加權 NSTI（QC 重要指標）
-* EC_metagenome_out/weighted_nsti.tsv.gz             → 每個樣本的加權 NSTI（QC 重要指標）
+* `KO_metagenome_out/pred_metagenome_unstrat.tsv.gz`   → 各樣本的 KO 總量（整合 ASV × abundance） 
+* `EC_metagenome_out/pred_metagenome_unstrat.tsv.gz`   → 各樣本的 EC 總量（整合 ASV × abundance）
+* `KO_metagenome_out/pred_metagenome_contrib.tsv.gz`   → ASV 分別貢獻哪些 KO（用於 LEfSe、貢獻分析）
+* `EC_metagenome_out/pred_metagenome_contrib.tsv.gz`   → ASV 分別貢獻哪些 EC（用於 LEfSe、貢獻分析）
+* `KO_metagenome_out/weighted_nsti.tsv.gz`             → 每個樣本的加權 NSTI（QC 重要指標）
+* `EC_metagenome_out/weighted_nsti.tsv.gz`             → 每個樣本的加權 NSTI（QC 重要指標）
     
 ### PICRUSt2 STEP D - PATHWAY PREDICTION
-* KEGG_pathways_out/path_abun_unstrat.tsv.gz    → pathway abundance（每個樣本的 metabolic pathway 量）
-* KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz    → pathway + 描述資訊
+* `KEGG_pathways_out/path_abun_unstrat.tsv.gz`    → pathway abundance（每個樣本的 metabolic pathway 量）
+* `KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz`    → pathway + 描述資訊
     
 ```
 DADA2 / Deblur  
