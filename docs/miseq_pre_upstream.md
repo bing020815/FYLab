@@ -127,14 +127,34 @@ conda activate qiime2-2023.2
 * 會產出 paired-end-demux.qza 檔案(檔案肥大，如需清理空間可優先清除)
 * 依照manifest.txt將兩段序列配對打包封裝起來(未實際拼接兩段序列)
 ```
-nohup qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest.txt --output-path paired-end-demux.qza --input-format PairedEndFastqManifestPhred33 &
+JOB_TYPE=import \
+PROJECT_DIR=. \
+JOB_NAME=paired_end_import \
+CMD="qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path manifest.csv \
+  --output-path paired-end-demux.qza \
+  --input-format PairedEndFastqManifestPhred33V2" \
+./run_in_tmux.sh
+```
+```
+MODE=latest JOB_TYPE=import ./check_tmux_jobs.sh
 ```
 
 ## 轉成可視化報表
 * 利用 qza 檔案，轉黨輸出成qzv，可以畫成可視化報表
 * https://view.qiime2.org/
 ```
-nohup qiime demux summarize --i-data paired-end-demux.qza --o-visualization paired-end-demux.qzv &
+JOB_TYPE=demux \
+PROJECT_DIR=. \
+JOB_NAME=paired_end_demux_summarize \
+CMD='qiime demux summarize \
+  --i-data paired-end-demux.qza \
+  --o-visualization paired-end-demux.qzv' \
+./run_in_tmux.sh
+```
+```
+MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
 ```
 
 ## Denoise 去除雜訊 [標準流程: 270-240 (適用於fastq長度 300 bp)]
