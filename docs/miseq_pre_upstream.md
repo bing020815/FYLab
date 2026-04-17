@@ -1,6 +1,11 @@
 # Miseq SOP
 適用於Miseq短序列流程: V3, V4, V3-V4
-
+```
+16S 全長：約 1500 bp
+V3V4：約 460 bp
+[-------------------- 16S 全長 --------------------]
+        [---- V3 ----][---- V4 ----]
+```
 
 # Table of Contents:
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
