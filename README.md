@@ -47,6 +47,16 @@ NOTE:
   - `rep-seqs.qza` >> 客製化分類器使用
   - `otu_table.tsv` >> dehost使用
 
+## 執行黨下載
+```bash
+mkdir -p shell_tools
+cd shell_tools
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_qza_basic_outputs.sh
+chmod +x export_qza_basic_outputs.sh
+cd ..
+```
+
+
 ### 資料庫預測代表序列
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
 以及2022年，GreenGenes 16S rRNA gene database 更新改版的 Greengenes2 比對資料庫。
