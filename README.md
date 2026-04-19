@@ -524,15 +524,17 @@ MODE=dehost THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
 ```bash
 MODE=raw THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
 ```
+完成可以直接跳[Picurst流程產生路徑](#PICRUSt2---Metabolism-Pathway)
 </details><br>
 <p align="center"><a href="#fylab">Top</a></p>
 
 
 # 畫圖
+## 進化樹 [optional]
 <details>
 <summary><strong>點我展開畫進化樹(optional)</strong></summary>
   
-### 3.導出無根進化樹 [optional]
+### 1. 導出無根進化樹 [optional]
 ```
 qiime tools export \
 --input-path unrooted-tree.qza \
@@ -540,7 +542,7 @@ qiime tools export \
 cd phyloseq; mv tree.nwk unrooted_tree.nwk; cd ../
 ```
 
-### 4.導出有根進化樹 [optional]
+### 2. 導出有根進化樹 [optional]
 ```
 qiime tools export \
 --input-path rooted-tree.qza \
