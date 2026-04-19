@@ -15,8 +15,7 @@ Reverse read  <----------------------------- 300 bp
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
-4. [|Post-upstream| QIIME2 - Analysis: 導出特徵表前準備](#Analysis-導出特徵表前準備)
-5. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
+4. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
 
 
 # FastQ files Preprocess 前處理 Primer
@@ -280,20 +279,10 @@ qiime cutadapt trim-reads \
   --i-data rep-seqs2_trimed.qza \
   --o-merged-data rep-seqs.qza
 ```
-[跳至倒出特徵表步驟](#Analysis-導出特徵表前準備)
+[跳至倒出特徵表步驟](../README.md#qza格式轉檔出存至phyloseq)
 
 </details>
 <p align="center"><a href="#fylab">Top</a></p>
-
-# Analysis 導出特徵表前準備
-導出 feature table 給後續共同步驟使用
-* 建立導出用的資料夾
-* 輸入去除雜訊後的 `table.qza`，再輸出成 biom format: `feature-table.biom`
-* 將輸出成 `feature-table.biom` 的當案轉黨成 `otu_table.tsv`
-* biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
-```bash
-./shell_tools/export_table_qza_to_phyloseq.sh table.qza phyloseq
-```
 
 
 # 接續模型分類流程
