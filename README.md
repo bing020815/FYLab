@@ -719,7 +719,6 @@ conda activate picrust2sc
 <summary><strong>Dehost使後用語法</strong></summary>
   
 -p 可改設定核心 能設定為4-6
-+ 就算最後 log 出現 Exit 1，只要產生的 `out.tre` 與 place_seqs_out/ 資料夾存在且完整，就可繼續執行後續流程
 ```bash
 JOB_TYPE=picrust_place \
 PROJECT_DIR=. \
