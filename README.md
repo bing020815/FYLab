@@ -1,9 +1,10 @@
 # FYLab 分析流程
 基因定序上游分析流程使用說明，或是使用[舊流程觀看對照](./docs/old_sop.md)
 
-* 20260415 updated
+* 20260419 updated
 ```
   + 分流Pre-upstrean [20260415]
+  + 優化執行命令流程 [20260419]
 ```
 
 # Table of Contents:
@@ -730,9 +731,7 @@ CMD='place_seqs.py \
   --intermediate intermediate/place_seqs' \
 ./shell_tools/run_in_tmux.sh
 ```
-```bash
-MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
-```
+
 </details><br>
 <details>
 <summary><strong>未Dehost使用語法</strong></summary>
@@ -750,6 +749,10 @@ CMD='place_seqs.py \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
+
+```bash
+MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
+```
 
 ## 2. Hidden-state prediction
 * 可產生計算好的NSTI資料表，作為路徑預測的QC
