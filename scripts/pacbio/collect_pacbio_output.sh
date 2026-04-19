@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="${1:-$(pwd)}"
+PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 PACBIO_RESULTS_DIR="${PROJECT_DIR}/pacbio_results"
 MODE="${MODE:-official}"   # official / fylab
 
@@ -23,16 +24,18 @@ write_taxonomy_source () {
     if [ "$mode" = "official" ]; then
         cat > "$outfile" <<EOF
 taxonomy_mode=official
-taxonomy_source=PacBio HiFi-16S-workflow bundled DB
-taxonomy_table=taxonomy.tsv
-note=This taxonomy result was generated from the Nextflow official workflow database, not FYLab custom classifier.
+taxonomy_source_type=nextflow_reference
+taxonomy_source_file=taxonomy_nextflow_reference.tsv
+taxonomy_source_merged_file=taxonomy_nextflow_merged_reference.tsv
+note=Use Nextflow official taxonomy as final taxonomy.
 EOF
     elif [ "$mode" = "fylab" ]; then
         cat > "$outfile" <<EOF
 taxonomy_mode=fylab
-taxonomy_source=FYLab custom classifier expected
-taxonomy_table=not_assigned_by_collect_script
-note=Official workflow taxonomy files are kept in pacbio_results and copied as reference only.
+taxonomy_source_type=fylab_classifier
+taxonomy_source_file=taxonomy.tsv
+taxonomy_source_merged_file=taxonomy_nextflow_merged_reference.tsv
+note=Use FYLab custom-classified taxonomy.tsv as final taxonomy. Nextflow taxonomy is reference only.
 EOF
     else
         echo "[ERROR] 不支援的 MODE: $mode"
@@ -47,30 +50,18 @@ if [ ! -d "${PACBIO_RESULTS_DIR}" ]; then
     exit 1
 fi
 
-echo "[INFO] 開始從 pacbio_results 整理 FYLab 共用檔案"
+echo "[INFO] 開始從 pacbio_results 整理 FYLab 共用核心檔案"
 echo "[INFO] MODE = ${MODE}"
 
-# 核心中間產物，兩種模式都整理
+# DADA2 核心產物
 copy_if_exists "${PACBIO_RESULTS_DIR}/dada2/dada2-ccs_table_filtered.qza" "${PROJECT_DIR}/table.qza"
 copy_if_exists "${PACBIO_RESULTS_DIR}/dada2/dada2-ccs_rep_filtered.qza" "${PROJECT_DIR}/rep-seqs.qza"
-copy_if_exists "${PACBIO_RESULTS_DIR}/results/feature-table-tax.biom" "${PROJECT_DIR}/feature-table.biom"
 
-# 先保留官方 taxonomy 參考檔
+# 官方 taxonomy 參考檔，一律保留
 copy_if_exists "${PACBIO_RESULTS_DIR}/results/best_taxonomy_withDB.tsv" "${PROJECT_DIR}/taxonomy_nextflow_reference.tsv"
 copy_if_exists "${PACBIO_RESULTS_DIR}/results/best_tax_merged_freq_tax.tsv" "${PROJECT_DIR}/taxonomy_nextflow_merged_reference.tsv"
 
-if [ "${MODE}" = "official" ]; then
-    copy_if_exists "${PACBIO_RESULTS_DIR}/results/best_taxonomy_withDB.tsv" "${PROJECT_DIR}/taxonomy.tsv"
-    write_taxonomy_source "official"
-
-elif [ "${MODE}" = "fylab" ]; then
-    # 不覆蓋 taxonomy.tsv，讓後續由 FYLab 自訂分類器產生
-    write_taxonomy_source "fylab"
-
-else
-    echo "[ERROR] MODE 只能是 official 或 fylab"
-    exit 1
-fi
+write_taxonomy_source "${MODE}"
 
 echo "[INFO] 整理完成"
-echo "[INFO] 專案根目錄已更新 FYLab 共用檔案"
+echo "[INFO] 已準備: table.qza, rep-seqs.qza, taxonomy_nextflow_reference.tsv, taxonomy_nextflow_merged_reference.tsv, taxonomy_source.txt"
