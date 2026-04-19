@@ -10,7 +10,7 @@
 0. [|Pre-upstream| 初始設定](#Preset)
 1. [|Pre-upstream| 序列前處理與導入](#序列前處理與導入)
 2. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
-3. [|Post-upstream| Dehost - 排除host基因](#Dehost-排除host基因)
+3. [|Post-upstream| Dehost - 由序列排除host基因](#Dehost-排除host基因)
 4. [|Post-upstream| 畫圖](#畫圖)
 5. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 6. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
