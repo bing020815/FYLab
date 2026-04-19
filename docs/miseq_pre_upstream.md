@@ -79,8 +79,7 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/ma
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/run_in_tmux.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_tmux_jobs.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_fastq_lengths.sh
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
-chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh check_fastq_lengths.sh export_table_qza_to_phyloseq.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh check_fastq_lengths.sh
 cd ..
 ```
 
