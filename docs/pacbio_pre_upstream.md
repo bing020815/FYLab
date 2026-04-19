@@ -101,12 +101,20 @@ m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
 mkdir -p shell_tools
 cd shell_tools
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/make_manifest_pacbio.sh
-chmod +x make_manifest_pacbio.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/run_pacbio_workflow.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
+chmod +x make_manifest_pacbio.sh run_pacbio_workflow.sh check_pacbio_sessions.sh collect_pacbio_output.sh
 cd ..
 ./shell_tools/make_manifest_pacbio.sh .
 ```
 
-## Step4. 檢查`sample.tsv`檔案
+## Step4. 建立sample和metadata檔案
+```bash
+./shell_tools/make_manifest_pacbio.sh .
+```
+
+## Step5. 檢查`sample.tsv`檔案
 ```bash
 cat samples.tsv
 ```
@@ -117,7 +125,7 @@ sample1 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample1.fastq.gz
 sample2 /home/adprc/user/pacbio_run_YYYYMMDD/raw_fastq/sample2.fastq.gz
 ```
 
-## Step5. 檢查`metadata.tsv`檔案
+## Step6. 檢查`metadata.tsv`檔案
 ```bash
 cat metadata.tsv
 ```
@@ -149,18 +157,7 @@ sample2 Treatment
 9. export biom
 10. barplot / report
 
-## Step1. 下載workflow執行檔案
-``` bash
-mkdir -p shell_tools
-cd shell_tools
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/run_pacbio_workflow.sh
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
-chmod +x run_pacbio_workflow.sh check_pacbio_sessions.sh collect_pacbio_output.sh
-cd ..
-```
-
-## Step2. 啟動執行 workflow
+## Step1. 啟動執行 workflow
 * `CPU` 可調整
 * 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./shell_tools/run_pacbio_workflow.sh .`
 * 需要補充官方 workflow 參數:
