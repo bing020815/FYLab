@@ -89,14 +89,18 @@ CMD_STR="qiime phylogeny align-to-tree-mafft-fasttree \
   --o-rooted-tree \"${ROOTED_TREE_QZA}\" \
   --p-n-threads \"${THREADS}\""
 
-JOB_TYPE=picrust_tree \
-PROJECT_DIR="${PROJECT_DIR}" \
-JOB_NAME="${JOB_NAME}" \
-CMD="${CMD_STR}" \
-"${RUN_IN_TMUX_SH}"
+SESSION_NAME=$(
+    JOB_TYPE=picrust_tree \
+    PROJECT_DIR="${PROJECT_DIR}" \
+    JOB_NAME="${JOB_NAME}" \
+    CMD="${CMD_STR}" \
+    SHOW_INFO=false \
+    "${RUN_IN_TMUX_SH}"
+)
 
 echo
 echo "[INFO] 已完成 PICRUSt2 tree 任務送出"
+echo "[INFO] SESSION_NAME          = ${SESSION_NAME}"
 echo "[INFO] tree job name         = ${JOB_NAME}"
 echo "[INFO] alignment qza         = ${ALIGN_QZA}"
 echo "[INFO] masked alignment qza  = ${MASKED_ALIGN_QZA}"
@@ -105,3 +109,4 @@ echo "[INFO] rooted tree qza       = ${ROOTED_TREE_QZA}"
 echo "[INFO] 參考 fasta            = ${EXPECT_FASTA}"
 echo "[INFO] 可用以下指令查詢任務："
 echo "MODE=latest JOB_TYPE=picrust_tree ./shell_tools/check_tmux_jobs.sh"
+echo "MODE=session SESSION_NAME=${SESSION_NAME} ./shell_tools/check_tmux_jobs.sh"
