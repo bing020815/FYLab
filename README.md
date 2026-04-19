@@ -51,8 +51,8 @@ NOTE:
 ```bash
 mkdir -p shell_tools
 cd shell_tools
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_qza_basic_outputs.sh
-chmod +x export_qza_basic_outputs.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
+chmod +x export_table_qza_to_phyloseq.sh
 cd ..
 ```
 
