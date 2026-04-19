@@ -10,25 +10,15 @@ if [ ! -f "${INPUT_QZA}" ]; then
     exit 1
 fi
 
-# 判斷 qiime 指令來源
-if command -v qiime >/dev/null 2>&1; then
-    QIIME_CMD=(qiime)
-elif command -v conda >/dev/null 2>&1; then
-    QIIME_CMD=(conda run -n "${QIIME_ENV_NAME}" qiime)
-else
-    echo "[ERROR] 找不到 qiime 指令，也找不到 conda"
-    echo "[ERROR] 請先 conda activate ${QIIME_ENV_NAME}，或安裝 QIIME2"
+if ! command -v qiime >/dev/null 2>&1; then
+    echo "[ERROR] 找不到 qiime 指令"
+    echo "[ERROR] 請先啟用 QIIME2 環境，例如：conda activate ${QIIME_ENV_NAME}"
     exit 1
 fi
 
-# 判斷 biom 指令來源
-if command -v biom >/dev/null 2>&1; then
-    BIOM_CMD=(biom)
-elif command -v conda >/dev/null 2>&1; then
-    BIOM_CMD=(conda run -n "${QIIME_ENV_NAME}" biom)
-else
-    echo "[ERROR] 找不到 biom 指令，也找不到 conda"
-    echo "[ERROR] 請先 conda activate ${QIIME_ENV_NAME}，或安裝 biom-format"
+if ! command -v biom >/dev/null 2>&1; then
+    echo "[ERROR] 找不到 biom 指令"
+    echo "[ERROR] 請先確認目前已啟用正確環境，例如：conda activate ${QIIME_ENV_NAME}"
     exit 1
 fi
 
@@ -36,10 +26,10 @@ mkdir -p "${OUTDIR}"
 
 echo "[INFO] 輸入 QZA      = ${INPUT_QZA}"
 echo "[INFO] 輸出資料夾   = ${OUTDIR}"
-echo "[INFO] QIIME 環境   = ${QIIME_ENV_NAME}"
+echo "[INFO] 目前環境     = ${CONDA_DEFAULT_ENV:-unknown}"
 
 echo "[INFO] 匯出 QIIME2 feature table"
-"${QIIME_CMD[@]}" tools export \
+qiime tools export \
   --input-path "${INPUT_QZA}" \
   --output-path "${OUTDIR}"
 
@@ -49,7 +39,7 @@ if [ ! -f "${OUTDIR}/feature-table.biom" ]; then
 fi
 
 echo "[INFO] 將 biom 轉成 otu_table.tsv"
-"${BIOM_CMD[@]}" convert \
+biom convert \
   -i "${OUTDIR}/feature-table.biom" \
   -o "${OUTDIR}/otu_table.tsv" \
   --to-tsv
