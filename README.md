@@ -86,7 +86,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
@@ -99,7 +99,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [Self-trained]
@@ -112,7 +112,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
@@ -127,7 +127,7 @@ CMD='qiime feature-classifier classify-consensus-vsearch \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 </details><br>
@@ -150,7 +150,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
@@ -163,7 +163,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [Official released]
@@ -176,7 +176,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
@@ -191,7 +191,7 @@ CMD='qiime feature-classifier classify-consensus-vsearch \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 </details><br>
@@ -219,7 +219,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
@@ -232,7 +232,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
@@ -254,7 +254,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 </details><br>
@@ -277,7 +277,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
@@ -290,7 +290,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
@@ -303,7 +303,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
@@ -318,7 +318,7 @@ CMD='qiime feature-classifier classify-consensus-vsearch \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 
 </details><br>
@@ -341,7 +341,7 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 </details><br>
 
@@ -363,13 +363,13 @@ CMD='qiime feature-classifier classify-sklearn \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 </details><br>
 
 模型分類進度查詢
 ```
-MODE=all JOB_TYPE=taxonomy ./check_tmux_jobs.sh
+MODE=all JOB_TYPE=taxonomy ./shell_tools/check_tmux_jobs.sh
 ```
 
 ### 特殊狀況處理2 (optional)
