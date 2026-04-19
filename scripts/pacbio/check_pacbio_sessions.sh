@@ -144,8 +144,7 @@ extract_pending_tasks_from_block() {
         printf '%s\n' "${block}" \
           | grep 'Plus [0-9]\+ more processes waiting for tasks' || true
     } \
-    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
-    | paste -sd ' ; ' - || true
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
 extract_last_finished_task_from_block() {
@@ -239,7 +238,10 @@ show_status_file_summary() {
         echo "[INFO] CURRENT_TASK  : ${current_task}"
     fi
     if [ -n "${pending_tasks:-}" ]; then
-        echo "[INFO] PENDING_TASKS : ${pending_tasks}"
+        echo "[INFO] PENDING_TASKS :"
+        while IFS= read -r line; do
+            [ -n "${line}" ] && echo "  - ${line}"
+        done <<< "${pending_tasks}"
     fi
     if [ -z "${current_task:-}" ] && [ -n "${last_finished_task:-}" ]; then
         echo "[INFO] LAST_FINISHED : ${last_finished_task}"
@@ -320,7 +322,10 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
         echo "[INFO] CURRENT_TASK  : ${CURRENT_TASK}"
     fi
     if [ -n "${PENDING_TASKS}" ]; then
-        echo "[INFO] PENDING_TASKS : ${PENDING_TASKS}"
+        echo "[INFO] PENDING_TASKS :"
+        while IFS= read -r line; do
+            [ -n "${line}" ] && echo "  - ${line}"
+        done <<< "${PENDING_TASKS}"
     fi
     if [ -z "${CURRENT_TASK}" ] && [ -n "${LAST_FINISHED_TASK}" ]; then
         echo "[INFO] LAST_FINISHED : ${LAST_FINISHED_TASK}"
