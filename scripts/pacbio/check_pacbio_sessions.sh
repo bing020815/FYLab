@@ -12,7 +12,7 @@ format_duration() {
 
     if ! [[ "${total}" =~ ^[0-9]+$ ]]; then
         echo "NA"
-        return
+        return 0
     fi
 
     local days hours mins secs
@@ -29,7 +29,7 @@ get_elapsed_from_start_epoch() {
 
     if ! [[ "${start_epoch}" =~ ^[0-9]+$ ]]; then
         echo "NA"
-        return
+        return 0
     fi
 
     local now elapsed
@@ -38,7 +38,7 @@ get_elapsed_from_start_epoch() {
 
     if [ "${elapsed}" -lt 0 ]; then
         echo "NA"
-        return
+        return 0
     fi
 
     format_duration "${elapsed}"
@@ -48,7 +48,7 @@ normalize_stdout_stream() {
     local stdout_log="$1"
 
     if [ ! -f "${stdout_log}" ]; then
-        return
+        return 0
     fi
 
     perl -pe '
@@ -75,7 +75,7 @@ show_tail_lines() {
 
 read_status_value() {
     local key="$1"
-    grep "^${key}=" "${STATUS_FILE}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
+    grep "^${key}=" "${STATUS_FILE}" 2>/dev/null | head -n 1 | cut -d'=' -f2- || true
 }
 
 extract_latest_executor_block() {
@@ -104,22 +104,22 @@ extract_latest_executor_block() {
     END {
         if (block != "") last_block = block
         printf "%s", last_block
-    }'
+    }' || true
 }
 
 extract_executor_line() {
     local block="$1"
     if [ -z "${block}" ]; then
-        return
+        return 0
     fi
 
-    printf '%s\n' "${block}" | grep '^executor >' | tail -n 1 | sed 's/^[[:space:]]*//'
+    printf '%s\n' "${block}" | grep '^executor >' | tail -n 1 | sed 's/^[[:space:]]*//' || true
 }
 
 extract_current_task_from_block() {
     local block="$1"
     if [ -z "${block}" ]; then
-        return
+        return 0
     fi
 
     printf '%s\n' "${block}" \
@@ -127,13 +127,13 @@ extract_current_task_from_block() {
       | grep -v '✔' \
       | grep -v '^\[-[[:space:]]*\]' \
       | head -n 1 \
-      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' || true
 }
 
 extract_pending_tasks_from_block() {
     local block="$1"
     if [ -z "${block}" ]; then
-        return
+        return 0
     fi
 
     {
@@ -145,20 +145,20 @@ extract_pending_tasks_from_block() {
           | grep 'Plus [0-9]\+ more processes waiting for tasks' || true
     } \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
-    | paste -sd ' ; ' -
+    | paste -sd ' ; ' - || true
 }
 
 extract_last_finished_task_from_block() {
     local block="$1"
     if [ -z "${block}" ]; then
-        return
+        return 0
     fi
 
     printf '%s\n' "${block}" \
       | grep 'pb16S:' \
       | grep '✔' \
       | tail -n 1 \
-      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' || true
 }
 
 show_status_file_summary() {
@@ -196,11 +196,11 @@ show_status_file_summary() {
         elapsed_fmt="$(format_duration "${duration_seconds:-}")"
     fi
 
-    task_block="$(extract_latest_executor_block "${stdout_log:-}")"
-    executor_line="$(extract_executor_line "${task_block}")"
-    current_task="$(extract_current_task_from_block "${task_block}")"
-    pending_tasks="$(extract_pending_tasks_from_block "${task_block}")"
-    last_finished_task="$(extract_last_finished_task_from_block "${task_block}")"
+    task_block="$(extract_latest_executor_block "${stdout_log:-}" || true)"
+    executor_line="$(extract_executor_line "${task_block}" || true)"
+    current_task="$(extract_current_task_from_block "${task_block}" || true)"
+    pending_tasks="$(extract_pending_tasks_from_block "${task_block}" || true)"
+    last_finished_task="$(extract_last_finished_task_from_block "${task_block}" || true)"
 
     stale_hint=""
     if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
@@ -255,7 +255,7 @@ show_status_file_summary() {
 echo
 echo "[INFO] PacBio tmux session 狀態總覽"
 
-mapfile -t PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}')
+mapfile -t PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}' || true)
 
 if [ "${#PACBIO_SESSIONS[@]}" -eq 0 ]; then
     echo
@@ -269,7 +269,12 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
     echo "=================================================="
     echo "[INFO] SESSION       : ${SESSION}"
 
-    PROJECT="$(tmux show-environment -t "${SESSION}" 2>/dev/null | awk -F= '/^PROJECT_DIR=/ {print $2}')"
+    if ! tmux has-session -t "${SESSION}" 2>/dev/null; then
+        echo "[WARN] session 已不存在，跳過即時查詢"
+        continue
+    fi
+
+    PROJECT="$(tmux show-environment -t "${SESSION}" 2>/dev/null | awk -F= '/^PROJECT_DIR=/ {print $2}' || true)"
     [ -z "${PROJECT:-}" ] && PROJECT="${PROJECT_DIR}"
 
     LOGS_DIR_SESSION="${PROJECT}/logs"
@@ -297,11 +302,11 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
         ELAPSED="$(get_elapsed_from_start_epoch "${START_EPOCH}")"
     fi
 
-    TASK_BLOCK="$(extract_latest_executor_block "${STDOUT_LOG}")"
-    EXECUTOR_LINE="$(extract_executor_line "${TASK_BLOCK}")"
-    CURRENT_TASK="$(extract_current_task_from_block "${TASK_BLOCK}")"
-    PENDING_TASKS="$(extract_pending_tasks_from_block "${TASK_BLOCK}")"
-    LAST_FINISHED_TASK="$(extract_last_finished_task_from_block "${TASK_BLOCK}")"
+    TASK_BLOCK="$(extract_latest_executor_block "${STDOUT_LOG}" || true)"
+    EXECUTOR_LINE="$(extract_executor_line "${TASK_BLOCK}" || true)"
+    CURRENT_TASK="$(extract_current_task_from_block "${TASK_BLOCK}" || true)"
+    PENDING_TASKS="$(extract_pending_tasks_from_block "${TASK_BLOCK}" || true)"
+    LAST_FINISHED_TASK="$(extract_last_finished_task_from_block "${TASK_BLOCK}" || true)"
 
     echo "[INFO] PROJECT       : ${PROJECT}"
     echo "[INFO] STATUS        : ${STATUS:-running}"
