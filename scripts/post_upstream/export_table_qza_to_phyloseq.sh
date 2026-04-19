@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if ! command -v qiime >/dev/null 2>&1; then
+    echo "[ERROR] 找不到 qiime 指令，請先執行：conda activate qiime2-2023.2"
+    exit 1
+fi
+
+if ! command -v biom >/dev/null 2>&1; then
+    echo "[ERROR] 找不到 biom 指令，請先安裝 biom-format 或切換到正確環境"
+    exit 1
+fi
+
 INPUT_QZA="${1:-table.qza}"
 OUTDIR="${2:-phyloseq}"
 
