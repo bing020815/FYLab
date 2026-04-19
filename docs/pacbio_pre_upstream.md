@@ -98,9 +98,12 @@ m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
 
 ## Step3. 建立sample和metadata檔案
 ```bash
+mkdir -p shell_tools
+cd shell_tools
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/make_manifest_pacbio.sh
 chmod +x make_manifest_pacbio.sh
-./make_manifest_pacbio.sh .
+cd ..
+./shell_tools/make_manifest_pacbio.sh .
 ```
 
 ## Step4. 檢查`sample.tsv`檔案
@@ -148,19 +151,24 @@ sample2 Treatment
 
 ## Step1. 下載workflow執行檔案
 ``` bash
+mkdir -p shell_tools
+cd shell_tools
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/run_pacbio_workflow.sh
-chmod +x run_pacbio_workflow.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
+chmod +x run_pacbio_workflow.sh check_pacbio_sessions.sh collect_pacbio_output.sh
+cd ..
 ```
 
 ## Step2. 啟動執行 workflow
 * `CPU` 可調整
-* 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./run_pacbio_workflow.sh .`
+* 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./shell_tools/run_pacbio_workflow.sh .`
 * 需要補充官方 workflow 參數:
-    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./run_pacbio_workflow.sh .`
-    + 預設 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./run_pacbio_workflow.sh .`
-    + 預設 filter 條件: `EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .`
+    + 已先修過 primer: `EXTRA_ARGS="--skip_primer_trim" CPU=8 ./shell_tools/run_pacbio_workflow.sh .`
+    + 預設 primer: `EXTRA_ARGS="--front_p AGRGTTYGATYMTGGCTCAG --adapter_p AAGTCGTAACAAGGTARCY" CPU=8 ./shell_tools/run_pacbio_workflow.sh .`
+    + 預設 filter 條件: `EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./shell_tools/run_pacbio_workflow.sh .`
 ```bash
-EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./run_pacbio_workflow.sh .
+EXTRA_ARGS="--filterQ 20 --min_len 1000 --max_len 1600 --max_ee 2" CPU=8 ./shell_tools/run_pacbio_workflow.sh .
 ```
 
 腳本預設會使用 tmux 建立背景 session，以避免遠端斷線導致任務中止。
@@ -176,14 +184,10 @@ workflow 輸出會導向：
 - logs/nextflow.stderr.log 監看與除錯
 
 查看session進度狀態
-``` bash
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/check_pacbio_sessions.sh
-chmod +x check_pacbio_sessions.sh
-```
 * 簡短狀態進度可加: `MODE=brief`
 * 已結束的session則不會被列出
 ``` bash
-./check_pacbio_sessions.sh
+./shell_tools/check_pacbio_sessions.sh
 ```
 
 查看workflow任務結論狀態
@@ -205,13 +209,7 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
   
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
 
-## Step1. 下載資料整理執行檔
-```bash
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
-chmod +x collect_pacbio_output.sh
-```
-
-
+## Step1. 執行資料整理執行檔
 <details>
 <summary><strong>使用官方分類模型結果</strong></summary>
  
@@ -221,7 +219,7 @@ chmod +x collect_pacbio_output.sh
 * 先嘗試做 species level，如果不行再做 genus level
 
 ```bash
-MODE=official ./collect_pacbio_output.sh .
+MODE=official ./shell_tools/collect_pacbio_output.sh .
 ```
 </details>
 
@@ -231,7 +229,7 @@ MODE=official ./collect_pacbio_output.sh .
 * 接續應用 Lab 客製化 Database 分類器和後面的 Downstream Analysis
 
 ```bash
-MODE=fylab ./collect_pacbio_output.sh .
+MODE=fylab ./shell_tools/collect_pacbio_output.sh .
 ```
 </details>
 
