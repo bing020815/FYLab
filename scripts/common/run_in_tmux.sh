@@ -11,6 +11,7 @@ CMD_FILE="${CMD_FILE:-}"
 RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
 TIMEZONE="${TIMEZONE:-Asia/Taipei}"
 LOG_DIR="${LOG_DIR:-${PROJECT_DIR}/logs}"
+SHOW_INFO="${SHOW_INFO:-true}"
 
 if [ -z "${JOB_TYPE}" ]; then
     echo "[ERROR] JOB_TYPE 不可為空"
@@ -90,6 +91,7 @@ cmd_preview=${CMD_PREVIEW}
 cmd_full=${CMD_FULL}
 timezone=${TIMEZONE}
 run_in_tmux=${RUN_IN_TMUX}
+show_info=${SHOW_INFO}
 EOF
 }
 
@@ -144,6 +146,7 @@ cmd_preview=${CMD_PREVIEW}
 cmd_full=${CMD_FULL}
 timezone=${TIMEZONE}
 run_in_tmux=${RUN_IN_TMUX}
+show_info=${SHOW_INFO}
 EOSTATUS
 }
 
@@ -169,20 +172,22 @@ RUNNER_SCRIPT="${LOG_DIR}/${JOB_ID}.runner.sh"
 build_runner_script > "${RUNNER_SCRIPT}"
 chmod +x "${RUNNER_SCRIPT}"
 
-echo "[INFO] JOB_TYPE      = ${JOB_TYPE}"
-echo "[INFO] JOB_NAME      = ${JOB_NAME}"
-echo "[INFO] PROJECT_DIR   = ${PROJECT_DIR}"
-echo "[INFO] JOB_ID        = ${JOB_ID}"
-echo "[INFO] SESSION_NAME  = ${SESSION_NAME}"
-echo "[INFO] LOG_DIR       = ${LOG_DIR}"
-echo "[INFO] STATUS_FILE   = ${STATUS_FILE}"
-echo "[INFO] STDOUT_LOG    = ${STDOUT_LOG}"
-echo "[INFO] STDERR_LOG    = ${STDERR_LOG}"
-if [ -n "${PRE_CMD}" ]; then
-    echo "[INFO] PRE_CMD       = ${PRE_CMD_PREVIEW}"
+if [ "${SHOW_INFO}" = "true" ]; then
+    echo "[INFO] JOB_TYPE      = ${JOB_TYPE}"
+    echo "[INFO] JOB_NAME      = ${JOB_NAME}"
+    echo "[INFO] PROJECT_DIR   = ${PROJECT_DIR}"
+    echo "[INFO] JOB_ID        = ${JOB_ID}"
+    echo "[INFO] SESSION_NAME  = ${SESSION_NAME}"
+    echo "[INFO] LOG_DIR       = ${LOG_DIR}"
+    echo "[INFO] STATUS_FILE   = ${STATUS_FILE}"
+    echo "[INFO] STDOUT_LOG    = ${STDOUT_LOG}"
+    echo "[INFO] STDERR_LOG    = ${STDERR_LOG}"
+    if [ -n "${PRE_CMD}" ]; then
+        echo "[INFO] PRE_CMD       = ${PRE_CMD_PREVIEW}"
+    fi
+    echo "[INFO] CMD_SOURCE    = ${CMD_SOURCE}"
+    echo "[INFO] CMD_PREVIEW   = ${CMD_PREVIEW}"
 fi
-echo "[INFO] CMD_SOURCE    = ${CMD_SOURCE}"
-echo "[INFO] CMD_PREVIEW   = ${CMD_PREVIEW}"
 
 if [ "${RUN_IN_TMUX}" = "true" ]; then
     if ! command -v tmux >/dev/null 2>&1; then
@@ -197,10 +202,16 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
 
     tmux new-session -d -s "${SESSION_NAME}" "bash \"${RUNNER_SCRIPT}\""
 
-    echo "[INFO] 已建立 tmux session: ${SESSION_NAME}"
-    echo "[INFO] 查詢 session 任務清單：./shell_tools/check_tmux_jobs.sh"
-    echo "[INFO] 查詢詳細任務進度：MODE=latest ./shell_tools/check_tmux_jobs.sh"
+    if [ "${SHOW_INFO}" = "true" ]; then
+        echo "[INFO] 已建立 tmux session: ${SESSION_NAME}"
+        echo "[INFO] 查詢 session 任務清單：./shell_tools/check_tmux_jobs.sh"
+        echo "[INFO] 查詢詳細任務進度：MODE=latest ./shell_tools/check_tmux_jobs.sh"
+    else
+        echo "${SESSION_NAME}"
+    fi
 else
-    echo "[INFO] 前景執行"
+    if [ "${SHOW_INFO}" = "true" ]; then
+        echo "[INFO] 前景執行"
+    fi
     bash "${RUNNER_SCRIPT}"
 fi
