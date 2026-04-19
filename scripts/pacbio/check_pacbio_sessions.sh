@@ -7,6 +7,43 @@ PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 LOGS_DIR="${PROJECT_DIR}/logs"
 STATUS_FILE="${LOGS_DIR}/run_pacbio.status"
 
+format_duration() {
+    local total="${1:-}"
+
+    if ! [[ "${total}" =~ ^[0-9]+$ ]]; then
+        echo "NA"
+        return
+    fi
+
+    local days hours mins secs
+    days=$(( total / 86400 ))
+    hours=$(( (total % 86400) / 3600 ))
+    mins=$(( (total % 3600) / 60 ))
+    secs=$(( total % 60 ))
+
+    printf "%02d:%02d:%02d:%02d\n" "${days}" "${hours}" "${mins}" "${secs}"
+}
+
+get_elapsed_from_start_epoch() {
+    local start_epoch="${1:-}"
+
+    if ! [[ "${start_epoch}" =~ ^[0-9]+$ ]]; then
+        echo "NA"
+        return
+    fi
+
+    local now elapsed
+    now="$(date +%s)"
+    elapsed=$(( now - start_epoch ))
+
+    if [ "${elapsed}" -lt 0 ]; then
+        echo "NA"
+        return
+    fi
+
+    format_duration "${elapsed}"
+}
+
 show_tail_lines() {
     local file="$1"
     local n="${2:-8}"
@@ -26,18 +63,48 @@ read_status_value() {
     grep "^${key}=" "${STATUS_FILE}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
 }
 
+extract_current_task_from_stdout() {
+    local stdout_log="$1"
+
+    if [ ! -f "${stdout_log}" ]; then
+        return
+    fi
+
+    grep -E 'pb16S:|Plus [0-9]+ more processes waiting' "${stdout_log}" \
+      | tail -n 8 \
+      | tr '\n' ' ' \
+      | sed 's/[[:space:]]\+/ /g' \
+      | sed 's/^ *//; s/ *$//'
+}
+
+extract_current_task_from_nextflow_log() {
+    local nf_log="$1"
+
+    if [ ! -f "${nf_log}" ]; then
+        return
+    fi
+
+    grep -E 'pb16S:' "${nf_log}" \
+      | tail -n 5 \
+      | tr '\n' ' ' \
+      | sed 's/[[:space:]]\+/ /g' \
+      | sed 's/^ *//; s/ *$//'
+}
+
 show_status_file_summary() {
     if [ ! -f "${STATUS_FILE}" ]; then
         echo "[INFO] 找不到 status 檔案：${STATUS_FILE}"
         return 1
     fi
 
-    local status start_time end_time duration_seconds exit_code
+    local status start_time start_epoch end_time duration_seconds exit_code
     local session_name project_dir stdout_log stderr_log
     local cpu resume extra_args workflow_dir timezone nxf_conda_cachedir
+    local elapsed_fmt current_task nf_log stale_hint
 
     status="$(read_status_value status)"
     start_time="$(read_status_value start_time)"
+    start_epoch="$(read_status_value start_epoch)"
     end_time="$(read_status_value end_time)"
     duration_seconds="$(read_status_value duration_seconds)"
     exit_code="$(read_status_value exit_code)"
@@ -52,6 +119,24 @@ show_status_file_summary() {
     timezone="$(read_status_value timezone)"
     nxf_conda_cachedir="$(read_status_value nxf_conda_cachedir)"
 
+    if [ "${status:-}" = "running" ]; then
+        elapsed_fmt="$(get_elapsed_from_start_epoch "${start_epoch:-}")"
+    else
+        elapsed_fmt="$(format_duration "${duration_seconds:-}")"
+    fi
+
+    current_task="$(extract_current_task_from_stdout "${stdout_log:-}")"
+
+    nf_log="${PROJECT_DIR}/.nextflow.log"
+    if [ -z "${current_task}" ]; then
+        current_task="$(extract_current_task_from_nextflow_log "${nf_log}")"
+    fi
+
+    stale_hint=""
+    if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
+        stale_hint="可能 tmux session 已結束，但 status 檔尚未更新。"
+    fi
+
     echo
     echo "=================================================="
     echo "[INFO] 目前無活著的 pacbio_* tmux session，改讀 status 檔案"
@@ -60,6 +145,7 @@ show_status_file_summary() {
     echo "[INFO] STATUS        : ${status:-NA}"
     echo "[INFO] START_TIME    : ${start_time:-NA}"
     echo "[INFO] END_TIME      : ${end_time:-NA}"
+    echo "[INFO] ELAPSED       : ${elapsed_fmt}"
     echo "[INFO] DURATION_SEC  : ${duration_seconds:-NA}"
     echo "[INFO] EXIT_CODE     : ${exit_code:-NA}"
     echo "[INFO] CPU           : ${cpu:-NA}"
@@ -75,6 +161,12 @@ show_status_file_summary() {
     fi
     if [ -n "${stderr_log:-}" ]; then
         echo "[INFO] STDERR_LOG    : ${stderr_log}"
+    fi
+    if [ -n "${current_task:-}" ]; then
+        echo "[INFO] CURRENT_TASK  : ${current_task}"
+    fi
+    if [ -n "${stale_hint}" ]; then
+        echo "[WARN] ${stale_hint}"
     fi
 
     show_tail_lines "${stdout_log:-/dev/null}" 8 "[INFO] stdout 最後 8 行"
@@ -108,23 +200,21 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
 
     STATUS="running"
     START_TIME="NA"
+    START_EPOCH=""
     ELAPSED="NA"
+    CURRENT_TASK=""
 
     if [ -f "${STATUS_FILE_SESSION}" ]; then
         START_TIME="$(grep '^start_time=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
+        START_EPOCH="$(grep '^start_epoch=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
         STATUS="$(grep '^status=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
     fi
 
-    if [ -f "${STDOUT_LOG}" ]; then
-        CURRENT_TASK="$(grep -E 'pb16S:|Plus [0-9]+ more processes waiting' "${STDOUT_LOG}" | tail -n 2 | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' || true)"
-    else
-        CURRENT_TASK=""
+    if [ -n "${START_EPOCH}" ]; then
+        ELAPSED="$(get_elapsed_from_start_epoch "${START_EPOCH}")"
     fi
 
-    if tmux has-session -t "${SESSION}" 2>/dev/null; then
-        ELAPSED="$(ps -eo etime,cmd | grep "tmux.*${SESSION}" | grep -v grep | head -n 1 | awk '{print $1}' || true)"
-        [ -z "${ELAPSED}" ] && ELAPSED="running"
-    fi
+    CURRENT_TASK="$(extract_current_task_from_stdout "${STDOUT_LOG}")"
 
     echo "[INFO] PROJECT       : ${PROJECT}"
     echo "[INFO] STATUS        : ${STATUS:-running}"
