@@ -11,10 +11,9 @@
 1. [|Pre-upstream| 序列前處理與導入](#序列前處理與導入)
 2. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
 3. [|Post-upstream| Dehost - 由序列排除host基因](#Dehost-排除host基因)
-4. [|Post-upstream| KEGG前期準備](#KEGG-前期準備)
-5. [|Post-upstream| 畫圖](#畫圖)
-6. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
-7. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
+4. [|Post-upstream| 畫圖](#畫圖)
+5. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+6. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
 
 # Preset
 ## Folder Management
@@ -58,8 +57,7 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_ups
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/run_dehost_on_fasta.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/filter_phyloseq_by_nonhost_ids.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/prepare_dehost_qiime2_inputs.sh
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/picrust/prepare_picrust_inputs.sh
-chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh prepare_picrust_inputs.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh 
 cd ..
 ```
 
@@ -500,37 +498,51 @@ conda activate qiime2-2023.2
 ```
 ./shell_tools/prepare_dehost_qiime2_inputs.sh .
 ```
+完成可以直接跳[Picurst流程產生路徑](#PICRUSt2---Metabolism-Pathway)
 <p align="center"><a href="#fylab">Top</a></p>
 
 
-# KEGG 前期準備
-## KEGG PICRUSt2 tree 前期準備
-### 進入qiime2環境
+# 畫圖
+## 進入qiime2環境
 ```
 conda activate qiime2-2023.2
 ```
-
-### 檔案執行
+### Phylogeny Tree 
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
 ```bash
-MODE=dehost THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
+JOB_TYPE=phylogeny_tree \
+PROJECT_DIR=. \
+JOB_NAME=dehost_tree \
+CMD='qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza \
+  --p-n-threads 2' \
+./shell_tools/run_in_tmux.sh
 ```
 </details><br>
 <details>
 <summary><strong>未Dehost使後語法</strong></summary>
 
 ```bash
-MODE=raw THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
+JOB_TYPE=phylogeny_tree \
+PROJECT_DIR=. \
+JOB_NAME=raw_tree \
+CMD='qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza \
+  --p-n-threads 2' \
+./shell_tools/run_in_tmux.sh
 ```
 </details><br>
 
-完成可以直接跳[Picurst流程產生路徑](#PICRUSt2---Metabolism-Pathway)
-<p align="center"><a href="#fylab">Top</a></p>
-
-
-# 畫圖
 ## 進化樹 [optional]
 <details>
 <summary><strong>點我展開畫進化樹(optional)</strong></summary>
@@ -574,7 +586,7 @@ qiime taxa barplot \
 <details>
 <summary><strong>點我展開畫OTU圖</strong></summary>
 
-### 1.Taxonomy Collapse
+### 1. Taxonomy Collapse  [optional]
 ```
 qiime taxa collapse \
 --i-table table.qza \
@@ -583,21 +595,21 @@ qiime taxa collapse \
 --o-collapsed-table collapse-table.qza
 ```
 
-### 2.Relative Frequency  [optional]
+### 2. Relative Frequency  [optional]
 ```
 qiime feature-table relative-frequency \
 --i-table collapse-table.qza \
 --o-relative-frequency-table relative-table.qza
 ```
 
-### 3.Export  [optional]
+### 3. Export [optional]
 ```
 qiime tools export \
 --input-path relative-table.qza \
 --output-path export-relative-table
 ```
 
-### 4.Convert BIOM to TSV (最後用convert-relative-table.tsv上greengene網站跑圖)  [optional]
+### 4. Convert BIOM to TSV (最後用convert-relative-table.tsv上greengene網站跑圖)  [optional]
 ```
 biom convert \
 -i export-relative-table/feature-table.biom \
@@ -613,7 +625,7 @@ biom convert \
 <details>
 <summary><strong>點我展開畫Diversity圖</strong></summary>
   
-### 1.
+### 1.轉換
 ```
 qiime diversity core-metrics-phylogenetic \
 --i-phylogeny rooted-tree.qza \
