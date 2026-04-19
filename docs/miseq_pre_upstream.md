@@ -284,7 +284,7 @@ qiime cutadapt trim-reads \
 * 將輸出成 `feature-table.biom` 的當案轉黨成 `otu_table.tsv`
 * biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
 ```bash
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/post_upstream/export_table_qza_to_phyloseq.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
 chmod +x export_table_qza_to_phyloseq.sh
 ./export_table_qza_to_phyloseq.sh table.qza phyloseq
 ```
