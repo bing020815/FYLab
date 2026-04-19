@@ -44,6 +44,21 @@ get_elapsed_from_start_epoch() {
     format_duration "${elapsed}"
 }
 
+normalize_stdout_stream() {
+    local stdout_log="$1"
+
+    if [ ! -f "${stdout_log}" ]; then
+        return
+    fi
+
+    perl -pe '
+        s/\r/\n/g;
+        s/\e\[[0-9;?]*[ -\/]*[@-~]//g;
+    ' "${stdout_log}" \
+    | sed 's/[[:space:]]\+$//' \
+    | sed '/^[[:space:]]*$/d'
+}
+
 show_tail_lines() {
     local file="$1"
     local n="${2:-8}"
@@ -52,7 +67,7 @@ show_tail_lines() {
     echo
     echo "${title}"
     if [ -f "${file}" ]; then
-        tail -n "${n}" "${file}" || true
+        normalize_stdout_stream "${file}" | tail -n "${n}" || true
     else
         echo "[INFO] 找不到檔案：${file}"
     fi
@@ -63,32 +78,87 @@ read_status_value() {
     grep "^${key}=" "${STATUS_FILE}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
 }
 
-extract_current_task_from_stdout() {
+extract_latest_executor_block() {
     local stdout_log="$1"
 
-    if [ ! -f "${stdout_log}" ]; then
-        return
-    fi
+    normalize_stdout_stream "${stdout_log}" | awk '
+    /^executor >[[:space:]]+Local/ {
+        if (block != "") last_block = block
+        block = $0 "\n"
+        in_block = 1
+        next
+    }
 
-    grep -E 'pb16S:|Plus [0-9]+ more processes waiting' "${stdout_log}" \
-      | tail -n 8 \
-      | tr '\n' ' ' \
-      | sed 's/[[:space:]]\+/ /g' \
-      | sed 's/^ *//; s/ *$//'
+    in_block {
+        if (/^executor >[[:space:]]+Local/) {
+            last_block = block
+            block = $0 "\n"
+            next
+        }
+
+        if (/pb16S:|Plus [0-9]+ more processes waiting for tasks/) {
+            block = block $0 "\n"
+        }
+    }
+
+    END {
+        if (block != "") last_block = block
+        printf "%s", last_block
+    }'
 }
 
-extract_current_task_from_nextflow_log() {
-    local nf_log="$1"
-
-    if [ ! -f "${nf_log}" ]; then
+extract_executor_line() {
+    local block="$1"
+    if [ -z "${block}" ]; then
         return
     fi
 
-    grep -E 'pb16S:' "${nf_log}" \
-      | tail -n 5 \
-      | tr '\n' ' ' \
-      | sed 's/[[:space:]]\+/ /g' \
-      | sed 's/^ *//; s/ *$//'
+    printf '%s\n' "${block}" | grep '^executor >' | tail -n 1 | sed 's/^[[:space:]]*//'
+}
+
+extract_current_task_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
+
+    printf '%s\n' "${block}" \
+      | grep 'pb16S:' \
+      | grep -v '✔' \
+      | grep -v '^\[-[[:space:]]*\]' \
+      | head -n 1 \
+      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+extract_pending_tasks_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
+
+    {
+        printf '%s\n' "${block}" \
+          | grep 'pb16S:' \
+          | grep -v '✔' \
+          | grep '^\[-[[:space:]]*\]' || true
+        printf '%s\n' "${block}" \
+          | grep 'Plus [0-9]\+ more processes waiting for tasks' || true
+    } \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+    | paste -sd ' ; ' -
+}
+
+extract_last_finished_task_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
+
+    printf '%s\n' "${block}" \
+      | grep 'pb16S:' \
+      | grep '✔' \
+      | tail -n 1 \
+      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
 show_status_file_summary() {
@@ -100,7 +170,8 @@ show_status_file_summary() {
     local status start_time start_epoch end_time duration_seconds exit_code
     local session_name project_dir stdout_log stderr_log
     local cpu resume extra_args workflow_dir timezone nxf_conda_cachedir
-    local elapsed_fmt current_task nf_log stale_hint
+    local elapsed_fmt stale_hint
+    local task_block executor_line current_task pending_tasks last_finished_task
 
     status="$(read_status_value status)"
     start_time="$(read_status_value start_time)"
@@ -125,12 +196,11 @@ show_status_file_summary() {
         elapsed_fmt="$(format_duration "${duration_seconds:-}")"
     fi
 
-    current_task="$(extract_current_task_from_stdout "${stdout_log:-}")"
-
-    nf_log="${PROJECT_DIR}/.nextflow.log"
-    if [ -z "${current_task}" ]; then
-        current_task="$(extract_current_task_from_nextflow_log "${nf_log}")"
-    fi
+    task_block="$(extract_latest_executor_block "${stdout_log:-}")"
+    executor_line="$(extract_executor_line "${task_block}")"
+    current_task="$(extract_current_task_from_block "${task_block}")"
+    pending_tasks="$(extract_pending_tasks_from_block "${task_block}")"
+    last_finished_task="$(extract_last_finished_task_from_block "${task_block}")"
 
     stale_hint=""
     if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
@@ -162,8 +232,17 @@ show_status_file_summary() {
     if [ -n "${stderr_log:-}" ]; then
         echo "[INFO] STDERR_LOG    : ${stderr_log}"
     fi
+    if [ -n "${executor_line:-}" ]; then
+        echo "[INFO] EXECUTOR      : ${executor_line}"
+    fi
     if [ -n "${current_task:-}" ]; then
         echo "[INFO] CURRENT_TASK  : ${current_task}"
+    fi
+    if [ -n "${pending_tasks:-}" ]; then
+        echo "[INFO] PENDING_TASKS : ${pending_tasks}"
+    fi
+    if [ -z "${current_task:-}" ] && [ -n "${last_finished_task:-}" ]; then
+        echo "[INFO] LAST_FINISHED : ${last_finished_task}"
     fi
     if [ -n "${stale_hint}" ]; then
         echo "[WARN] ${stale_hint}"
@@ -202,7 +281,11 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
     START_TIME="NA"
     START_EPOCH=""
     ELAPSED="NA"
+    TASK_BLOCK=""
+    EXECUTOR_LINE=""
     CURRENT_TASK=""
+    PENDING_TASKS=""
+    LAST_FINISHED_TASK=""
 
     if [ -f "${STATUS_FILE_SESSION}" ]; then
         START_TIME="$(grep '^start_time=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
@@ -214,15 +297,28 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
         ELAPSED="$(get_elapsed_from_start_epoch "${START_EPOCH}")"
     fi
 
-    CURRENT_TASK="$(extract_current_task_from_stdout "${STDOUT_LOG}")"
+    TASK_BLOCK="$(extract_latest_executor_block "${STDOUT_LOG}")"
+    EXECUTOR_LINE="$(extract_executor_line "${TASK_BLOCK}")"
+    CURRENT_TASK="$(extract_current_task_from_block "${TASK_BLOCK}")"
+    PENDING_TASKS="$(extract_pending_tasks_from_block "${TASK_BLOCK}")"
+    LAST_FINISHED_TASK="$(extract_last_finished_task_from_block "${TASK_BLOCK}")"
 
     echo "[INFO] PROJECT       : ${PROJECT}"
     echo "[INFO] STATUS        : ${STATUS:-running}"
     echo "[INFO] START_TIME    : ${START_TIME:-NA}"
     echo "[INFO] ELAPSED       : ${ELAPSED:-NA}"
 
+    if [ -n "${EXECUTOR_LINE}" ]; then
+        echo "[INFO] EXECUTOR      : ${EXECUTOR_LINE}"
+    fi
     if [ -n "${CURRENT_TASK}" ]; then
         echo "[INFO] CURRENT_TASK  : ${CURRENT_TASK}"
+    fi
+    if [ -n "${PENDING_TASKS}" ]; then
+        echo "[INFO] PENDING_TASKS : ${PENDING_TASKS}"
+    fi
+    if [ -z "${CURRENT_TASK}" ] && [ -n "${LAST_FINISHED_TASK}" ]; then
+        echo "[INFO] LAST_FINISHED : ${LAST_FINISHED_TASK}"
     fi
 
     show_tail_lines "${STDOUT_LOG}" 8 "[INFO] stdout 最後 8 行"
