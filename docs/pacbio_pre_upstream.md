@@ -63,7 +63,7 @@ nextflow run main.nf --download_db
 # 建立專案
 基本專案資料夾
 
-* raw_fastq/：原始 PacBio .fastq.gz
+* raw_fastq/：原始 PacBio `.fastq.gz`
 * samples.tsv：官方 workflow 的樣本輸入清單
 * metadata.tsv：樣本分組與描述資料
 * pacbio_results/：官方 workflow 
@@ -86,7 +86,7 @@ project_name/
 conda activate pacbio16s
 ```
 
-## Step2. 所有 PacBio .fastq.gz 放入 raw_fastq/，並確認：
+## Step2. 所有 PacBio `.fastq.gz` 放入 raw_fastq/，並確認：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
@@ -153,8 +153,8 @@ sample2 Treatment
 6. ASV merge / filter / QC
 7. Rarefaction 與 diversity 相關輸出
 8. Taxonomy classification
-    * dada2_assignTax = Naive Bayes：會產出 best_taxonomy_withDB.tsv、best_tax_merged_freq_tax.tsv、feature-table-tax.biom
-    * class_tax = VSEARCH：會產出 vsearch_merged_freq_tax.tsv、feature-table-tax_vsearch.biom、taxonomy_barplot_vsearch.qzv
+    * dada2_assignTax = Naive Bayes：會產出 `best_taxonomy_withDB.tsv`、`best_tax_merged_freq_tax.tsv`、`feature-table-tax.biom`
+    * class_tax = VSEARCH：會產出 `vsearch_merged_freq_tax.tsv`、`feature-table-tax_vsearch.biom`、`taxonomy_barplot_vsearch.qzv`
 9. export biom
 10. barplot / report
 
@@ -201,13 +201,18 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
    - 沿用 Nextflow workflow 的官方資料庫分類結果
    - 會將官方 taxonomy 整理成專案根目錄的 `taxonomy.tsv`
 2. `MODE=fylab`
-   - 只整理 DADA2 產生的核心中間產物
+   - 只整理 DADA2 產生的核心中間產物(`table.qza` [豐度矩陣], `rep-seqs.qza` [代表序列], `stats.qza` [QC資料])
    - 官方 taxonomy 僅保留為參考檔
    - 後續 taxonomy classification 由 FYLab 自訂分類器處理
   
 兩種模式都會產生 `taxonomy_source.txt`，用於標記 taxonomy 來源。
 
 ## Step1. 執行資料整理執行檔
+* `pacbio_results/dada2/dada2-ccs_table_filtered.qza` -> `table.qza`
+* `pacbio_results/dada2/dada2-ccs_rep_filtered.qza` -> `rep-seqs.qza`
+* `best_taxonomy_withDB.tsv` -> `taxonomy_nextflow_reference.tsv`,
+* `best_tax_merged_freq_tax.tsv` -> `taxonomy_nextflow_merged_reference.tsv`
+
 <details>
 <summary><strong>使用官方分類模型結果</strong></summary>
  
@@ -215,7 +220,6 @@ PacBio workflow 完成後，可依需求選擇兩種整理模式：
 * Naive-Bayes classifier 來做分類會同時使用 3 個資料庫: GreenGenes2、GTDB、Silva
 * 優先順序是 GG2 → GTDB → Silva
 * 先嘗試做 species level，如果不行再做 genus level
-
 ```bash
 MODE=official ./shell_tools/collect_pacbio_output.sh .
 ```
@@ -225,7 +229,6 @@ MODE=official ./shell_tools/collect_pacbio_output.sh .
 <summary><strong>使用 FYLab 自訂分類模型模式</strong></summary>
 
 * 接續應用 Lab 客製化 Database 分類器和後面的 Downstream Analysis
-
 ```bash
 MODE=fylab ./shell_tools/collect_pacbio_output.sh .
 ```
