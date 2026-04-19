@@ -52,7 +52,10 @@ NOTE:
 mkdir -p shell_tools
 cd shell_tools
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
-chmod +x export_table_qza_to_phyloseq.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/run_dehost_on_fasta.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/filter_phyloseq_by_nonhost_ids.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/prepare_dehost_qiime2_inputs.sh
+chmod +x export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh
 cd ..
 ```
 
@@ -448,267 +451,57 @@ https://useast.ensembl.org/index.html
 ```
 conda activate host-tools
 ```
-### Step 1: 檢查代表性序列品質（QC）
-```
+## 排除宿主基因
+### Step 1. 檢查代表性序列品質（QC）
+```bash
 seqkit stats phyloseq/dna-sequences.fasta
 ```
 
-### Step 2: 加強篩選與過濾（可選）
+### Step 2. 加強長度篩選與過濾（可選）
 * 去除R1, R2合併後小於 350 bp序列
 * 保守篩選濾除低於 350 bp 序列，減少過多序列定序停留於Family
 * 需要高品質、高分類準確度的研究，例如 菌種層級分析、生物標記開發
+```bash
+seqkit seq -m 350 -M 500 \
+  phyloseq/dna-sequences.fasta \
+  -o phyloseq/host_filter/filtered_dna-sequences.fasta
 ```
-nohup seqkit seq -m 350 -M 500 -v phyloseq/dna-sequences.fasta -o phyloseq/filtered_dna-sequences.fasta &
+再檢查代表性序列品質（可選）
+```
+seqkit stats phyloseq/host_filter/filtered_dna-sequences.fasta
 ```
 
-### Step 3: 再檢查代表性序列品質（QC）
-<details>
-<summary><strong>使用加強篩選與過濾後語法</strong></summary>
+### Step 3. 代表性序列對 host genome 比對
+* dehost 的序列層處理，需要有`dna-sequences.fasta`
+* HOST_DB: 人類`human`/老鼠`mouse`/狗`dog`/貓`cat`/鴨`duck`/牛`cattle`/山羊`goat`/馬`horse`/豬`pig`/綜合物種`all`
+```bash
+HOST_DB=dog ./shell_tools/run_dehost_on_fasta.sh .
+```
 
+### Step 4. 產出 dehost 結果
+* 產出`dehost_otu_table.tsv`, `dehost_taxonomy.tsv`
+* 需要有 `phyloseq/host_filter/nonhost.fasta`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
+```bash
+./shell_tools/filter_phyloseq_by_nonhost_ids.sh .
 ```
-seqkit stats phyloseq/filtered_dna-sequences.fasta
-```
-</details><br>
-<details>
-<summary><strong>未使用加強篩選與過濾語法</strong></summary>
 
-```
-seqkit stats phyloseq/dna-sequences.fasta
-```
-</details><br>
-
-## 使用 Bowtie2 比對至[人類human/老鼠mouse/狗dog/貓cat/綜合物種all]基因組
-
-<details>
-<summary><strong>請選擇一項適合專案的基因組執行dehost</strong></summary>
-
-  ### human [pick one fits the project]
-  <details>
-  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
-         -f phyloseq/filtered_dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  <details>
-  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
-         -f phyloseq/dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  
-  ### mouse [pick one fits the project]
-  <details>
-  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
-         -f phyloseq/filtered_dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  <details>
-  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
-         -f phyloseq/dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-
-  ### dog [pick one fits the project]
-  <details>
-  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
-         -f phyloseq/filtered_dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  <details>
-  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
-         -f phyloseq/dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  
-  
-  ### cat [pick one fits the project]
-  <details>
-  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
-         -f phyloseq/filtered_dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  <details>
-  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
-         -f phyloseq/dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  
-  ### all(human, mouse, dog, cat, cattle, duck, goat, horse, pig, rabbit, turkey, chicken, sheep) [pick one fits the project]
-  <details>
-  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
-         -f phyloseq/filtered_dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  <details>
-  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
-         -f phyloseq/dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-</details><br>
-
-## samtools 處理宿主基因
-### 1.將 `.sam` 轉換為 `.bam`（二進位格式，處理效率更高）
-```
-samtools view -h -b phyloseq/mapping_host_genome.sam -o phyloseq/mapping_host_genome.bam
-```
-### 2.篩選出「成功比對上的宿主序列」
-```
-samtools view -h -b -F 4 phyloseq/mapping_host_genome.bam > phyloseq/mapped_host_genome.bam
-```
-### 3.排序 BAM 檔（按 read name）
-```
-samtools sort -n phyloseq/mapped_host_genome.bam -o phyloseq/sorted.bam
-```
-### 4.把比對上的宿主 reads 轉回 FASTA
-```
-samtools fasta -@ 2 phyloseq/sorted.bam -F 4 -0 phyloseq/host_reads.fasta
-```
-### 5.篩選出「未比對上的非宿主序列」
-```
-samtools view -h -b -f 4 phyloseq/mapping_host_genome.bam > phyloseq/nonhost.bam
-```
-### 6.排序未比對序列
-```
-samtools sort -n phyloseq/nonhost.bam -o phyloseq/nonhost_sorted.bam
-```
-### 7.匯出非宿主 reads 為 FASTA
-```
-samtools fasta -@ 2 phyloseq/nonhost_sorted.bam -f 4 -0 phyloseq/nonhost.fasta
-```
-### 查看host基因佔比 [option1]
-* overall alignment rate: 宿主基因佔比
-```
-cat phyloseq/mapping_host_genome.txt
-```
-### 查看host基因佔比 [option2]
-* `dna-sequences.fasta`: 原始代表性序列（未過濾長度）
-* `filtered_dna-sequences.fasta`: 只保留長度 350~500 bp 的序列
-* `host_reads.fasta`: 成功比對到宿主的序列（被剃除）
-* `nonhost.fasta`: 未比對到宿主的序列（保留分析）
-```
-seqkit stats -T phyloseq/*.fasta | awk '{print $1, $4}' | column -t
-```
-## 輸出去除宿主基因`otu_table.tsv`, `taxonomy.tsv`
-### 0.建立filtered資料夾
-```
-mkdir -p phyloseq/filtered_host
-```
-### 1.建立keep_ids
-```
-grep '^>' phyloseq/nonhost.fasta | sed 's/^>//' > phyloseq/filtered_host/keep_ids.txt
-```
-### 2.建立 `dehost_taxonomy.tsv`
-```
-awk 'FNR==NR {keep[$1]; next} FNR==1 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/taxonomy.tsv > phyloseq/filtered_host/dehost_taxonomy.tsv
-```
-### 3.建立 `dehost_otu_table.tsv`
-```
-awk 'FNR==NR {keep[$1]; next} FNR<=2 || $1 in keep' phyloseq/filtered_host/keep_ids.txt phyloseq/otu_table.tsv > phyloseq/filtered_host/dehost_otu_table.tsv
-```
-## 進入qiime2環境
+## Dehost pathway 流程前期準備
+### 進入qiime2環境
 ```
 conda activate qiime2-2023.2
 ```
-### 1. Dehost pathway 流程前期準備: `dehost_otu_table.tsv` 轉檔 `dehost_otu_table.biom`
+### 轉檔qiime2對應deshot資料
+* 產出`phyloseq/filtered_host/dehost_otu_table.biom`,`phyloseq/filtered_host/dehost_otu_table.qza`,`phyloseq/filtered_host/dehost_rep_seqs.qza`,`phyloseq/filtered_host/dehost_taxonomy.qza`,`phyloseq/filtered_host/dna-sequences.fasta`
+* 需要有 `rep-seqs.qza`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
 ```
-biom convert \
-  -i phyloseq/filtered_host/dehost_otu_table.tsv \
-  -o phyloseq/filtered_host/dehost_otu_table.biom \
-  --to-hdf5 \
-  --table-type="OTU table"
+./shell_tools/prepare_dehost_qiime2_inputs.sh .
 ```
-### 2. Dehost pathway 流程前期準備: 把 `dehost_otu_table.biom` 匯入為 QIIME2 格式
-```
-qiime tools import \
-  --input-path phyloseq/filtered_host/dehost_otu_table.biom \
-  --type 'FeatureTable[Frequency]' \
-  --input-format BIOMV210Format \
-  --output-path phyloseq/filtered_host/dehost_otu_table.qza
-```
-### 3. Dehost pathway 流程前期準備: 從原始 `rep-seqs.qza` 過濾出 dehost 用的 `rep-seqs.qza`
-```
-qiime feature-table filter-seqs \
-  --i-data rep-seqs.qza \
-  --i-table phyloseq/filtered_host/dehost_otu_table.qza \
-  --o-filtered-data phyloseq/filtered_host/dehost_rep_seqs.qza
-```
-### 4. 把 `taxonomy.qza` 過濾出與 dehost 一致的分類結果
-```
-qiime tools import \
-  --input-path phyloseq/filtered_host/dehost_taxonomy.tsv \
-  --type 'FeatureData[Taxonomy]' \
-  --output-path phyloseq/filtered_host/dehost_taxonomy.qza \
-  --input-format HeaderlessTSVTaxonomyFormat
-```
-### 5. Dehost pathway 流程前期準備: 匯出 過濾出 dehost 用的 `rep-seqs.fasta`
-```
-qiime tools export \
-  --input-path phyloseq/filtered_host/dehost_rep_seqs.qza \
-  --output-path phyloseq/filtered_host/
-```
-
 <p align="center"><a href="#fylab">Top</a></p>
+
 
 # 畫圖
 ## KEGG Pathway 前期準備
+＝＝＝＝＝＝＝ＶＶ
 ### 1.Phylogeny Tree (此步驟要超級久，可以多線程設定)
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
@@ -755,7 +548,7 @@ qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --out
 qiime tools export --input-path rep-seqs.qza --output-path fastq1/
 ```
 </details><br>
-
+＝＝＝＝＝＝＝＾＾
 <p align="center"><a href="#fylab">Top</a></p>
 
 <details>
@@ -934,7 +727,7 @@ conda activate picrust2sc
 + 就算最後 log 出現 Exit 1，只要產生的 `out.tre` 與 place_seqs_out/ 資料夾存在且完整，就可繼續執行後續流程
 ```
 nohup place_seqs.py \
--s phyloseq/filtered_host/dna-sequences.fasta \
+-s phyloseq/filtered_host/dehost_dna-sequences.fasta \
 -o out.tre \
 -p 2 \
 --intermediate intermediate/place_seqs &
