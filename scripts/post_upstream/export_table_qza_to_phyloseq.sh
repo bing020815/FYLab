@@ -35,31 +35,45 @@ if [ ! -f "${REPSEQS_QZA}" ]; then
     exit 1
 fi
 
-if [ ! -f "${TAXONOMY_SOURCE_TXT}" ]; then
-    echo "[ERROR] 找不到 taxonomy_source.txt：${TAXONOMY_SOURCE_TXT}"
-    exit 1
-fi
-
 read_taxonomy_source_value() {
     local key="$1"
     grep "^${key}=" "${TAXONOMY_SOURCE_TXT}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
 }
 
-TAXONOMY_MODE="$(read_taxonomy_source_value "taxonomy_mode")"
-TAXONOMY_SOURCE_TYPE="$(read_taxonomy_source_value "taxonomy_source_type")"
-TAXONOMY_SOURCE_FILE="$(read_taxonomy_source_value "taxonomy_source_file")"
+TAXONOMY_MODE="auto"
+TAXONOMY_SOURCE_TYPE="auto"
+TAXONOMY_SOURCE_FILE=""
+TAXONOMY_INPUT=""
 
-if [ -z "${TAXONOMY_MODE}" ]; then
-    echo "[ERROR] taxonomy_source.txt 缺少 taxonomy_mode"
-    exit 1
+if [ -f "${TAXONOMY_SOURCE_TXT}" ]; then
+    TAXONOMY_MODE="$(read_taxonomy_source_value "taxonomy_mode")"
+    TAXONOMY_SOURCE_TYPE="$(read_taxonomy_source_value "taxonomy_source_type")"
+    TAXONOMY_SOURCE_FILE="$(read_taxonomy_source_value "taxonomy_source_file")"
+
+    if [ -z "${TAXONOMY_SOURCE_FILE}" ]; then
+        echo "[ERROR] taxonomy_source.txt 存在，但缺少 taxonomy_source_file"
+        exit 1
+    fi
+
+    TAXONOMY_INPUT="${PROJECT_DIR}/${TAXONOMY_SOURCE_FILE}"
+else
+    echo "[INFO] 找不到 taxonomy_source.txt，改用一般模式自動判斷 taxonomy 來源"
+
+    if [ -f "${PROJECT_DIR}/taxonomy.qza" ]; then
+        TAXONOMY_MODE="auto"
+        TAXONOMY_SOURCE_TYPE="local_qza"
+        TAXONOMY_SOURCE_FILE="taxonomy.qza"
+        TAXONOMY_INPUT="${PROJECT_DIR}/taxonomy.qza"
+    elif [ -f "${PROJECT_DIR}/taxonomy.tsv" ]; then
+        TAXONOMY_MODE="auto"
+        TAXONOMY_SOURCE_TYPE="local_tsv"
+        TAXONOMY_SOURCE_FILE="taxonomy.tsv"
+        TAXONOMY_INPUT="${PROJECT_DIR}/taxonomy.tsv"
+    else
+        echo "[ERROR] 找不到 taxonomy_source.txt，且專案根目錄也沒有 taxonomy.qza 或 taxonomy.tsv"
+        exit 1
+    fi
 fi
-
-if [ -z "${TAXONOMY_SOURCE_FILE}" ]; then
-    echo "[ERROR] taxonomy_source.txt 缺少 taxonomy_source_file"
-    exit 1
-fi
-
-TAXONOMY_INPUT="${PROJECT_DIR}/${TAXONOMY_SOURCE_FILE}"
 
 mkdir -p "${OUTDIR}"
 
