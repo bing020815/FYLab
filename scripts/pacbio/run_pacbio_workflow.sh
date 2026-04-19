@@ -160,7 +160,7 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
     if tmux has-session -t "${TMUX_SESSION_NAME}" 2>/dev/null; then
         echo "[ERROR] tmux session 已存在：${TMUX_SESSION_NAME}"
         echo "[ERROR] 請改用其他名稱，例如："
-        echo "TMUX_SESSION_NAME=${TMUX_SESSION_NAME}_v2 ./run_pacbio_workflow.sh ${PROJECT_DIR}"
+        echo "TMUX_SESSION_NAME=${TMUX_SESSION_NAME}_v2 ./shell_tools/run_pacbio_workflow.sh ${PROJECT_DIR}"
         exit 1
     fi
 
