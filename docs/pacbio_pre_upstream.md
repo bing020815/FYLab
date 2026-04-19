@@ -107,6 +107,8 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/c
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
 chmod +x make_manifest_pacbio.sh run_pacbio_workflow.sh check_pacbio_sessions.sh collect_pacbio_output.sh
 cd ..
+```
+```bash
 ./shell_tools/make_manifest_pacbio.sh .
 ```
 
