@@ -4,210 +4,311 @@ set -euo pipefail
 PROJECT_DIR="${1:-$(pwd)}"
 PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 
-ENV_NAME="pacbio16s"
-WORKFLOW_DIR="${HOME}/tools/HiFi-16S-workflow"
-TIMEZONE="${TIMEZONE:-Asia/Taipei}"
-
-NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR:-/home/adprc/nf_conda}"
-export NXF_CONDA_CACHEDIR
-mkdir -p "${NXF_CONDA_CACHEDIR}"
-
-SAMPLES_TSV="${PROJECT_DIR}/samples.tsv"
-METADATA_TSV="${PROJECT_DIR}/metadata.tsv"
-OUTDIR="${PROJECT_DIR}/pacbio_results"
 LOGS_DIR="${PROJECT_DIR}/logs"
-WORK_DIR="${PROJECT_DIR}/work"
-
-CPU="${CPU:-8}"
-RESUME="${RESUME:-false}"
-EXTRA_ARGS="${EXTRA_ARGS:-}"
-RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
-
-DEFAULT_SESSION_NAME="pacbio_$(TZ="${TIMEZONE}" date +%Y%m%d_%H%M%S)"
-TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-${DEFAULT_SESSION_NAME}}"
-
-STDOUT_LOG="${LOGS_DIR}/nextflow.stdout.log"
-STDERR_LOG="${LOGS_DIR}/nextflow.stderr.log"
 STATUS_FILE="${LOGS_DIR}/run_pacbio.status"
-INNER_SCRIPT="${LOGS_DIR}/run_pacbio_inner.sh"
 
-mkdir -p "${OUTDIR}" "${LOGS_DIR}" "${WORK_DIR}"
+format_duration() {
+    local total="${1:-}"
 
-if [ ! -f "${SAMPLES_TSV}" ]; then
-    echo "[ERROR] 找不到 ${SAMPLES_TSV}"
-    exit 1
-fi
+    if ! [[ "${total}" =~ ^[0-9]+$ ]]; then
+        echo "NA"
+        return
+    fi
 
-if [ ! -f "${METADATA_TSV}" ]; then
-    echo "[ERROR] 找不到 ${METADATA_TSV}"
-    exit 1
-fi
+    local days hours mins secs
+    days=$(( total / 86400 ))
+    hours=$(( (total % 86400) / 3600 ))
+    mins=$(( (total % 3600) / 60 ))
+    secs=$(( total % 60 ))
 
-if [ ! -d "${WORKFLOW_DIR}" ]; then
-    echo "[ERROR] 找不到 workflow：${WORKFLOW_DIR}"
-    echo "[ERROR] 請先完成共用層安裝"
-    exit 1
-fi
-
-if ! command -v conda >/dev/null 2>&1; then
-    echo "[ERROR] 找不到 conda"
-    exit 1
-fi
-
-write_inner_script() {
-    cat > "${INNER_SCRIPT}" <<EOF
-#!/usr/bin/env bash
-set -e
-set -o pipefail
-export TZ="${TIMEZONE}"
-
-cd "${PROJECT_DIR}"
-
-START_TIME="\$(date '+%Y-%m-%d %H:%M:%S')"
-START_EPOCH="\$(date +%s)"
-
-write_status() {
-    local status="\$1"
-    local end_time="\$2"
-    local end_epoch="\$3"
-    local duration_seconds="\$4"
-    local exit_code="\$5"
-
-    cat > "${STATUS_FILE}" <<EOSTATUS
-status=\${status}
-start_time=\${START_TIME}
-start_epoch=\${START_EPOCH}
-end_time=\${end_time}
-end_epoch=\${end_epoch}
-duration_seconds=\${duration_seconds}
-exit_code=\${exit_code}
-session_name=${TMUX_SESSION_NAME}
-project_dir=${PROJECT_DIR}
-stdout_log=${STDOUT_LOG}
-stderr_log=${STDERR_LOG}
-timezone=${TIMEZONE}
-nxf_conda_cachedir=${NXF_CONDA_CACHEDIR}
-cpu=${CPU}
-resume=${RESUME}
-extra_args=${EXTRA_ARGS}
-workflow_dir=${WORKFLOW_DIR}
-EOSTATUS
+    printf "%02d:%02d:%02d:%02d\n" "${days}" "${hours}" "${mins}" "${secs}"
 }
 
-finish() {
-    local exit_code="\$1"
-    local end_time end_epoch duration_seconds final_status
+get_elapsed_from_start_epoch() {
+    local start_epoch="${1:-}"
 
-    end_time="\$(date '+%Y-%m-%d %H:%M:%S')"
-    end_epoch="\$(date +%s)"
-    duration_seconds=\$((end_epoch - START_EPOCH))
+    if ! [[ "${start_epoch}" =~ ^[0-9]+$ ]]; then
+        echo "NA"
+        return
+    fi
 
-    if [ "\${exit_code}" -eq 0 ]; then
-        final_status="completed"
+    local now elapsed
+    now="$(date +%s)"
+    elapsed=$(( now - start_epoch ))
+
+    if [ "${elapsed}" -lt 0 ]; then
+        echo "NA"
+        return
+    fi
+
+    format_duration "${elapsed}"
+}
+
+show_tail_lines() {
+    local file="$1"
+    local n="${2:-8}"
+    local title="$3"
+
+    echo
+    echo "${title}"
+    if [ -f "${file}" ]; then
+        tail -n "${n}" "${file}" || true
     else
-        final_status="failed"
+        echo "[INFO] 找不到檔案：${file}"
     fi
-
-    write_status "\${final_status}" "\${end_time}" "\${end_epoch}" "\${duration_seconds}" "\${exit_code}"
 }
 
-trap 'finish $?' EXIT
+read_status_value() {
+    local key="$1"
+    grep "^${key}=" "${STATUS_FILE}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
+}
 
-write_status "running" "" "" "" ""
+extract_latest_executor_block() {
+    local stdout_log="$1"
 
-exec > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
+    if [ ! -f "${stdout_log}" ]; then
+        return
+    fi
 
-echo "[INFO] PacBio inner script started at \${START_TIME}"
-echo "[INFO] PROJECT_DIR=${PROJECT_DIR}"
-echo "[INFO] ENV_NAME=${ENV_NAME}"
-echo "[INFO] RESUME=${RESUME}"
-echo "[INFO] CPU=${CPU}"
-echo "[INFO] NXF_CONDA_CACHEDIR=${NXF_CONDA_CACHEDIR}"
+    awk '
+    /^executor >[[:space:]]+Local/ {
+        if (in_block && block != "") {
+            last_block = block
+        }
+        block = $0 "\n"
+        in_block = 1
+        next
+    }
 
-set +u
-source "\$(conda info --base)/etc/profile.d/conda.sh"
-conda deactivate >/dev/null 2>&1 || true
-conda activate "${ENV_NAME}"
-set -u
+    in_block {
+        if ($0 ~ /^$/) {
+            last_block = block
+            block = ""
+            in_block = 0
+        } else {
+            block = block $0 "\n"
+        }
+    }
 
-export NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR}"
+    END {
+        if (block != "") {
+            last_block = block
+        }
+        printf "%s", last_block
+    }' "${stdout_log}"
+}
 
-NEXTFLOW_CMD=(
-    nextflow run "${WORKFLOW_DIR}/main.nf"
-    --input "${SAMPLES_TSV}"
-    --metadata "${METADATA_TSV}"
-    --dada2_cpu "${CPU}"
-    --vsearch_cpu "${CPU}"
-    --outdir "${OUTDIR}"
-    --publish_dir_mode copy
-    -work-dir "${WORK_DIR}"
-)
+extract_executor_line() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
+    printf '%s\n' "${block}" | grep '^executor >' | tail -n 1 | sed 's/^[[:space:]]*//'
+}
 
-if [ "${RESUME}" = "true" ]; then
-    NEXTFLOW_CMD+=(-resume)
-fi
+extract_current_task_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
 
-if [ -n "${EXTRA_ARGS}" ]; then
-    # shellcheck disable=SC2206
-    EXTRA_ARGS_ARRAY=( ${EXTRA_ARGS} )
-    NEXTFLOW_CMD+=("\${EXTRA_ARGS_ARRAY[@]}")
-fi
+    printf '%s\n' "${block}" \
+      | grep 'pb16S:' \
+      | grep -v '✔' \
+      | head -n 1 \
+      | sed 's/^[[:space:]]*//'
+}
 
-echo "[INFO] Running Nextflow command:"
-printf ' %q' "\${NEXTFLOW_CMD[@]}"
+extract_pending_tasks_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
+
+    {
+        printf '%s\n' "${block}" \
+          | grep 'pb16S:' \
+          | grep -v '✔' \
+          | tail -n +2 || true
+        printf '%s\n' "${block}" \
+          | grep 'Plus [0-9]\+ more processes waiting for tasks' || true
+    } | sed 's/^[[:space:]]*//' | paste -sd ' | ' -
+}
+
+extract_last_finished_task_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return
+    fi
+
+    printf '%s\n' "${block}" \
+      | grep 'pb16S:' \
+      | grep '✔' \
+      | tail -n 1 \
+      | sed 's/^[[:space:]]*//'
+}
+
+show_status_file_summary() {
+    if [ ! -f "${STATUS_FILE}" ]; then
+        echo "[INFO] 找不到 status 檔案：${STATUS_FILE}"
+        return 1
+    fi
+
+    local status start_time start_epoch end_time duration_seconds exit_code
+    local session_name project_dir stdout_log stderr_log
+    local cpu resume extra_args workflow_dir timezone nxf_conda_cachedir
+    local elapsed_fmt nf_log stale_hint
+    local task_block executor_line current_task pending_tasks last_finished_task
+
+    status="$(read_status_value status)"
+    start_time="$(read_status_value start_time)"
+    start_epoch="$(read_status_value start_epoch)"
+    end_time="$(read_status_value end_time)"
+    duration_seconds="$(read_status_value duration_seconds)"
+    exit_code="$(read_status_value exit_code)"
+    session_name="$(read_status_value session_name)"
+    project_dir="$(read_status_value project_dir)"
+    stdout_log="$(read_status_value stdout_log)"
+    stderr_log="$(read_status_value stderr_log)"
+    cpu="$(read_status_value cpu)"
+    resume="$(read_status_value resume)"
+    extra_args="$(read_status_value extra_args)"
+    workflow_dir="$(read_status_value workflow_dir)"
+    timezone="$(read_status_value timezone)"
+    nxf_conda_cachedir="$(read_status_value nxf_conda_cachedir)"
+
+    if [ "${status:-}" = "running" ]; then
+        elapsed_fmt="$(get_elapsed_from_start_epoch "${start_epoch:-}")"
+    else
+        elapsed_fmt="$(format_duration "${duration_seconds:-}")"
+    fi
+
+    task_block="$(extract_latest_executor_block "${stdout_log:-}")"
+    executor_line="$(extract_executor_line "${task_block}")"
+    current_task="$(extract_current_task_from_block "${task_block}")"
+    pending_tasks="$(extract_pending_tasks_from_block "${task_block}")"
+    last_finished_task="$(extract_last_finished_task_from_block "${task_block}")"
+
+    nf_log="${PROJECT_DIR}/.nextflow.log"
+    stale_hint=""
+    if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
+        stale_hint="可能 tmux session 已結束，但 status 檔尚未更新。"
+    fi
+
+    echo
+    echo "=================================================="
+    echo "[INFO] 目前無活著的 pacbio_* tmux session，改讀 status 檔案"
+    echo "[INFO] SESSION       : ${session_name:-NA}"
+    echo "[INFO] PROJECT       : ${project_dir:-NA}"
+    echo "[INFO] STATUS        : ${status:-NA}"
+    echo "[INFO] START_TIME    : ${start_time:-NA}"
+    echo "[INFO] END_TIME      : ${end_time:-NA}"
+    echo "[INFO] ELAPSED       : ${elapsed_fmt}"
+    echo "[INFO] DURATION_SEC  : ${duration_seconds:-NA}"
+    echo "[INFO] EXIT_CODE     : ${exit_code:-NA}"
+    echo "[INFO] CPU           : ${cpu:-NA}"
+    echo "[INFO] RESUME        : ${resume:-NA}"
+    echo "[INFO] EXTRA_ARGS    : ${extra_args:-NA}"
+    echo "[INFO] WORKFLOW_DIR  : ${workflow_dir:-NA}"
+    echo "[INFO] TIMEZONE      : ${timezone:-NA}"
+    echo "[INFO] NXF_CONDA     : ${nxf_conda_cachedir:-NA}"
+    echo "[INFO] STATUS_FILE   : ${STATUS_FILE}"
+
+    if [ -n "${stdout_log:-}" ]; then
+        echo "[INFO] STDOUT_LOG    : ${stdout_log}"
+    fi
+    if [ -n "${stderr_log:-}" ]; then
+        echo "[INFO] STDERR_LOG    : ${stderr_log}"
+    fi
+    if [ -n "${executor_line:-}" ]; then
+        echo "[INFO] EXECUTOR      : ${executor_line}"
+    fi
+    if [ -n "${current_task:-}" ]; then
+        echo "[INFO] CURRENT_TASK  : ${current_task}"
+    fi
+    if [ -n "${pending_tasks:-}" ]; then
+        echo "[INFO] PENDING_TASKS : ${pending_tasks}"
+    fi
+    if [ -z "${current_task:-}" ] && [ -n "${last_finished_task:-}" ]; then
+        echo "[INFO] LAST_FINISHED : ${last_finished_task}"
+    fi
+    if [ -n "${stale_hint}" ]; then
+        echo "[WARN] ${stale_hint}"
+    fi
+
+    show_tail_lines "${stdout_log:-/dev/null}" 8 "[INFO] stdout 最後 8 行"
+    show_tail_lines "${stderr_log:-/dev/null}" 5 "[INFO] stderr 最後 5 行"
+}
+
 echo
+echo "[INFO] PacBio tmux session 狀態總覽"
 
-"\${NEXTFLOW_CMD[@]}"
-EOF
+mapfile -t PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}')
 
-    chmod +x "${INNER_SCRIPT}"
-}
-
-write_inner_script
-
-echo "[INFO] PROJECT_DIR        = ${PROJECT_DIR}"
-echo "[INFO] WORKFLOW_DIR       = ${WORKFLOW_DIR}"
-echo "[INFO] OUTDIR             = ${OUTDIR}"
-echo "[INFO] CPU                = ${CPU}"
-echo "[INFO] RESUME             = ${RESUME}"
-echo "[INFO] RUN_IN_TMUX        = ${RUN_IN_TMUX}"
-echo "[INFO] EXTRA_ARGS         = ${EXTRA_ARGS}"
-echo "[INFO] TIMEZONE           = ${TIMEZONE}"
-echo "[INFO] NXF_CONDA_CACHEDIR = ${NXF_CONDA_CACHEDIR}"
-echo "[INFO] STATUS_FILE        = ${STATUS_FILE}"
-
-if [ "${RUN_IN_TMUX}" = "true" ]; then
-    if ! command -v tmux >/dev/null 2>&1; then
-        echo "[ERROR] 找不到 tmux，但 RUN_IN_TMUX=true"
-        echo "[ERROR] 可改用 RUN_IN_TMUX=false 前景執行"
-        exit 1
-    fi
-
-    if tmux has-session -t "${TMUX_SESSION_NAME}" 2>/dev/null; then
-        echo "[ERROR] tmux session 已存在：${TMUX_SESSION_NAME}"
-        echo "[ERROR] 請改用其他名稱，例如："
-        echo "TMUX_SESSION_NAME=${TMUX_SESSION_NAME}_v2 ./shell_tools/run_pacbio_workflow.sh ${PROJECT_DIR}"
-        exit 1
-    fi
-
-    tmux new-session -d -s "${TMUX_SESSION_NAME}" "bash '${INNER_SCRIPT}'"
-
-    echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
-    echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
-    echo "[INFO] 請以以下方式監看進度："
-    echo "[INFO]   tail -f ${STDOUT_LOG}"
-    echo "[INFO]   tail -f ${STDERR_LOG}"
-    echo "[INFO]   cat ${STATUS_FILE}"
-    echo "[INFO] 若需檢查 session 是否仍存在：tmux ls"
-    echo "[INFO] 若需手動接回 session：tmux attach -t ${TMUX_SESSION_NAME}"
-    echo "[INFO] 注意：attach 後畫面可能為空白，屬正常現象，請以 log 檔為主"
-    echo "[INFO] 若需關閉 session：tmux kill-session -t ${TMUX_SESSION_NAME}"
-else
-    echo "[INFO] 前景執行 workflow"
-    bash "${INNER_SCRIPT}"
-
-    echo "[INFO] 執行完成"
-    echo "[INFO] stdout log: ${STDOUT_LOG}"
-    echo "[INFO] stderr log: ${STDERR_LOG}"
-    echo "[INFO] status file: ${STATUS_FILE}"
+if [ "${#PACBIO_SESSIONS[@]}" -eq 0 ]; then
+    echo
+    echo "[INFO] 目前沒有 pacbio_* 的 tmux session"
+    show_status_file_summary
+    exit 0
 fi
+
+for SESSION in "${PACBIO_SESSIONS[@]}"; do
+    echo
+    echo "=================================================="
+    echo "[INFO] SESSION       : ${SESSION}"
+
+    PROJECT="$(tmux show-environment -t "${SESSION}" 2>/dev/null | awk -F= '/^PROJECT_DIR=/ {print $2}')"
+    [ -z "${PROJECT:-}" ] && PROJECT="${PROJECT_DIR}"
+
+    LOGS_DIR_SESSION="${PROJECT}/logs"
+    STATUS_FILE_SESSION="${LOGS_DIR_SESSION}/run_pacbio.status"
+    STDOUT_LOG="${LOGS_DIR_SESSION}/nextflow.stdout.log"
+    STDERR_LOG="${LOGS_DIR_SESSION}/nextflow.stderr.log"
+
+    STATUS="running"
+    START_TIME="NA"
+    START_EPOCH=""
+    ELAPSED="NA"
+    TASK_BLOCK=""
+    EXECUTOR_LINE=""
+    CURRENT_TASK=""
+    PENDING_TASKS=""
+    LAST_FINISHED_TASK=""
+
+    if [ -f "${STATUS_FILE_SESSION}" ]; then
+        START_TIME="$(grep '^start_time=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
+        START_EPOCH="$(grep '^start_epoch=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
+        STATUS="$(grep '^status=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
+    fi
+
+    if [ -n "${START_EPOCH}" ]; then
+        ELAPSED="$(get_elapsed_from_start_epoch "${START_EPOCH}")"
+    fi
+
+    TASK_BLOCK="$(extract_latest_executor_block "${STDOUT_LOG}")"
+    EXECUTOR_LINE="$(extract_executor_line "${TASK_BLOCK}")"
+    CURRENT_TASK="$(extract_current_task_from_block "${TASK_BLOCK}")"
+    PENDING_TASKS="$(extract_pending_tasks_from_block "${TASK_BLOCK}")"
+    LAST_FINISHED_TASK="$(extract_last_finished_task_from_block "${TASK_BLOCK}")"
+
+    echo "[INFO] PROJECT       : ${PROJECT}"
+    echo "[INFO] STATUS        : ${STATUS:-running}"
+    echo "[INFO] START_TIME    : ${START_TIME:-NA}"
+    echo "[INFO] ELAPSED       : ${ELAPSED:-NA}"
+
+    if [ -n "${EXECUTOR_LINE}" ]; then
+        echo "[INFO] EXECUTOR      : ${EXECUTOR_LINE}"
+    fi
+    if [ -n "${CURRENT_TASK}" ]; then
+        echo "[INFO] CURRENT_TASK  : ${CURRENT_TASK}"
+    fi
+    if [ -n "${PENDING_TASKS}" ]; then
+        echo "[INFO] PENDING_TASKS : ${PENDING_TASKS}"
+    fi
+    if [ -z "${CURRENT_TASK}" ] && [ -n "${LAST_FINISHED_TASK}" ]; then
+        echo "[INFO] LAST_FINISHED : ${LAST_FINISHED_TASK}"
+    fi
+
+    show_tail_lines "${STDOUT_LOG}" 8 "[INFO] stdout 最後 8 行"
+    show_tail_lines "${STDERR_LOG}" 5 "[INFO] stderr 最後 5 行"
+done
