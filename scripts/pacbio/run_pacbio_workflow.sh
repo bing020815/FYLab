@@ -57,19 +57,29 @@ fi
 write_inner_script() {
     cat > "${INNER_SCRIPT}" <<EOF
 #!/usr/bin/env bash
-set -euo pipefail
+set -u
+export TZ="${TIMEZONE}"
 
-START_TIME="\$(TZ='${TIMEZONE}' date '+%Y-%m-%d %H:%M:%S')"
+cd "${PROJECT_DIR}"
+
+START_TIME="\$(date '+%Y-%m-%d %H:%M:%S')"
 START_EPOCH="\$(date +%s)"
 
-cat > "${STATUS_FILE}" <<EOSTATUS
-status=running
+write_status() {
+    local status="\$1"
+    local end_time="\$2"
+    local end_epoch="\$3"
+    local duration_seconds="\$4"
+    local exit_code="\$5"
+
+    cat > "${STATUS_FILE}" <<EOSTATUS
+status=\${status}
 start_time=\${START_TIME}
 start_epoch=\${START_EPOCH}
-end_time=
-end_epoch=
-duration_seconds=
-exit_code=
+end_time=\${end_time}
+end_epoch=\${end_epoch}
+duration_seconds=\${duration_seconds}
+exit_code=\${exit_code}
 session_name=${TMUX_SESSION_NAME}
 project_dir=${PROJECT_DIR}
 stdout_log=${STDOUT_LOG}
@@ -81,57 +91,55 @@ resume=${RESUME}
 extra_args=${EXTRA_ARGS}
 workflow_dir=${WORKFLOW_DIR}
 EOSTATUS
+}
+
+finish() {
+    local exit_code="\$1"
+    local end_time end_epoch duration_seconds final_status
+
+    end_time="\$(date '+%Y-%m-%d %H:%M:%S')"
+    end_epoch="\$(date +%s)"
+    duration_seconds=\$((end_epoch - START_EPOCH))
+
+    if [ "\${exit_code}" -eq 0 ]; then
+        final_status="completed"
+    else
+        final_status="failed"
+    fi
+
+    write_status "\${final_status}" "\${end_time}" "\${end_epoch}" "\${duration_seconds}" "\${exit_code}"
+}
+
+trap 'finish $?' EXIT
+
+write_status "running" "" "" "" ""
 
 source "\$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${ENV_NAME}"
 export NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR}"
 
-set +e
-nextflow run "${WORKFLOW_DIR}/main.nf" \\
-  --input "${SAMPLES_TSV}" \\
-  --metadata "${METADATA_TSV}" \\
-  --dada2_cpu "${CPU}" \\
-  --vsearch_cpu "${CPU}" \\
-  --outdir "${OUTDIR}" \\
-  --publish_dir_mode copy \\
-  -work-dir "${WORK_DIR}" \\
-  $( [ "${RESUME}" = "true" ] && printf '%s ' "-resume" ) \\
-  ${EXTRA_ARGS} \\
-  > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
-EXIT_CODE=\$?
-set -e
+NEXTFLOW_CMD=(
+    nextflow run "${WORKFLOW_DIR}/main.nf"
+    --input "${SAMPLES_TSV}"
+    --metadata "${METADATA_TSV}"
+    --dada2_cpu "${CPU}"
+    --vsearch_cpu "${CPU}"
+    --outdir "${OUTDIR}"
+    --publish_dir_mode copy
+    -work-dir "${WORK_DIR}"
+)
 
-END_TIME="\$(TZ='${TIMEZONE}' date '+%Y-%m-%d %H:%M:%S')"
-END_EPOCH="\$(date +%s)"
-DURATION_SECONDS=\$((END_EPOCH - START_EPOCH))
-
-if [ "\${EXIT_CODE}" -eq 0 ]; then
-    FINAL_STATUS="completed"
-else
-    FINAL_STATUS="failed"
+if [ "${RESUME}" = "true" ]; then
+    NEXTFLOW_CMD+=(-resume)
 fi
 
-cat > "${STATUS_FILE}" <<EOSTATUS
-status=\${FINAL_STATUS}
-start_time=\${START_TIME}
-start_epoch=\${START_EPOCH}
-end_time=\${END_TIME}
-end_epoch=\${END_EPOCH}
-duration_seconds=\${DURATION_SECONDS}
-exit_code=\${EXIT_CODE}
-session_name=${TMUX_SESSION_NAME}
-project_dir=${PROJECT_DIR}
-stdout_log=${STDOUT_LOG}
-stderr_log=${STDERR_LOG}
-timezone=${TIMEZONE}
-nxf_conda_cachedir=${NXF_CONDA_CACHEDIR}
-cpu=${CPU}
-resume=${RESUME}
-extra_args=${EXTRA_ARGS}
-workflow_dir=${WORKFLOW_DIR}
-EOSTATUS
+if [ -n "${EXTRA_ARGS}" ]; then
+    # shellcheck disable=SC2206
+    EXTRA_ARGS_ARRAY=( ${EXTRA_ARGS} )
+    NEXTFLOW_CMD+=("\${EXTRA_ARGS_ARRAY[@]}")
+fi
 
-exit "\${EXIT_CODE}"
+"\${NEXTFLOW_CMD[@]}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
 EOF
 
     chmod +x "${INNER_SCRIPT}"
@@ -176,7 +184,6 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
     echo "[INFO] 若需手動接回 session：tmux attach -t ${TMUX_SESSION_NAME}"
     echo "[INFO] 注意：attach 後畫面可能為空白，屬正常現象，請以 log 檔為主"
     echo "[INFO] 若需關閉 session：tmux kill-session -t ${TMUX_SESSION_NAME}"
-
 else
     echo "[INFO] 前景執行 workflow"
     bash "${INNER_SCRIPT}"
