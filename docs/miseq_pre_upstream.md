@@ -278,27 +278,17 @@ qiime cutadapt trim-reads \
 <p align="center"><a href="#fylab">Top</a></p>
 
 # Analysis 導出特徵表前準備
-## 建立導出用的資料夾
-```
-mkdir phyloseq
-```
-## 轉黨 qza 檔案成 biom 檔案
+導出 feature table 給後續共同步驟使用
+* 建立導出用的資料夾
 * 輸入去除雜訊後的 `table.qza`，再輸出成 biom format: `feature-table.biom`
-```
-qiime tools export \
---input-path table.qza \
---output-path phyloseq
+* 將輸出成 `feature-table.biom` 的當案轉黨成 `otu_table.tsv`
+* biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
+```bash
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/post_upstream/export_table_qza_to_phyloseq.sh
+chmod +x export_table_qza_to_phyloseq.sh
+./export_table_qza_to_phyloseq.sh table.qza phyloseq
 ```
 
-## Biom 轉黨
-* 將輸出成 `feature-table.biom` 的當案轉黨成 `otu_table.tsv` 
-* biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
-```
-biom convert \
--i phyloseq/feature-table.biom \
--o phyloseq/otu_table.tsv \
---to-tsv
-```
 
 # 接續模型分類流程
 [接續回到主要共同步驟](../README.md)
