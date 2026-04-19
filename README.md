@@ -11,9 +11,10 @@
 1. [|Pre-upstream| 序列前處理與導入](#序列前處理與導入)
 2. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
 3. [|Post-upstream| Dehost - 由序列排除host基因](#Dehost-排除host基因)
-4. [|Post-upstream| 畫圖](#畫圖)
-5. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
-6. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
+4. [|Post-upstream| KEGG前期準備](#KEGG前期準備)
+5. [|Post-upstream| 畫圖](#畫圖)
+6. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+7. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
 
 # Preset
 ## Folder Management
@@ -51,11 +52,14 @@ NOTE:
 ```bash
 mkdir -p shell_tools
 cd shell_tools
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/run_in_tmux.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_tmux_jobs.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/run_dehost_on_fasta.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/filter_phyloseq_by_nonhost_ids.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/prepare_dehost_qiime2_inputs.sh
-chmod +x export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/picrust/prepare_picrust_inputs.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh prepare_picrust_inputs.sh
 cd ..
 ```
 
@@ -491,7 +495,7 @@ HOST_DB=dog ./shell_tools/run_dehost_on_fasta.sh .
 conda activate qiime2-2023.2
 ```
 ### 轉檔qiime2對應deshot資料
-* 產出`phyloseq/filtered_host/dehost_otu_table.biom`,`phyloseq/filtered_host/dehost_otu_table.qza`,`phyloseq/filtered_host/dehost_rep_seqs.qza`,`phyloseq/filtered_host/dehost_taxonomy.qza`,`phyloseq/filtered_host/dna-sequences.fasta`
+* 產出`phyloseq/filtered_host/dehost_otu_table.biom`,`phyloseq/filtered_host/dehost_otu_table.qza`,`phyloseq/filtered_host/dehost_rep_seqs.qza`,`phyloseq/filtered_host/dehost_taxonomy.qza`,`phyloseq/filtered_host/dehost_dna-sequences.fasta`
 * 需要有 `rep-seqs.qza`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
 ```
 ./shell_tools/prepare_dehost_qiime2_inputs.sh .
@@ -499,58 +503,32 @@ conda activate qiime2-2023.2
 <p align="center"><a href="#fylab">Top</a></p>
 
 
-# 畫圖
-## KEGG Pathway 前期準備
-＝＝＝＝＝＝＝ＶＶ
-### 1.Phylogeny Tree (此步驟要超級久，可以多線程設定)
+# KEGG 前期準備
+## KEGG PICRUSt2 tree 前期準備
+### 進入qiime2環境
+```
+conda activate qiime2-2023.2
+```
+
+### 檔案執行
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
-```
-nohup qiime phylogeny align-to-tree-mafft-fasttree \
---i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza \
---o-alignment aligned-rep-seqs.qza \
---o-masked-alignment masked-aligned-rep-seqs.qza \
---o-tree unrooted-tree.qza \
---o-rooted-tree rooted-tree.qza \
---p-n-threads 2 > nohup.out 2>&1 &
+```bash
+MODE=dehost THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
 ```
 </details><br>
 <details>
 <summary><strong>未Dehost使後語法</strong></summary>
 
-```
-nohup qiime phylogeny align-to-tree-mafft-fasttree \
---i-sequences rep-seqs.qza \
---o-alignment aligned-rep-seqs.qza \
---o-masked-alignment masked-aligned-rep-seqs.qza \
---o-tree unrooted-tree.qza \
---o-rooted-tree rooted-tree.qza \
---p-n-threads 2 > nohup.out 2>&1 &
+```bash
+MODE=raw THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
 ```
 </details><br>
-
-
-### 2.導出代表序列 (這步完成後，可以跳到 #PICRUSt2，直接啟動picrust2)
-<details>
-<summary><strong>Dehost使後用語法</strong></summary>
-
-註: 產出dehost過的`dna-sequences.fasta` 於 `phyloseq/filtered_host/`
-```
-qiime tools export --input-path phyloseq/filtered_host/dehost_rep_seqs.qza --output-path phyloseq/filtered_host/
-```
-</details><br>
-<details>
-<summary><strong>未Dehost使後語法</strong></summary>
-  
-註: 產出dehost過的`dna-sequences.fasta` 於 `fastq1/`
-```
-qiime tools export --input-path rep-seqs.qza --output-path fastq1/
-```
-</details><br>
-＝＝＝＝＝＝＝＾＾
 <p align="center"><a href="#fylab">Top</a></p>
 
+
+# 畫圖
 <details>
 <summary><strong>點我展開畫進化樹(optional)</strong></summary>
   
@@ -739,7 +717,7 @@ nohup place_seqs.py \
 -p 可改設定核心 能設定為4-6
 ```
 nohup place_seqs.py \
--s fastq1/dna-sequences.fasta \
+-s picrust/dna-sequences.fasta \
 -o out.tre \
 -p 2 \
 --intermediate intermediate/place_seqs &
