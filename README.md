@@ -67,7 +67,7 @@ NOTE:
 * [LPSN - List of Prokaryotic names with Standing in Nomenclature](https://lpsn.dsmz.de/) 
 
 <details>
-<summary><strong>Greengenes 13_8 16S [20250728 新增]</strong></summary>
+<summary><strong>Greengenes 13_8 16S [20260419 修正]</strong></summary>
 
 GreenGenes 16S rRNA gene databas:
   + Greengene 1 13-8 只有更新到 2013.08，可參考序列數較多
@@ -77,47 +77,63 @@ GreenGenes 16S rRNA gene databas:
 [Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
 
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg_nb_v3v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3_len200.qza.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg_nb_v3 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3_len200.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V4_len250.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg_nb_v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V4_len250.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
-```
-nohup qiime feature-classifier classify-consensus-vsearch \
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg_vsearch_full \
+CMD='qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
-  --verbose > nohup_vsearch.out 2>&1 &
+  --verbose' \
+./run_in_tmux.sh
 ```
 
 </details><br>
 
 <details>
-<summary><strong>Greengenes2 2022_10 16S [20251008 新增]</strong></summary>
+<summary><strong>Greengenes2 2022_10 16S [20260419 修正]</strong></summary>
 
 Greengenes2 16S rRNA gene databas:
   + Greengenes2 從 2022 年起開始重新建構，以backbone技術，採用全基因體（WoL）。
@@ -125,47 +141,63 @@ Greengenes2 16S rRNA gene databas:
 
 [Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2022_10_nb_v3v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3_len200.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2022_10_nb_v3 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3_len200.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [Official released]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2.2022.10.backbone.V4.nb.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2022_10_nb_v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg2/gg2.2022.10.backbone.V4.nb.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
-```
-nohup qiime feature-classifier classify-consensus-vsearch \
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2022_10_vsearch_full \
+CMD='qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg2/gg2_2022_10_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2022_10_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
-  --verbose > nohup_vsearch.out 2>&1 &
+  --verbose' \
+./run_in_tmux.sh
 ```
 
 </details><br>
 
 <details>
-<summary><strong>Greengenes2 2024_09 16S [20251008 新增]</strong></summary>
+<summary><strong>Greengenes2 2024_09 16S [20260419 修正]</strong></summary>
 
 Greengenes2 16S rRNA gene databas:
   + Greengenes2 從 2024.09 年再次更新：
@@ -178,25 +210,33 @@ Greengenes2 16S rRNA gene databas:
 [Greengenes2 2024.09 Cite 參考資訊](https://forum.qiime2.org/t/greengenes2-2024-09/31606/4)
 
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3V4.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2024_09_nb_v3v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3V4.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3_len200.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2024_09_nb_v3 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3_len200.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
-```
+```bash
 nohup qiime feature-classifier classify-sklearn \
 --i-classifier /home/adprc/classifier/gg2/gg2.2024.09.backbone.v4.nb.qza \
 --i-reads rep-seqs.qza \
@@ -205,20 +245,22 @@ nohup qiime feature-classifier classify-sklearn \
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
-```
-nohup qiime feature-classifier classify-consensus-vsearch \
-  --i-query rep-seqs.qza \
-  --i-reference-reads /home/adprc/classifier/gg2/gg2_2024_09_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2024_09_Taxonomy.qza \
-  --p-threads 4 \
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg2_2024_09_nb_v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg2/gg2.2024.09.backbone.v4.nb.qza \
+  --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --verbose > nohup_vsearch.out 2>&1 &
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 </details><br>
 
 <details>
-<summary><strong>SILVA 138 16S [20250728 新增]</strong></summary>
+<summary><strong>SILVA 138 16S [20260419 修正]</strong></summary>
 
 SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 條)
 * ASV 數量約87.3萬筆，Taxonomy 總數維持約43.6萬筆
@@ -226,47 +268,63 @@ SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 
 [Qiime2 2023.2 Cite 參考資訊](https://docs.qiime2.org/2023.2/data-resources/)
   
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=silva138_nb_v3v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3_len200.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=silva138_nb_v3 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3_len200.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva-138-99-515-806_V4-nb-classifier.zip \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=silva138_nb_v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/SILVA/silva-138-99-515-806_V4-nb-classifier.zip \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 
 ### Option2: vsearch 模型分類 (full-length)
-```
-nohup qiime feature-classifier classify-consensus-vsearch \
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=silva138_vsearch_full \
+CMD='qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
+  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
-  --verbose > nohup_vsearch.out 2>&1 &
+  --verbose' \
+./run_in_tmux.sh
 ```
 
 </details><br>
 
 <details>
-<summary><strong>SILVA DaDa2 Zenodo 138.2 16S [20251115 新增]</strong></summary>
+<summary><strong>SILVA DaDa2 Zenodo 138.2 16S [20260419 修正]</strong></summary>
 
 由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 資料庫 138.2 版本建立 (約42萬條序列)
 * ASV 數量約90.4萬筆，Taxonomy 總數維持約45.2萬筆
@@ -274,12 +332,16 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 [SILVA DaDa2 Zenodo 138.2 Cite 參考資訊](https://zenodo.org/records/14169026)
   
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
-```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+```bash
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=silva_dada2_1382_nb_v3v4 \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/SILVA/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
 </details><br>
 
@@ -287,25 +349,28 @@ nohup qiime feature-classifier classify-sklearn \
 <details>
 <summary><strong>Greengenes 13_8 16S full-length</strong></summary>
   
-### Step 1. 下載模型
-* 下載 2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs
-* https://greengenes.lbl.gov/
-* https://www.lcsciences.com/documents/sample_data/16S_sequencing/src/html/top2.html
-```
-wget https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza
-```
-
-### Step2. Naive Bayes 模型分類
+### Naive Bayes 官方模型分類
 * 透過已訓練好的模型`gg-13-8-99-nb-classifier.qza`來預測，並輸出`taxonomy.qza`
+* 2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs
+* https://www.lcsciences.com/documents/sample_data/16S_sequencing/src/html/top2.html
+* https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza
 ```
-nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg-13-8-99-nb-classifier.qza \
---i-reads rep-seqs.qza \
---o-classification taxonomy.qza \
---p-n-jobs 2 > nohup.out 2>&1 &
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gg13_8_nb_full \
+CMD='qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/gg/gg-13-8-99-nb-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2' \
+./run_in_tmux.sh
 ```
-
 </details><br>
+
+模型分類進度查詢
+```
+MODE=all JOB_TYPE=taxonomy ./check_tmux_jobs.sh
+```
 
 ### 特殊狀況處理2 (optional)
 <details>
