@@ -52,8 +52,11 @@ mv *.fastq.gz raw_fastq/
 
 ## 下載去除 primer 腳本與賦予執行權限
 ```
+mkdir -p shell_tools
+cd shell_tools
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/trim_all.sh
 chmod +x trim_all.sh
+cd ..
 ```
 
 ## 執行去除 primer 腳本
@@ -61,7 +64,7 @@ chmod +x trim_all.sh
 * 剪完的檔案會輸出至 trimmed_fastq/ 目錄下，並且重新命名為 `*_R1_trimmed.fastq.gz`
 * `raw_fastq/*_R1_*.fastq.gz` 形式的檔案則不會被修改或刪除，需要清理空間時可優先清理這邊
 ```
-./trim_all.sh
+./shell_tools/trim_all.sh
 ```
 <p align="center"><a href="#fylab">Top</a></p>
 
@@ -70,11 +73,15 @@ chmod +x trim_all.sh
 ![QIIME2](../img/QIIME2_flow.png)
 ## 下載腳本與賦予執行權限
 ```
+mkdir -p shell_tools
+cd shell_tools
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/miseq/make_manifest_miseq.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/run_in_tmux.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_tmux_jobs.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/common/check_fastq_lengths.sh
-chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh check_fastq_lengths.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh check_fastq_lengths.sh export_table_qza_to_phyloseq.sh
+cd ..
 ```
 
 ## 執行 manifest 腳本
@@ -85,7 +92,7 @@ chmod +x run_in_tmux.sh check_tmux_jobs.sh make_manifest_miseq.sh check_fastq_le
 * 檢查是否存在重複的 R1 或 R2
 * 檢查是否有無法辨識命名格式的檔案
 ```
-./make_manifest_miseq.sh .
+./shell_tools/make_manifest_miseq.sh .
 ```
 ```
 # 此為manifest.csv範例格式，無需執行
@@ -146,10 +153,10 @@ CMD="qiime tools import \
   --input-path manifest.csv \
   --output-path paired-end-demux.qza \
   --input-format PairedEndFastqManifestPhred33" \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 ```
-MODE=latest JOB_TYPE=import ./check_tmux_jobs.sh
+MODE=latest JOB_TYPE=import ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## 轉成可視化報表
@@ -162,10 +169,10 @@ JOB_NAME=paired_end_demux_summarize \
 CMD='qiime demux summarize \
   --i-data paired-end-demux.qza \
   --o-visualization paired-end-demux.qzv' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 ```
-MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
+MODE=latest JOB_TYPE=demux ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## Denoise 去除雜訊 [標準流程: 270-240 (適用於fastq長度 300 bp)]
@@ -189,7 +196,7 @@ MODE=latest JOB_TYPE=demux ./check_tmux_jobs.sh
 * fastq_length_distribution_all.tsv
 * fastq_length_summary.tsv
 ```
-./check_fastq_lengths.sh .
+./shell_tools/check_fastq_lengths.sh .
 ```
 </details>
 
@@ -207,10 +214,10 @@ CMD='qiime dada2 denoise-paired \
   --o-representative-sequences rep-seqs.qza \
   --o-table table.qza \
   --o-denoising-stats stats.qza' \
-./run_in_tmux.sh
+./shell_tools/run_in_tmux.sh
 ```
 ```
-MODE=latest JOB_TYPE=denoise ./check_tmux_jobs.sh
+MODE=latest JOB_TYPE=denoise ./shell_tools/check_tmux_jobs.sh
 ```
 
 ### 檢查 stats 檔案 denosis 狀態圖表
@@ -284,9 +291,7 @@ qiime cutadapt trim-reads \
 * 將輸出成 `feature-table.biom` 的當案轉黨成 `otu_table.tsv`
 * biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
 ```bash
-curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/export_table_qza_to_phyloseq.sh
-chmod +x export_table_qza_to_phyloseq.sh
-./export_table_qza_to_phyloseq.sh table.qza phyloseq
+./shell_tools/export_table_qza_to_phyloseq.sh table.qza phyloseq
 ```
 
 
