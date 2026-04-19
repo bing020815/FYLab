@@ -795,6 +795,7 @@ CMD='hsp.py \
   -p 2' \
 ./shell_tools/run_in_tmux.sh
 ```
+查詢任務狀態
 ```bash
 MODE=latest JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 ```
@@ -876,6 +877,11 @@ CMD='metagenome_pipeline.py \
 ```
 </details><br>
 
+查詢任務狀態
+```bash
+MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
+```
+
 ### EC
 * 產出檔案在EC_metagenome_out資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: EC 的每個 sample unstratified 預測結果
@@ -952,6 +958,7 @@ CMD='metagenome_pipeline.py \
 ```
 </details><br>
 
+查詢任務狀態
 ```bash
 MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
 ```
@@ -1037,6 +1044,11 @@ CMD='add_descriptions.py \
 ```
 </details><br>
 
+查詢任務狀態
+```bash
+MODE=latest JOB_TYPE=picrust_pathway ./shell_tools/check_tmux_jobs.sh
+```
+
 ## 5. EC: Add descriptions
 
 ```bash
@@ -1049,6 +1061,7 @@ CMD='add_descriptions.py \
   -o EC_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz' \
 ./shell_tools/run_in_tmux.sh
 ```
+查詢任務狀態
 ```bash
 MODE=latest JOB_TYPE=picrust_desc ./shell_tools/check_tmux_jobs.sh
 ```
@@ -1084,6 +1097,7 @@ CMD='add_descriptions.py \
 ```
 </details><br>
 
+查詢任務狀態
 ```bash
 MODE=latest JOB_TYPE=picrust_desc ./shell_tools/check_tmux_jobs.sh
 ```
