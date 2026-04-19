@@ -446,14 +446,14 @@ biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
 
 
 # Dehost 排除host基因
-## 啟動host-tools package 
+## 1. 啟動host-tools package 
 
 包含: bowtie2, samtools, seqkit 工具包 
 https://useast.ensembl.org/index.html
 ```
 conda activate host-tools
 ```
-## 排除宿主基因
+## 2. 排除宿主基因
 ### Step 1. 檢查代表性序列品質（QC）
 ```bash
 seqkit stats phyloseq/dna-sequences.fasta
@@ -487,7 +487,7 @@ HOST_DB=dog ./shell_tools/run_dehost_on_fasta.sh .
 ./shell_tools/filter_phyloseq_by_nonhost_ids.sh .
 ```
 
-## Dehost pathway 流程前期準備
+## 3. Dehost pathway 流程前期準備
 ### 進入qiime2環境
 ```
 conda activate qiime2-2023.2
