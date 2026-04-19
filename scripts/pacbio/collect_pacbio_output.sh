@@ -33,7 +33,7 @@ EOF
         cat > "$outfile" <<EOF
 taxonomy_mode=fylab
 taxonomy_source_type=fylab_classifier
-taxonomy_source_file=taxonomy.tsv
+taxonomy_source_file=taxonomy.qza
 taxonomy_source_merged_file=taxonomy_nextflow_merged_reference.tsv
 note=Use FYLab custom-classified taxonomy.tsv as final taxonomy. Nextflow taxonomy is reference only.
 EOF
