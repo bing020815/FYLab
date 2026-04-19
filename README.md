@@ -524,8 +524,9 @@ MODE=dehost THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
 ```bash
 MODE=raw THREADS=2 ./shell_tools/prepare_picrust_inputs.sh .
 ```
-完成可以直接跳[Picurst流程產生路徑](#PICRUSt2---Metabolism-Pathway)
 </details><br>
+
+完成可以直接跳[Picurst流程產生路徑](#PICRUSt2---Metabolism-Pathway)
 <p align="center"><a href="#fylab">Top</a></p>
 
 
