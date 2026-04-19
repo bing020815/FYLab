@@ -73,6 +73,7 @@ nextflow run main.nf --download_db
 ```
 project_name/
 ├─ raw_fastq/        << 自行建立
+├─ shell_tools/      << 指令產出，存放需要執行的.sh
 ├─ samples.tsv       << 系統產出
 ├─ metadata.tsv      << 系統產出
 ├─ pacbio_results/   << 系統產出
