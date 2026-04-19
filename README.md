@@ -421,20 +421,21 @@ rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際
 
 </details>
 
-## qza格式轉檔
-*  將分類好的輸出檔案`taxonomy.qza`轉黨為成`taxonomy.tsv`，存至phyloseq
-```
-qiime tools export \
---input-path taxonomy.qza \
---output-path phyloseq
-```
-
-### -- 解壓縮 `rep-seqs.qza` 檔案，產生 `dna-sequences.fasta`，方便查詢Sequence、篩選350bp長度 --
-* [NCBI網站查詢序列](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes)
-```
-qiime tools export \
-  --input-path rep-seqs.qza \
-  --output-path phyloseq
+## qza格式轉檔出存至phyloseq
+* 建立導出用的資料夾
+biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
+* 處理 `table.qza`，再輸出成 `feature-table.biom`，轉檔成 `otu_table.tsv`
+* 處理 `rep-seqs.qza`，再輸出成 `dna-sequences.fasta`
+  * [NCBI網站查詢序列](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&BLAST_SPEC=MicrobialGenomes)
+* 根據 taxonomy_source 決定 taxonomy 處理方式
+    * Nextflow 官方 taxonomy or  Customized DB taxonomy
+* 最後在 phyloseq/ 內產出：
+    * `feature-table.biom`
+    * `otu_table.tsv`
+    * `taxonomy.tsv`
+    * `dna-sequences.fasta`
+```bash
+./shell_tools/export_table_qza_to_phyloseq.sh
 ```
 <p align="center"><a href="#fylab">Top</a></p>
 
