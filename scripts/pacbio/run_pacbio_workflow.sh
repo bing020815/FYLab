@@ -57,7 +57,8 @@ fi
 write_inner_script() {
     cat > "${INNER_SCRIPT}" <<EOF
 #!/usr/bin/env bash
-set -u
+set -e
+set -o pipefail
 export TZ="${TIMEZONE}"
 
 cd "${PROJECT_DIR}"
@@ -114,8 +115,21 @@ trap 'finish $?' EXIT
 
 write_status "running" "" "" "" ""
 
+exec > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
+
+echo "[INFO] PacBio inner script started at \${START_TIME}"
+echo "[INFO] PROJECT_DIR=${PROJECT_DIR}"
+echo "[INFO] ENV_NAME=${ENV_NAME}"
+echo "[INFO] RESUME=${RESUME}"
+echo "[INFO] CPU=${CPU}"
+echo "[INFO] NXF_CONDA_CACHEDIR=${NXF_CONDA_CACHEDIR}"
+
+set +u
 source "\$(conda info --base)/etc/profile.d/conda.sh"
+conda deactivate >/dev/null 2>&1 || true
 conda activate "${ENV_NAME}"
+set -u
+
 export NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR}"
 
 NEXTFLOW_CMD=(
@@ -139,7 +153,11 @@ if [ -n "${EXTRA_ARGS}" ]; then
     NEXTFLOW_CMD+=("\${EXTRA_ARGS_ARRAY[@]}")
 fi
 
-"\${NEXTFLOW_CMD[@]}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"
+echo "[INFO] Running Nextflow command:"
+printf ' %q' "\${NEXTFLOW_CMD[@]}"
+echo
+
+"\${NEXTFLOW_CMD[@]}"
 EOF
 
     chmod +x "${INNER_SCRIPT}"
