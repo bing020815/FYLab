@@ -140,6 +140,33 @@ samtools fasta -@ "${THREADS}" "${HOST_FILTER_DIR}/nonhost_sorted.bam" \
 echo "[INFO] Step 11. 顯示 fasta 統計"
 seqkit stats "${INPUT_FASTA}" "${HOST_FILTER_DIR}/host_reads.fasta" "${HOST_FILTER_DIR}/nonhost.fasta"
 
+echo "[INFO] Step 12. 顯示 bowtie2 alignment 摘要"
+if [ -f "${HOST_FILTER_DIR}/mapping_host_genome.txt" ]; then
+    if grep -q "overall alignment rate" "${HOST_FILTER_DIR}/mapping_host_genome.txt"; then
+        grep "overall alignment rate" "${HOST_FILTER_DIR}/mapping_host_genome.txt"
+    else
+        echo "[WARN] 找不到 overall alignment rate，請手動檢查 ${HOST_FILTER_DIR}/mapping_host_genome.txt"
+    fi
+else
+    echo "[WARN] 找不到 bowtie2 log：${HOST_FILTER_DIR}/mapping_host_genome.txt"
+fi
+
+echo "[INFO] Step 13. 顯示 dehost 前後 fasta 統計摘要"
+if [ -f "${FILTERED_FASTA}" ]; then
+    seqkit stats -T \
+      "${RAW_FASTA}" \
+      "${FILTERED_FASTA}" \
+      "${HOST_FILTER_DIR}/host_reads.fasta" \
+      "${HOST_FILTER_DIR}/nonhost.fasta" \
+      | column -t
+else
+    seqkit stats -T \
+      "${RAW_FASTA}" \
+      "${HOST_FILTER_DIR}/host_reads.fasta" \
+      "${HOST_FILTER_DIR}/nonhost.fasta" \
+      | column -t
+fi
+
 echo
 echo "[INFO] dehost 完成"
 echo "[INFO] host log       = ${HOST_FILTER_DIR}/mapping_host_genome.txt"
