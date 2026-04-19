@@ -38,6 +38,7 @@ conda activate cutadapt310
 project_name/
 ├─ raw_fastq/        << 原始 paired-end FASTQ
 ├─ trimmed_fastq/    << 去 primer 後 FASTQ
+├─ shell_tools/      << 存放需要執行的.sh
 ├─ manifest.csv      << make_manifest_miseq.sh 產出
 ├─ qiime2_results/   << QIIME2 輸出
 └─ logs/             << 執行紀錄
