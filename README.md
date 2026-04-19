@@ -952,6 +952,10 @@ CMD='metagenome_pipeline.py \
 ```
 </details><br>
 
+```bash
+MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
+```
+
 ## 3.5 Picrust QC [Optional]
 ### Weighted NSTI
 用於計算 weighted NSTI，會自動判斷目前是 raw 或 dehost 流程
