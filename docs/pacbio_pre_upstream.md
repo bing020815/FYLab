@@ -97,7 +97,7 @@ m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_25.hifi_reads.fastq.gz
 m84036_230702_205216_s2.MAS16S_Fwd_01--MAS16S_Rev_37.hifi_reads.fastq.gz
 ```
 
-## Step3. 建立sample和metadata檔案
+## Step3. 下載執行檔
 ```bash
 mkdir -p shell_tools
 cd shell_tools
@@ -107,9 +107,6 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/c
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/pacbio/collect_pacbio_output.sh
 chmod +x make_manifest_pacbio.sh run_pacbio_workflow.sh check_pacbio_sessions.sh collect_pacbio_output.sh
 cd ..
-```
-```bash
-./shell_tools/make_manifest_pacbio.sh .
 ```
 
 ## Step4. 建立sample和metadata檔案
