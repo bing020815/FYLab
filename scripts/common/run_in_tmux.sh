@@ -198,8 +198,8 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
     tmux new-session -d -s "${SESSION_NAME}" "bash \"${RUNNER_SCRIPT}\""
 
     echo "[INFO] 已建立 tmux session: ${SESSION_NAME}"
-    echo "[INFO] 查詢 session 任務清單：./check_tmux_jobs.sh"
-    echo "[INFO] 查詢詳細任務進度：MODE=latest ./check_tmux_jobs.sh"
+    echo "[INFO] 查詢 session 任務清單：./shell_tools/check_tmux_jobs.sh"
+    echo "[INFO] 查詢詳細任務進度：MODE=latest ./shell_tools/check_tmux_jobs.sh"
 else
     echo "[INFO] 前景執行"
     bash "${RUNNER_SCRIPT}"
