@@ -44,6 +44,16 @@ get_elapsed_from_start_epoch() {
     format_duration "${elapsed}"
 }
 
+normalize_stdout_stream() {
+    local stdout_log="$1"
+
+    if [ ! -f "${stdout_log}" ]; then
+        return
+    fi
+
+    tr '\r' '\n' < "${stdout_log}" | sed '/^[[:space:]]*$/d'
+}
+
 show_tail_lines() {
     local file="$1"
     local n="${2:-8}"
@@ -52,7 +62,7 @@ show_tail_lines() {
     echo
     echo "${title}"
     if [ -f "${file}" ]; then
-        tail -n "${n}" "${file}" || true
+        tr '\r' '\n' < "${file}" | sed '/^[[:space:]]*$/d' | tail -n "${n}" || true
     else
         echo "[INFO] 找不到檔案：${file}"
     fi
@@ -66,11 +76,7 @@ read_status_value() {
 extract_latest_executor_block() {
     local stdout_log="$1"
 
-    if [ ! -f "${stdout_log}" ]; then
-        return
-    fi
-
-    awk '
+    normalize_stdout_stream "${stdout_log}" | awk '
     /^executor >[[:space:]]+Local/ {
         if (in_block && block != "") {
             last_block = block
@@ -81,11 +87,13 @@ extract_latest_executor_block() {
     }
 
     in_block {
-        if ($0 ~ /^$/) {
+        if ($0 ~ /^executor >/ && block != "") {
             last_block = block
-            block = ""
-            in_block = 0
-        } else {
+            block = $0 "\n"
+            next
+        }
+
+        if ($0 ~ /pb16S:|Plus [0-9]+ more processes waiting for tasks/) {
             block = block $0 "\n"
         }
     }
@@ -95,7 +103,7 @@ extract_latest_executor_block() {
             last_block = block
         }
         printf "%s", last_block
-    }' "${stdout_log}"
+    }'
 }
 
 extract_executor_line() {
@@ -132,7 +140,7 @@ extract_pending_tasks_from_block() {
           | tail -n +2 || true
         printf '%s\n' "${block}" \
           | grep 'Plus [0-9]\+ more processes waiting for tasks' || true
-    } | sed 's/^[[:space:]]*//' | paste -sd ' | ' -
+    } | sed 's/^[[:space:]]*//' | paste -sd ' ; ' -
 }
 
 extract_last_finished_task_from_block() {
@@ -157,7 +165,7 @@ show_status_file_summary() {
     local status start_time start_epoch end_time duration_seconds exit_code
     local session_name project_dir stdout_log stderr_log
     local cpu resume extra_args workflow_dir timezone nxf_conda_cachedir
-    local elapsed_fmt nf_log stale_hint
+    local elapsed_fmt stale_hint
     local task_block executor_line current_task pending_tasks last_finished_task
 
     status="$(read_status_value status)"
@@ -189,7 +197,6 @@ show_status_file_summary() {
     pending_tasks="$(extract_pending_tasks_from_block "${task_block}")"
     last_finished_task="$(extract_last_finished_task_from_block "${task_block}")"
 
-    nf_log="${PROJECT_DIR}/.nextflow.log"
     stale_hint=""
     if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
         stale_hint="可能 tmux session 已結束，但 status 檔尚未更新。"
