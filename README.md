@@ -466,7 +466,7 @@ seqkit stats phyloseq/dna-sequences.fasta
 * 保守篩選濾除低於 350 bp 序列，減少過多序列定序停留於Family
 * 需要高品質、高分類準確度的研究，例如 菌種層級分析、生物標記開發
 ```bash
-seqkit seq -m 350 -M 500 \
+seqkit seq -g -m 350 -M 500 \
   phyloseq/dna-sequences.fasta \
   -o phyloseq/dehost_work/filtered_dna-sequences.fasta
 ```
