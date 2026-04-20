@@ -723,6 +723,7 @@ conda activate picrust2sc
 JOB_TYPE=picrust_place \
 PROJECT_DIR=. \
 JOB_NAME=dehost_picrust2_place \
+PRE_CMD='rm -rf intermediate/place_seqs && rm -f out.tre' \
 CMD='place_seqs.py \
   -s phyloseq/dehost_output/dehost_dna-sequences.fasta \
   -o out.tre \
@@ -740,6 +741,7 @@ CMD='place_seqs.py \
 JOB_TYPE=picrust_place \
 PROJECT_DIR=. \
 JOB_NAME=raw_picrust2_place \
+PRE_CMD='rm -rf intermediate/place_seqs && rm -f out.tre' \
 CMD='place_seqs.py \
   -s phyloseq/dna-sequences.fasta \
   -o out.tre \
