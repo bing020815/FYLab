@@ -195,12 +195,11 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
     echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
     echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
     echo "[INFO] 請以以下方式監看進度："
+    echo "[INFO]   ./shell_tools/check_pacbio_sessions.sh"
     echo "[INFO]   tail -f ${STDOUT_LOG}"
     echo "[INFO]   tail -f ${STDERR_LOG}"
     echo "[INFO]   cat ${STATUS_FILE}"
     echo "[INFO] 若需檢查 session 是否仍存在：tmux ls"
-    echo "[INFO] 若需手動接回 session：tmux attach -t ${TMUX_SESSION_NAME}"
-    echo "[INFO] 注意：attach 後畫面可能為空白，屬正常現象，請以 log 檔為主"
     echo "[INFO] 若需關閉 session：tmux kill-session -t ${TMUX_SESSION_NAME}"
 else
     echo "[INFO] 前景執行 workflow"
