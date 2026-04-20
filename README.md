@@ -749,6 +749,7 @@ CMD='place_seqs.py \
 ```
 </details><br>
 
+查詢任務狀態
 ```bash
 MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
 ```
