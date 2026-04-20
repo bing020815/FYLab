@@ -741,7 +741,7 @@ JOB_TYPE=picrust_place \
 PROJECT_DIR=. \
 JOB_NAME=raw_picrust2_place \
 CMD='place_seqs.py \
-  -s picrust/dna-sequences.fasta \
+  -s phyloseq/dna-sequences.fasta \
   -o out.tre \
   -p 2 \
   --intermediate intermediate/place_seqs' \
