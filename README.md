@@ -468,11 +468,11 @@ seqkit stats phyloseq/dna-sequences.fasta
 ```bash
 seqkit seq -m 350 -M 500 \
   phyloseq/dna-sequences.fasta \
-  -o phyloseq/host_filter/filtered_dna-sequences.fasta
+  -o phyloseq/dehost_work/filtered_dna-sequences.fasta
 ```
 再檢查代表性序列品質（可選）
 ```
-seqkit stats phyloseq/host_filter/filtered_dna-sequences.fasta
+seqkit stats phyloseq/dehost_work/filtered_dna-sequences.fasta
 ```
 
 ### Step 3. 代表性序列對 host genome 比對
@@ -484,7 +484,7 @@ HOST_DB=dog ./shell_tools/run_dehost_on_fasta.sh .
 
 ### Step 4. 產出 dehost 結果
 * 產出`dehost_otu_table.tsv`, `dehost_taxonomy.tsv`
-* 需要有 `phyloseq/host_filter/nonhost.fasta`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
+* 需要有 `phyloseq/dehost_work/nonhost.fasta`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
 ```bash
 ./shell_tools/filter_phyloseq_by_nonhost_ids.sh .
 ```
@@ -495,7 +495,7 @@ HOST_DB=dog ./shell_tools/run_dehost_on_fasta.sh .
 conda activate qiime2-2023.2
 ```
 ### 轉檔qiime2對應deshot資料
-* 產出`phyloseq/filtered_host/dehost_otu_table.biom`,`phyloseq/filtered_host/dehost_otu_table.qza`,`phyloseq/filtered_host/dehost_rep_seqs.qza`,`phyloseq/filtered_host/dehost_taxonomy.qza`,`phyloseq/filtered_host/dehost_dna-sequences.fasta`
+* 產出`phyloseq/dehost_output/dehost_otu_table.biom`,`phyloseq/dehost_output/dehost_otu_table.qza`,`phyloseq/dehost_output/dehost_rep_seqs.qza`,`phyloseq/dehost_output/dehost_taxonomy.qza`,`phyloseq/dehost_output/dehost_dna-sequences.fasta`
 * 需要有 `rep-seqs.qza`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
 ```
 ./shell_tools/prepare_dehost_qiime2_inputs.sh .
@@ -518,7 +518,7 @@ JOB_TYPE=phylogeny_tree \
 PROJECT_DIR=. \
 JOB_NAME=dehost_tree \
 CMD='qiime phylogeny align-to-tree-mafft-fasttree \
-  --i-sequences phyloseq/filtered_host/dehost_rep_seqs.qza \
+  --i-sequences phyloseq/dehost_output/dehost_rep_seqs.qza \
   --o-alignment aligned-rep-seqs.qza \
   --o-masked-alignment masked-aligned-rep-seqs.qza \
   --o-tree unrooted-tree.qza \
@@ -724,7 +724,7 @@ JOB_TYPE=picrust_place \
 PROJECT_DIR=. \
 JOB_NAME=dehost_picrust2_place \
 CMD='place_seqs.py \
-  -s phyloseq/filtered_host/dehost_dna-sequences.fasta \
+  -s phyloseq/dehost_output/dehost_dna-sequences.fasta \
   -o out.tre \
   -p 2 \
   --intermediate intermediate/place_seqs' \
@@ -815,7 +815,7 @@ JOB_TYPE=picrust_metagenome \
 PROJECT_DIR=. \
 JOB_NAME=dehost_picrust2_ko_metagenome \
 CMD='metagenome_pipeline.py \
-  -i phyloseq/filtered_host/dehost_otu_table.biom \
+  -i phyloseq/dehost_output/dehost_otu_table.biom \
   -m marker_predicted_and_nsti.tsv.gz \
   -f KO_predicted.tsv.gz \
   -o KO_metagenome_out \
@@ -849,7 +849,7 @@ JOB_TYPE=picrust_metagenome \
 PROJECT_DIR=. \
 JOB_NAME=dehost_picrust2sc_ko_metagenome \
 CMD='metagenome_pipeline.py \
-  --input phyloseq/filtered_host/dehost_otu_table.biom \
+  --input phyloseq/dehost_output/dehost_otu_table.biom \
   --marker marker_predicted_and_nsti.tsv.gz \
   --function KO_predicted.tsv.gz \
   --out_dir KO_metagenome_out \
@@ -896,7 +896,7 @@ JOB_TYPE=picrust_metagenome \
 PROJECT_DIR=. \
 JOB_NAME=dehost_picrust2_ec_metagenome \
 CMD='metagenome_pipeline.py \
-  -i phyloseq/filtered_host/dehost_otu_table.biom \
+  -i phyloseq/dehost_output/dehost_otu_table.biom \
   -m marker_predicted_and_nsti.tsv.gz \
   -f EC_predicted.tsv.gz \
   -o EC_metagenome_out \
@@ -930,7 +930,7 @@ JOB_TYPE=picrust_metagenome \
 PROJECT_DIR=. \
 JOB_NAME=dehost_picrust2sc_ec_metagenome \
 CMD='metagenome_pipeline.py \
-  --input phyloseq/filtered_host/dehost_otu_table.biom \
+  --input phyloseq/dehost_output/dehost_otu_table.biom \
   --marker marker_predicted_and_nsti.tsv.gz \
   --function EC_predicted.tsv.gz \
   --out_dir EC_metagenome_out \
