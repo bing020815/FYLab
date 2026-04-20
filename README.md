@@ -505,11 +505,11 @@ conda activate qiime2-2023.2
 
 
 # 畫圖
-## 進入qiime2環境
+## 進入qiime2環境 [optional]
 ```
 conda activate qiime2-2023.2
 ```
-### Phylogeny Tree 
+### Phylogeny Tree [optional]
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
