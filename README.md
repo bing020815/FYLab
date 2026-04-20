@@ -26,10 +26,16 @@
 
 ## Puty/terminal
 Windos: Putty
-  + IP: `adprc@140.127.97.66`
+  + IP:
+  ```
+  adprc@140.127.97.66
+  ```
 
 Mac: Terminal
-  + run: `ssh adprc@140.127.97.66`
+  + Run:
+  ```
+  ssh adprc@140.127.97.66
+  ```
 <p align="center"><a href="#fylab">Top</a></p>
 
 
