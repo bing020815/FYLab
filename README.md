@@ -65,14 +65,15 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_ups
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/filter_phyloseq_by_nonhost_ids.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/prepare_dehost_qiime2_inputs.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/use_qiime_for_artifact.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/bootstrap_qiime_named_env.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/picrust/check_picrust_qc.sh
-chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh check_picrust_qc.sh use_qiime_for_artifact.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh check_picrust_qc.sh use_qiime_for_artifact.sh bootstrap_qiime_named_env.sh
 cd ..
 ```
 
-## 進入 qiime2 環境
+## 使用執行檔依據`rep-seqs.qza`進入相對應 qiime2 環境
 ```
-conda activate qiime2-2023.2
+source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 
 ### 資料庫預測代表序列
