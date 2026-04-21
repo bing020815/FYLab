@@ -7,6 +7,8 @@ PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 LOGS_DIR="${PROJECT_DIR}/logs"
 STATUS_FILE="${LOGS_DIR}/run_pacbio.status"
 
+SHOW_ALL="${SHOW_ALL:-false}"
+
 format_duration() {
     local total="${1:-}"
 
@@ -208,7 +210,11 @@ show_status_file_summary() {
 
     echo
     echo "=================================================="
-    echo "[INFO] 目前無屬於此專案的活躍 pacbio_* tmux session，改讀 status 檔案"
+    if [ "${SHOW_ALL}" = "true" ]; then
+        echo "[INFO] 目前無活躍 pacbio_* tmux session，改讀目前專案 status 檔案"
+    else
+        echo "[INFO] 目前無屬於此專案的活躍 pacbio_* tmux session，改讀 status 檔案"
+    fi
     echo "[INFO] SESSION       : ${session_name:-NA}"
     echo "[INFO] PROJECT       : ${project_dir:-NA}"
     echo "[INFO] STATUS        : ${status:-NA}"
@@ -254,13 +260,85 @@ show_status_file_summary() {
     show_tail_lines "${stderr_log:-/dev/null}" 5 "[INFO] stderr 最後 5 行"
 }
 
+print_session_block() {
+    local session="$1"
+    local project="$2"
+
+    local logs_dir_session status_file_session stdout_log stderr_log
+    local status start_time start_epoch elapsed
+    local task_block executor_line current_task pending_tasks last_finished_task
+
+    logs_dir_session="${project}/logs"
+    status_file_session="${logs_dir_session}/run_pacbio.status"
+    stdout_log="${logs_dir_session}/nextflow.stdout.log"
+    stderr_log="${logs_dir_session}/nextflow.stderr.log"
+
+    status="running"
+    start_time="NA"
+    start_epoch=""
+    elapsed="NA"
+    task_block=""
+    executor_line=""
+    current_task=""
+    pending_tasks=""
+    last_finished_task=""
+
+    if [ -f "${status_file_session}" ]; then
+        start_time="$(grep '^start_time=' "${status_file_session}" | cut -d= -f2- || true)"
+        start_epoch="$(grep '^start_epoch=' "${status_file_session}" | cut -d= -f2- || true)"
+        status="$(grep '^status=' "${status_file_session}" | cut -d= -f2- || true)"
+    fi
+
+    if [ -n "${start_epoch}" ]; then
+        elapsed="$(get_elapsed_from_start_epoch "${start_epoch}")"
+    fi
+
+    task_block="$(extract_latest_executor_block "${stdout_log}" || true)"
+    executor_line="$(extract_executor_line "${task_block}" || true)"
+    current_task="$(extract_current_task_from_block "${task_block}" || true)"
+    pending_tasks="$(extract_pending_tasks_from_block "${task_block}" || true)"
+    last_finished_task="$(extract_last_finished_task_from_block "${task_block}" || true)"
+
+    echo
+    echo "=================================================="
+    echo "[INFO] SESSION       : ${session}"
+    echo "[INFO] PROJECT       : ${project}"
+    echo "[INFO] STATUS        : ${status:-running}"
+    echo "[INFO] START_TIME    : ${start_time:-NA}"
+    echo "[INFO] ELAPSED       : ${elapsed:-NA}"
+
+    if [ -n "${executor_line}" ]; then
+        echo "[INFO] EXECUTOR      : ${executor_line}"
+    fi
+    if [ -n "${current_task}" ]; then
+        echo "[INFO] CURRENT_TASK  : ${current_task}"
+    fi
+    if [ -n "${pending_tasks}" ]; then
+        echo "[INFO] PENDING_TASKS :"
+        while IFS= read -r line; do
+            [ -n "${line}" ] && echo "  - ${line}"
+        done <<< "${pending_tasks}"
+    fi
+    if [ -z "${current_task}" ] && [ -n "${last_finished_task}" ]; then
+        echo "[INFO] LAST_FINISHED : ${last_finished_task}"
+    fi
+
+    show_tail_lines "${stdout_log}" 5 "[INFO] stdout 最後 5 行"
+    show_tail_lines "${stderr_log}" 5 "[INFO] stderr 最後 5 行"
+}
+
 echo
 echo "[INFO] PacBio tmux session 狀態總覽"
-echo "[INFO] 目前專案目錄：${PROJECT_DIR}"
+if [ "${SHOW_ALL}" = "true" ]; then
+    echo "[INFO] 模式：全部專案"
+else
+    echo "[INFO] 目前專案目錄：${PROJECT_DIR}"
+fi
 
 mapfile -t ALL_PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}' || true)
 
 PACBIO_SESSIONS=()
+PACBIO_PROJECTS=()
 
 for SESSION in "${ALL_PACBIO_SESSIONS[@]}"; do
     if ! tmux has-session -t "${SESSION}" 2>/dev/null; then
@@ -269,77 +347,30 @@ for SESSION in "${ALL_PACBIO_SESSIONS[@]}"; do
 
     SESSION_PROJECT="$(tmux show-environment -t "${SESSION}" 2>/dev/null | awk -F= '/^PROJECT_DIR=/ {print $2}' || true)"
 
-    if [ -n "${SESSION_PROJECT:-}" ] && [ "${SESSION_PROJECT}" = "${PROJECT_DIR}" ]; then
-        PACBIO_SESSIONS+=("${SESSION}")
+    if [ "${SHOW_ALL}" = "true" ]; then
+        if [ -n "${SESSION_PROJECT:-}" ]; then
+            PACBIO_SESSIONS+=("${SESSION}")
+            PACBIO_PROJECTS+=("${SESSION_PROJECT}")
+        fi
+    else
+        if [ -n "${SESSION_PROJECT:-}" ] && [ "${SESSION_PROJECT}" = "${PROJECT_DIR}" ]; then
+            PACBIO_SESSIONS+=("${SESSION}")
+            PACBIO_PROJECTS+=("${SESSION_PROJECT}")
+        fi
     fi
 done
 
 if [ "${#PACBIO_SESSIONS[@]}" -eq 0 ]; then
     echo
-    echo "[INFO] 目前沒有屬於此專案的 pacbio_* tmux session"
+    if [ "${SHOW_ALL}" = "true" ]; then
+        echo "[INFO] 目前沒有任何帶有 PROJECT_DIR 的 pacbio_* tmux session"
+    else
+        echo "[INFO] 目前沒有屬於此專案的 pacbio_* tmux session"
+    fi
     show_status_file_summary
     exit 0
 fi
 
-for SESSION in "${PACBIO_SESSIONS[@]}"; do
-    echo
-    echo "=================================================="
-    echo "[INFO] SESSION       : ${SESSION}"
-
-    PROJECT="${PROJECT_DIR}"
-
-    LOGS_DIR_SESSION="${PROJECT}/logs"
-    STATUS_FILE_SESSION="${LOGS_DIR_SESSION}/run_pacbio.status"
-    STDOUT_LOG="${LOGS_DIR_SESSION}/nextflow.stdout.log"
-    STDERR_LOG="${LOGS_DIR_SESSION}/nextflow.stderr.log"
-
-    STATUS="running"
-    START_TIME="NA"
-    START_EPOCH=""
-    ELAPSED="NA"
-    TASK_BLOCK=""
-    EXECUTOR_LINE=""
-    CURRENT_TASK=""
-    PENDING_TASKS=""
-    LAST_FINISHED_TASK=""
-
-    if [ -f "${STATUS_FILE_SESSION}" ]; then
-        START_TIME="$(grep '^start_time=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
-        START_EPOCH="$(grep '^start_epoch=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
-        STATUS="$(grep '^status=' "${STATUS_FILE_SESSION}" | cut -d= -f2- || true)"
-    fi
-
-    if [ -n "${START_EPOCH}" ]; then
-        ELAPSED="$(get_elapsed_from_start_epoch "${START_EPOCH}")"
-    fi
-
-    TASK_BLOCK="$(extract_latest_executor_block "${STDOUT_LOG}" || true)"
-    EXECUTOR_LINE="$(extract_executor_line "${TASK_BLOCK}" || true)"
-    CURRENT_TASK="$(extract_current_task_from_block "${TASK_BLOCK}" || true)"
-    PENDING_TASKS="$(extract_pending_tasks_from_block "${TASK_BLOCK}" || true)"
-    LAST_FINISHED_TASK="$(extract_last_finished_task_from_block "${TASK_BLOCK}" || true)"
-
-    echo "[INFO] PROJECT       : ${PROJECT}"
-    echo "[INFO] STATUS        : ${STATUS:-running}"
-    echo "[INFO] START_TIME    : ${START_TIME:-NA}"
-    echo "[INFO] ELAPSED       : ${ELAPSED:-NA}"
-
-    if [ -n "${EXECUTOR_LINE}" ]; then
-        echo "[INFO] EXECUTOR      : ${EXECUTOR_LINE}"
-    fi
-    if [ -n "${CURRENT_TASK}" ]; then
-        echo "[INFO] CURRENT_TASK  : ${CURRENT_TASK}"
-    fi
-    if [ -n "${PENDING_TASKS}" ]; then
-        echo "[INFO] PENDING_TASKS :"
-        while IFS= read -r line; do
-            [ -n "${line}" ] && echo "  - ${line}"
-        done <<< "${PENDING_TASKS}"
-    fi
-    if [ -z "${CURRENT_TASK}" ] && [ -n "${LAST_FINISHED_TASK}" ]; then
-        echo "[INFO] LAST_FINISHED : ${LAST_FINISHED_TASK}"
-    fi
-
-    show_tail_lines "${STDOUT_LOG}" 5 "[INFO] stdout 最後 5 行"
-    show_tail_lines "${STDERR_LOG}" 5 "[INFO] stderr 最後 5 行"
+for idx in "${!PACBIO_SESSIONS[@]}"; do
+    print_session_block "${PACBIO_SESSIONS[$idx]}" "${PACBIO_PROJECTS[$idx]}"
 done
