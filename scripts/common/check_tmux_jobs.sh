@@ -47,6 +47,46 @@ get_elapsed_from_status() {
     fi
 }
 
+get_cpu_total() {
+    nproc 2>/dev/null || echo "NA"
+}
+
+get_cpu_used_and_total() {
+    local total_cpus
+    total_cpus="$(get_cpu_total)"
+
+    if ! [[ "${total_cpus}" =~ ^[0-9]+$ ]]; then
+        echo "NA/NA"
+        return 0
+    fi
+
+    read -r _ u1 n1 s1 i1 w1 irq1 sirq1 st1 _ < /proc/stat
+    local idle1 total1
+    idle1=$((i1 + w1))
+    total1=$((u1 + n1 + s1 + i1 + w1 + irq1 + sirq1 + st1))
+
+    sleep 0.2
+
+    read -r _ u2 n2 s2 i2 w2 irq2 sirq2 st2 _ < /proc/stat
+    local idle2 total2
+    idle2=$((i2 + w2))
+    total2=$((u2 + n2 + s2 + i2 + w2 + irq2 + sirq2 + st2))
+
+    local totald idled used_percent used_cpus
+    totald=$((total2 - total1))
+    idled=$((idle2 - idle1))
+
+    if [ "${totald}" -le 0 ]; then
+        echo "NA/${total_cpus}"
+        return 0
+    fi
+
+    used_percent=$(( (100 * (totald - idled)) / totald ))
+    used_cpus=$(( (used_percent * total_cpus + 50) / 100 ))
+
+    echo "${used_cpus}/${total_cpus}"
+}
+
 tmux_alive() {
     local session_name="$1"
     if [ -z "${session_name}" ]; then
@@ -163,18 +203,22 @@ print_detail() {
 main() {
     mapfile -t all_status_files < <(collect_status_files)
     if [ "${#all_status_files[@]}" -eq 0 ]; then
+        echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
         echo "[INFO] 找不到任何 status 檔"
         exit 0
     fi
 
     mapfile -t filtered_status_files < <(filter_status_files "${all_status_files[@]}")
     if [ "${#filtered_status_files[@]}" -eq 0 ]; then
+        echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
         echo "[INFO] 找不到符合條件的任務"
         exit 0
     fi
 
     case "${MODE}" in
         summary)
+            echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
+            echo
             printf "%-28s | %-10s | %-16s | %-10s | %-19s | %s\n" \
                 "SESSION" "JOB_TYPE" "JOB_NAME" "STATUS" "START_TIME" "ELAPSED"
             printf '%s\n' "---------------------------------------------------------------------------------------------------------------"
@@ -183,11 +227,15 @@ main() {
             done
             ;;
         all)
+            echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
+            echo
             for f in "${filtered_status_files[@]}"; do
                 print_detail "${f}"
             done
             ;;
         latest)
+            echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
+            echo
             latest_file=""
             latest_epoch=0
             for f in "${filtered_status_files[@]}"; do
@@ -204,6 +252,8 @@ main() {
             print_detail "${latest_file}"
             ;;
         session)
+            echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
+            echo
             if [ -z "${SESSION_NAME}" ]; then
                 echo "[ERROR] MODE=session 時必須提供 SESSION_NAME"
                 exit 1
