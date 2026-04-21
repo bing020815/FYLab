@@ -46,6 +46,46 @@ get_elapsed_from_start_epoch() {
     format_duration "${elapsed}"
 }
 
+get_cpu_total() {
+    nproc 2>/dev/null || echo "NA"
+}
+
+get_cpu_used_and_total() {
+    local total_cpus
+    total_cpus="$(get_cpu_total)"
+
+    if ! [[ "${total_cpus}" =~ ^[0-9]+$ ]]; then
+        echo "NA/NA"
+        return 0
+    fi
+
+    read -r _ u1 n1 s1 i1 w1 irq1 sirq1 st1 _ < /proc/stat
+    local idle1 total1
+    idle1=$((i1 + w1))
+    total1=$((u1 + n1 + s1 + i1 + w1 + irq1 + sirq1 + st1))
+
+    sleep 0.2
+
+    read -r _ u2 n2 s2 i2 w2 irq2 sirq2 st2 _ < /proc/stat
+    local idle2 total2
+    idle2=$((i2 + w2))
+    total2=$((u2 + n2 + s2 + i2 + w2 + irq2 + sirq2 + st2))
+
+    local totald idled used_percent used_cpus
+    totald=$((total2 - total1))
+    idled=$((idle2 - idle1))
+
+    if [ "${totald}" -le 0 ]; then
+        echo "NA/${total_cpus}"
+        return 0
+    fi
+
+    used_percent=$(( (100 * (totald - idled)) / totald ))
+    used_cpus=$(( (used_percent * total_cpus + 50) / 100 ))
+
+    echo "${used_cpus}/${total_cpus}"
+}
+
 normalize_stdout_stream() {
     local stdout_log="$1"
 
@@ -223,7 +263,7 @@ show_status_file_summary() {
     echo "[INFO] ELAPSED       : ${elapsed_fmt}"
     echo "[INFO] DURATION_SEC  : ${duration_seconds:-NA}"
     echo "[INFO] EXIT_CODE     : ${exit_code:-NA}"
-    echo "[INFO] CPU           : ${cpu:-NA}"
+    echo "[INFO] THREADS       : ${cpu:-NA}"
     echo "[INFO] RESUME        : ${resume:-NA}"
     echo "[INFO] EXTRA_ARGS    : ${extra_args:-NA}"
     echo "[INFO] WORKFLOW_DIR  : ${workflow_dir:-NA}"
@@ -265,7 +305,7 @@ print_session_block() {
     local project="$2"
 
     local logs_dir_session status_file_session stdout_log stderr_log
-    local status start_time start_epoch elapsed
+    local status start_time start_epoch elapsed threads
     local task_block executor_line current_task pending_tasks last_finished_task
 
     logs_dir_session="${project}/logs"
@@ -277,6 +317,7 @@ print_session_block() {
     start_time="NA"
     start_epoch=""
     elapsed="NA"
+    threads="NA"
     task_block=""
     executor_line=""
     current_task=""
@@ -287,6 +328,7 @@ print_session_block() {
         start_time="$(grep '^start_time=' "${status_file_session}" | cut -d= -f2- || true)"
         start_epoch="$(grep '^start_epoch=' "${status_file_session}" | cut -d= -f2- || true)"
         status="$(grep '^status=' "${status_file_session}" | cut -d= -f2- || true)"
+        threads="$(grep '^cpu=' "${status_file_session}" | cut -d= -f2- || true)"
     fi
 
     if [ -n "${start_epoch}" ]; then
@@ -306,6 +348,7 @@ print_session_block() {
     echo "[INFO] STATUS        : ${status:-running}"
     echo "[INFO] START_TIME    : ${start_time:-NA}"
     echo "[INFO] ELAPSED       : ${elapsed:-NA}"
+    echo "[INFO] THREADS       : ${threads:-NA}"
 
     if [ -n "${executor_line}" ]; then
         echo "[INFO] EXECUTOR      : ${executor_line}"
@@ -334,6 +377,7 @@ if [ "${SHOW_ALL}" = "true" ]; then
 else
     echo "[INFO] 目前專案目錄：${PROJECT_DIR}"
 fi
+echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
 
 mapfile -t ALL_PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}' || true)
 
