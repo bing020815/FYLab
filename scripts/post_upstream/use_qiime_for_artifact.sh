@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
 
-# 用法：
-#   source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
-#
-# 功能：
-#   1. 自動找出能讀取指定 artifact 的 qiime
-#   2. conda activate 對應環境
-#   3. 若為 hash / nextflow env，將 prompt 美化成 qiime2-<release>-alias
-#   4. 若為已建立且具名稱的 conda env，保留原本名稱
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "[ERROR] 請用 source 執行，不要直接執行："
     echo "        source ./shell_tools/use_qiime_for_artifact.sh <artifact.qza>"
@@ -38,8 +29,8 @@ fi
 
 find_candidate_qiime_bins() {
     {
-        find /home/adprc/miniconda3/envs -maxdepth 2 -type f -path '*/bin/qiime' 2>/dev/null
-        find /home/adprc/nf_conda -maxdepth 2 -type f -path '*/bin/qiime' 2>/dev/null
+        find /home/adprc/miniconda3/envs -type f -path '*/bin/qiime' 2>/dev/null
+        find /home/adprc/nf_conda -type f -path '*/bin/qiime' 2>/dev/null
     } | sort -u
 }
 
@@ -111,7 +102,6 @@ export QIIME_VERSION="${BEST_VERSION}"
 export QIIME_LABEL="${BEST_LABEL}"
 export QIIME_TARGET_ARTIFACT="$(realpath "${TARGET_ARTIFACT}")"
 
-# 保留原本 prompt，避免重複包裝
 if [ -z "${ORIGINAL_CONDA_PROMPT_MODIFIER:-}" ] && [ -n "${CONDA_PROMPT_MODIFIER:-}" ]; then
     export ORIGINAL_CONDA_PROMPT_MODIFIER="${CONDA_PROMPT_MODIFIER}"
 fi
