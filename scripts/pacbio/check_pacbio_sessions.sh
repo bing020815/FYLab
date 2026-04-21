@@ -212,15 +212,172 @@ extract_completed_steps_from_block() {
       | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' || true
 }
 
+normalize_trace_step_name() {
+    local name="$1"
+    name="$(printf '%s' "${name}" | sed -E 's/[[:space:]]+\([0-9]+\)$//')"
+    printf '%s\n' "${name}"
+}
+
+parse_duration_to_seconds() {
+    local raw="$1"
+    raw="$(printf '%s' "${raw}" | tr -d '[:space:]')"
+
+    if [ -z "${raw}" ]; then
+        echo ""
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+(\.[0-9]+)?)ms$ ]]; then
+        echo "0"
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+(\.[0-9]+)?)s$ ]]; then
+        awk -v v="${BASH_REMATCH[1]}" 'BEGIN{printf "%.0f\n", v}'
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+(\.[0-9]+)?)m$ ]]; then
+        awk -v v="${BASH_REMATCH[1]}" 'BEGIN{printf "%.0f\n", v*60}'
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+(\.[0-9]+)?)h$ ]]; then
+        awk -v v="${BASH_REMATCH[1]}" 'BEGIN{printf "%.0f\n", v*3600}'
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+)ms([0-9]+)s$ ]]; then
+        echo "${BASH_REMATCH[2]}"
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+)m([0-9]+)s$ ]]; then
+        echo $(( ${BASH_REMATCH[1]} * 60 + ${BASH_REMATCH[2]} ))
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+)h([0-9]+)m([0-9]+)s$ ]]; then
+        echo $(( ${BASH_REMATCH[1]} * 3600 + ${BASH_REMATCH[2]} * 60 + ${BASH_REMATCH[3]} ))
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+)h([0-9]+)m$ ]]; then
+        echo $(( ${BASH_REMATCH[1]} * 3600 + ${BASH_REMATCH[2]} * 60 ))
+        return 0
+    fi
+
+    if [[ "${raw}" =~ ^([0-9]+)m([0-9]+)ms$ ]]; then
+        echo $(( ${BASH_REMATCH[1]} * 60 ))
+        return 0
+    fi
+
+    echo ""
+}
+
+build_trace_duration_map() {
+    local trace_file="$1"
+
+    if [ ! -f "${trace_file}" ]; then
+        return 0
+    fi
+
+    python3 - "$trace_file" <<'PY'
+import csv
+import re
+import sys
+
+trace_file = sys.argv[1]
+
+def normalize_name(name: str) -> str:
+    return re.sub(r'\s+\(\d+\)$', '', name.strip())
+
+def parse_duration(raw: str):
+    if not raw:
+        return None
+    raw = raw.strip().replace(" ", "")
+    if not raw:
+        return None
+
+    patterns = [
+        (r'^(\d+(?:\.\d+)?)ms$', lambda m: 0),
+        (r'^(\d+(?:\.\d+)?)s$', lambda m: round(float(m.group(1)))),
+        (r'^(\d+(?:\.\d+)?)m$', lambda m: round(float(m.group(1)) * 60)),
+        (r'^(\d+(?:\.\d+)?)h$', lambda m: round(float(m.group(1)) * 3600)),
+        (r'^(\d+)m(\d+)s$', lambda m: int(m.group(1)) * 60 + int(m.group(2))),
+        (r'^(\d+)h(\d+)m(\d+)s$', lambda m: int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))),
+        (r'^(\d+)h(\d+)m$', lambda m: int(m.group(1)) * 3600 + int(m.group(2)) * 60),
+        (r'^(\d+)m(\d+)ms$', lambda m: int(m.group(1)) * 60),
+        (r'^(\d+)ms(\d+)s$', lambda m: int(m.group(2))),
+    ]
+
+    for pat, fn in patterns:
+        m = re.match(pat, raw)
+        if m:
+            return fn(m)
+    return None
+
+totals = {}
+
+with open(trace_file, newline='') as f:
+    reader = csv.DictReader(f, delimiter='\t')
+    for row in reader:
+        status = (row.get('status') or '').strip()
+        if status != 'COMPLETED':
+            continue
+
+        name = normalize_name(row.get('name') or '')
+        if not name:
+            continue
+
+        dur = parse_duration(row.get('duration') or '')
+        if dur is None:
+            continue
+
+        totals[name] = totals.get(name, 0) + dur
+
+for k, v in sorted(totals.items()):
+    print(f"{k}\t{v}")
+PY
+}
+
+get_trace_duration_seconds_for_step() {
+    local trace_file="$1"
+    local step_name="$2"
+
+    if [ ! -f "${trace_file}" ]; then
+        echo ""
+        return 0
+    fi
+
+    build_trace_duration_map "${trace_file}" \
+      | awk -F'\t' -v target="${step_name}" '$1 == target {print $2; exit}'
+}
+
 format_completed_steps_with_duration() {
     local completed_steps="$1"
+    local trace_file="$2"
+
     if [ -z "${completed_steps}" ]; then
         return 0
     fi
 
     while IFS= read -r line; do
         [ -z "${line}" ] && continue
-        echo "${line} | duration=NA"
+
+        local step_name duration_seconds duration_fmt
+        step_name="$(printf '%s\n' "${line}" | sed -E 's/^.*(pb16S:[^|]+)\|.*$/\1/' | sed 's/[[:space:]]*$//')"
+        step_name="$(normalize_trace_step_name "${step_name}")"
+
+        duration_seconds="$(get_trace_duration_seconds_for_step "${trace_file}" "${step_name}")"
+
+        if [[ "${duration_seconds}" =~ ^[0-9]+$ ]]; then
+            duration_fmt="$(format_duration "${duration_seconds}")"
+        else
+            duration_fmt="NA"
+        fi
+
+        echo "${line} | duration=${duration_fmt}"
     done <<< "${completed_steps}"
 }
 
@@ -231,7 +388,7 @@ show_status_file_summary() {
     fi
 
     local status start_time start_epoch end_time duration_seconds exit_code
-    local session_name project_dir stdout_log stderr_log
+    local session_name project_dir stdout_log stderr_log trace_file
     local cpu resume extra_args workflow_dir timezone nxf_conda_cachedir
     local elapsed_fmt stale_hint
     local task_block executor_line current_task pending_tasks last_finished_task completed_steps completed_steps_with_duration
@@ -246,12 +403,17 @@ show_status_file_summary() {
     project_dir="$(read_status_value project_dir)"
     stdout_log="$(read_status_value stdout_log)"
     stderr_log="$(read_status_value stderr_log)"
+    trace_file="$(read_status_value trace_file)"
     cpu="$(read_status_value cpu)"
     resume="$(read_status_value resume)"
     extra_args="$(read_status_value extra_args)"
     workflow_dir="$(read_status_value workflow_dir)"
     timezone="$(read_status_value timezone)"
     nxf_conda_cachedir="$(read_status_value nxf_conda_cachedir)"
+
+    if [ -z "${trace_file}" ]; then
+        trace_file="${PROJECT_DIR}/logs/nextflow.trace.txt"
+    fi
 
     if [ "${status:-}" = "running" ]; then
         elapsed_fmt="$(get_elapsed_from_start_epoch "${start_epoch:-}")"
@@ -265,7 +427,7 @@ show_status_file_summary() {
     pending_tasks="$(extract_pending_tasks_from_block "${task_block}" || true)"
     last_finished_task="$(extract_last_finished_task_from_block "${task_block}" || true)"
     completed_steps="$(extract_completed_steps_from_block "${task_block}" || true)"
-    completed_steps_with_duration="$(format_completed_steps_with_duration "${completed_steps}" || true)"
+    completed_steps_with_duration="$(format_completed_steps_with_duration "${completed_steps}" "${trace_file}" || true)"
 
     stale_hint=""
     if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
@@ -294,6 +456,7 @@ show_status_file_summary() {
     echo "[INFO] TIMEZONE      : ${timezone:-NA}"
     echo "[INFO] NXF_CONDA     : ${nxf_conda_cachedir:-NA}"
     echo "[INFO] STATUS_FILE   : ${STATUS_FILE}"
+    echo "[INFO] TRACE_FILE    : ${trace_file:-NA}"
 
     if [ -n "${stdout_log:-}" ]; then
         echo "[INFO] STDOUT_LOG    : ${stdout_log}"
@@ -334,7 +497,7 @@ print_session_block() {
     local session="$1"
     local project="$2"
 
-    local logs_dir_session status_file_session stdout_log stderr_log
+    local logs_dir_session status_file_session stdout_log stderr_log trace_file
     local status start_time start_epoch elapsed threads
     local task_block executor_line current_task pending_tasks last_finished_task completed_steps completed_steps_with_duration
 
@@ -342,6 +505,7 @@ print_session_block() {
     status_file_session="${logs_dir_session}/run_pacbio.status"
     stdout_log="${logs_dir_session}/nextflow.stdout.log"
     stderr_log="${logs_dir_session}/nextflow.stderr.log"
+    trace_file="${logs_dir_session}/nextflow.trace.txt"
 
     status="running"
     start_time="NA"
@@ -361,6 +525,10 @@ print_session_block() {
         start_epoch="$(grep '^start_epoch=' "${status_file_session}" | cut -d= -f2- || true)"
         status="$(grep '^status=' "${status_file_session}" | cut -d= -f2- || true)"
         threads="$(grep '^cpu=' "${status_file_session}" | cut -d= -f2- || true)"
+        trace_file_from_status="$(grep '^trace_file=' "${status_file_session}" | cut -d= -f2- || true)"
+        if [ -n "${trace_file_from_status:-}" ]; then
+            trace_file="${trace_file_from_status}"
+        fi
     fi
 
     if [ -n "${start_epoch}" ]; then
@@ -373,7 +541,7 @@ print_session_block() {
     pending_tasks="$(extract_pending_tasks_from_block "${task_block}" || true)"
     last_finished_task="$(extract_last_finished_task_from_block "${task_block}" || true)"
     completed_steps="$(extract_completed_steps_from_block "${task_block}" || true)"
-    completed_steps_with_duration="$(format_completed_steps_with_duration "${completed_steps}" || true)"
+    completed_steps_with_duration="$(format_completed_steps_with_duration "${completed_steps}" "${trace_file}" || true)"
 
     echo
     echo "=================================================="
