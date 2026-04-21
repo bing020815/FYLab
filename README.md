@@ -69,6 +69,10 @@ chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_d
 cd ..
 ```
 
+## 進入 qiime2 環境
+```
+conda activate qiime2-2023.2
+```
 
 ### 資料庫預測代表序列
 根據資料庫預測代表序列的ASV，資料庫可採用 GreenGenes 16S rRNA gene database、SILVA ribosomal RNA database 兩大資料庫。
