@@ -154,7 +154,6 @@ extract_executor_line() {
     if [ -z "${block}" ]; then
         return 0
     fi
-
     printf '%s\n' "${block}" | grep '^executor >' | tail -n 1 | sed 's/^[[:space:]]*//' || true
 }
 
@@ -185,8 +184,7 @@ extract_pending_tasks_from_block() {
           | grep '^\[-[[:space:]]*\]' || true
         printf '%s\n' "${block}" \
           | grep 'Plus [0-9]\+ more processes waiting for tasks' || true
-    } \
-    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+    } | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' || true
 }
 
 extract_last_finished_task_from_block() {
@@ -202,6 +200,30 @@ extract_last_finished_task_from_block() {
       | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' || true
 }
 
+extract_completed_steps_from_block() {
+    local block="$1"
+    if [ -z "${block}" ]; then
+        return 0
+    fi
+
+    printf '%s\n' "${block}" \
+      | grep 'pb16S:' \
+      | grep '✔' \
+      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' || true
+}
+
+format_completed_steps_with_duration() {
+    local completed_steps="$1"
+    if [ -z "${completed_steps}" ]; then
+        return 0
+    fi
+
+    while IFS= read -r line; do
+        [ -z "${line}" ] && continue
+        echo "${line} | duration=NA"
+    done <<< "${completed_steps}"
+}
+
 show_status_file_summary() {
     if [ ! -f "${STATUS_FILE}" ]; then
         echo "[INFO] 找不到 status 檔案：${STATUS_FILE}"
@@ -212,7 +234,7 @@ show_status_file_summary() {
     local session_name project_dir stdout_log stderr_log
     local cpu resume extra_args workflow_dir timezone nxf_conda_cachedir
     local elapsed_fmt stale_hint
-    local task_block executor_line current_task pending_tasks last_finished_task
+    local task_block executor_line current_task pending_tasks last_finished_task completed_steps completed_steps_with_duration
 
     status="$(read_status_value status)"
     start_time="$(read_status_value start_time)"
@@ -242,6 +264,8 @@ show_status_file_summary() {
     current_task="$(extract_current_task_from_block "${task_block}" || true)"
     pending_tasks="$(extract_pending_tasks_from_block "${task_block}" || true)"
     last_finished_task="$(extract_last_finished_task_from_block "${task_block}" || true)"
+    completed_steps="$(extract_completed_steps_from_block "${task_block}" || true)"
+    completed_steps_with_duration="$(format_completed_steps_with_duration "${completed_steps}" || true)"
 
     stale_hint=""
     if [ "${status:-}" = "running" ] && ! tmux has-session -t "${session_name:-nonexistent}" 2>/dev/null; then
@@ -280,6 +304,12 @@ show_status_file_summary() {
     if [ -n "${executor_line:-}" ]; then
         echo "[INFO] EXECUTOR      : ${executor_line}"
     fi
+    if [ -n "${completed_steps_with_duration:-}" ]; then
+        echo "[INFO] COMPLETED_STEPS :"
+        while IFS= read -r line; do
+            [ -n "${line}" ] && echo "  - ${line}"
+        done <<< "${completed_steps_with_duration}"
+    fi
     if [ -n "${current_task:-}" ]; then
         echo "[INFO] CURRENT_TASK  : ${current_task}"
     fi
@@ -306,7 +336,7 @@ print_session_block() {
 
     local logs_dir_session status_file_session stdout_log stderr_log
     local status start_time start_epoch elapsed threads
-    local task_block executor_line current_task pending_tasks last_finished_task
+    local task_block executor_line current_task pending_tasks last_finished_task completed_steps completed_steps_with_duration
 
     logs_dir_session="${project}/logs"
     status_file_session="${logs_dir_session}/run_pacbio.status"
@@ -323,6 +353,8 @@ print_session_block() {
     current_task=""
     pending_tasks=""
     last_finished_task=""
+    completed_steps=""
+    completed_steps_with_duration=""
 
     if [ -f "${status_file_session}" ]; then
         start_time="$(grep '^start_time=' "${status_file_session}" | cut -d= -f2- || true)"
@@ -340,6 +372,8 @@ print_session_block() {
     current_task="$(extract_current_task_from_block "${task_block}" || true)"
     pending_tasks="$(extract_pending_tasks_from_block "${task_block}" || true)"
     last_finished_task="$(extract_last_finished_task_from_block "${task_block}" || true)"
+    completed_steps="$(extract_completed_steps_from_block "${task_block}" || true)"
+    completed_steps_with_duration="$(format_completed_steps_with_duration "${completed_steps}" || true)"
 
     echo
     echo "=================================================="
@@ -352,6 +386,12 @@ print_session_block() {
 
     if [ -n "${executor_line}" ]; then
         echo "[INFO] EXECUTOR      : ${executor_line}"
+    fi
+    if [ -n "${completed_steps_with_duration}" ]; then
+        echo "[INFO] COMPLETED_STEPS :"
+        while IFS= read -r line; do
+            [ -n "${line}" ] && echo "  - ${line}"
+        done <<< "${completed_steps_with_duration}"
     fi
     if [ -n "${current_task}" ]; then
         echo "[INFO] CURRENT_TASK  : ${current_task}"
