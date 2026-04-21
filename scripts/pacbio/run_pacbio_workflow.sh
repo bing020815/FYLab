@@ -190,7 +190,8 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
         exit 1
     fi
 
-    tmux new-session -d -s "${TMUX_SESSION_NAME}" "bash '${INNER_SCRIPT}'"
+    tmux new-session -d -s "${TMUX_SESSION_NAME}" "bash '${INNER_SCRIPT}'" 
+    tmux set-environment -t "${TMUX_SESSION_NAME}" PROJECT_DIR "${PROJECT_DIR}"
 
     echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
     echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
