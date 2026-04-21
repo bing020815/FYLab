@@ -208,7 +208,7 @@ show_status_file_summary() {
 
     echo
     echo "=================================================="
-    echo "[INFO] 目前無活著的 pacbio_* tmux session，改讀 status 檔案"
+    echo "[INFO] 目前無屬於此專案的活躍 pacbio_* tmux session，改讀 status 檔案"
     echo "[INFO] SESSION       : ${session_name:-NA}"
     echo "[INFO] PROJECT       : ${project_dir:-NA}"
     echo "[INFO] STATUS        : ${status:-NA}"
@@ -256,12 +256,27 @@ show_status_file_summary() {
 
 echo
 echo "[INFO] PacBio tmux session 狀態總覽"
+echo "[INFO] 目前專案目錄：${PROJECT_DIR}"
 
-mapfile -t PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}' || true)
+mapfile -t ALL_PACBIO_SESSIONS < <(tmux ls 2>/dev/null | awk -F: '/^pacbio_/ {print $1}' || true)
+
+PACBIO_SESSIONS=()
+
+for SESSION in "${ALL_PACBIO_SESSIONS[@]}"; do
+    if ! tmux has-session -t "${SESSION}" 2>/dev/null; then
+        continue
+    fi
+
+    SESSION_PROJECT="$(tmux show-environment -t "${SESSION}" 2>/dev/null | awk -F= '/^PROJECT_DIR=/ {print $2}' || true)"
+
+    if [ -n "${SESSION_PROJECT:-}" ] && [ "${SESSION_PROJECT}" = "${PROJECT_DIR}" ]; then
+        PACBIO_SESSIONS+=("${SESSION}")
+    fi
+done
 
 if [ "${#PACBIO_SESSIONS[@]}" -eq 0 ]; then
     echo
-    echo "[INFO] 目前沒有 pacbio_* 的 tmux session"
+    echo "[INFO] 目前沒有屬於此專案的 pacbio_* tmux session"
     show_status_file_summary
     exit 0
 fi
@@ -271,13 +286,7 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
     echo "=================================================="
     echo "[INFO] SESSION       : ${SESSION}"
 
-    if ! tmux has-session -t "${SESSION}" 2>/dev/null; then
-        echo "[WARN] session 已不存在，跳過即時查詢"
-        continue
-    fi
-
-    PROJECT="$(tmux show-environment -t "${SESSION}" 2>/dev/null | awk -F= '/^PROJECT_DIR=/ {print $2}' || true)"
-    [ -z "${PROJECT:-}" ] && PROJECT="${PROJECT_DIR}"
+    PROJECT="${PROJECT_DIR}"
 
     LOGS_DIR_SESSION="${PROJECT}/logs"
     STATUS_FILE_SESSION="${LOGS_DIR_SESSION}/run_pacbio.status"
@@ -331,6 +340,6 @@ for SESSION in "${PACBIO_SESSIONS[@]}"; do
         echo "[INFO] LAST_FINISHED : ${LAST_FINISHED_TASK}"
     fi
 
-    show_tail_lines "${STDOUT_LOG}" 8 "[INFO] stdout 最後 8 行"
+    show_tail_lines "${STDOUT_LOG}" 5 "[INFO] stdout 最後 5 行"
     show_tail_lines "${STDERR_LOG}" 5 "[INFO] stderr 最後 5 行"
 done
