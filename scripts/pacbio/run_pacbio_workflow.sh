@@ -197,6 +197,7 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
     echo "[INFO] 此 session 主要用途為避免遠端斷線導致任務中止"
     echo "[INFO] 請以以下方式監看進度："
     echo "[INFO]   ./shell_tools/check_pacbio_sessions.sh"
+    echo "[INFO]   SHOW_ALL=true ./shell_tools/check_pacbio_sessions.sh"
     echo "[INFO]   tail -f ${STDOUT_LOG}"
     echo "[INFO]   tail -f ${STDERR_LOG}"
     echo "[INFO]   cat ${STATUS_FILE}"
