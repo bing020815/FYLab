@@ -12,7 +12,7 @@ SEARCH_ROOT="${SEARCH_ROOT:-.}"
 read_status_value() {
     local status_file="$1"
     local key="$2"
-    grep "^${key}=" "${status_file}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
+    grep "^${key}=" "${status_file}" 2>/dev/null | head -n 1 | cut -d'=' -f2- || true
 }
 
 format_elapsed() {
@@ -236,8 +236,9 @@ main() {
         latest)
             echo "[INFO] CPU_USAGE     : $(get_cpu_used_and_total)"
             echo
-            latest_file=""
-            latest_epoch=0
+            local latest_file=""
+            local latest_epoch=0
+            local start_epoch=""
             for f in "${filtered_status_files[@]}"; do
                 start_epoch="$(read_status_value "${f}" "start_epoch")"
                 if [[ "${start_epoch}" =~ ^[0-9]+$ ]] && [ "${start_epoch}" -ge "${latest_epoch}" ]; then
