@@ -517,9 +517,9 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 
 
 # 畫圖
-## 進入qiime2環境 [optional]
+## 依照artifact版本進入qiime2環境 [optional]
 ```
-conda activate qiime2-2023.2
+source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 ### Phylogeny Tree [optional]
 <details>
