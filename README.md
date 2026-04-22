@@ -489,9 +489,9 @@ seqkit stats phyloseq/dehost_work/filtered_dna-sequences.fasta
 
 ### Step 3. 代表性序列對 host genome 比對
 * dehost 的序列層處理，需要有`dna-sequences.fasta`
-* HOST_DB: 人類`human`/老鼠`mouse`/狗`dog`/貓`cat`/鴨`duck`/牛`cattle`/山羊`goat`/馬`horse`/豬`pig`/綜合物種`all`
+* HOST_DB: 人類`human`/老鼠`mouse`/狗`dog`/貓`cat`/鴨`duck`/牛`cattle`/綿羊`sheep`/山羊`goat`/馬`horse`/豬`pig`/火雞`turkey`/兔`rabbit`/雞`chicken`
 ```bash
-HOST_DB=dog ./shell_tools/run_dehost_on_fasta.sh .
+HOST_DB=human ./shell_tools/run_dehost_on_fasta.sh .
 ```
 
 ### Step 4. 產出 dehost 結果
