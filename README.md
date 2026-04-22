@@ -396,7 +396,7 @@ CMD='qiime feature-classifier classify-sklearn \
 ./shell_tools/run_in_tmux.sh
 ```
 
-### Option1-2: Naive Bayes 模型分類 (V4) [official released]
+### Option1-2: Naive Bayes 模型分類 (V4)
 ```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
@@ -404,7 +404,7 @@ JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=silva138_nb_v4 \
 CMD='qiime feature-classifier classify-sklearn \
-  --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva-138-99-515-806_V4-nb-classifier.zip \
+  --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_138_99_NB_classifier_V4_len250.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2' \
@@ -435,7 +435,7 @@ CMD='qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/SILVA/source/silva_138_99_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/SILVA/source/silva_138_99_Taxonomy.qza \
-  --p-threads 4 \
+  --p-threads 2 \
   --o-classification taxonomy.qza \
   --verbose' \
 ./shell_tools/run_in_tmux.sh
@@ -465,7 +465,6 @@ CMD='qiime feature-classifier classify-sklearn \
   --p-n-jobs 2' \
 ./shell_tools/run_in_tmux.sh
 ```
-</details><br>
 
 ### Option2: Naive Bayes 模型分類 (full-length)
 ```
@@ -482,9 +481,11 @@ CMD='qiime feature-classifier classify-sklearn \
 ./shell_tools/run_in_tmux.sh
 ```
 
+</details><br>
+
 模型分類進度查詢
 ```
-MODE=latest JOB_TYPE=taxonomy ./shell_tools/check_tmux_jobs.sh
+MODE=all JOB_TYPE=taxonomy ./shell_tools/check_tmux_jobs.sh
 ```
 
 ### 特殊狀況處理2 (optional)
