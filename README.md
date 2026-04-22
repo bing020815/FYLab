@@ -502,9 +502,9 @@ HOST_DB=human ./shell_tools/run_dehost_on_fasta.sh .
 ```
 
 ## 3. Dehost pathway 流程前期準備
-### 進入qiime2環境
+### 依照artifact檔案版本進入qiime2環境
 ```
-conda activate qiime2-2023.2
+source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 ### 轉檔qiime2對應deshot資料
 * 產出`phyloseq/dehost_output/dehost_otu_table.biom`,`phyloseq/dehost_output/dehost_otu_table.qza`,`phyloseq/dehost_output/dehost_rep_seqs.qza`,`phyloseq/dehost_output/dehost_taxonomy.qza`,`phyloseq/dehost_output/dehost_dna-sequences.fasta`
