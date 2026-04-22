@@ -27,13 +27,13 @@
 ## Puty/terminal
 Windos: Putty
   + IP:
-  ```
+  ```bash
   adprc@140.127.97.66
   ```
 
 Mac: Terminal
   + Run:
-  ```
+  ```bash
   ssh adprc@140.127.97.66
   ```
 <p align="center"><a href="#fylab">Top</a></p>
@@ -72,7 +72,7 @@ cd ..
 ```
 
 ## 使用執行檔依據`rep-seqs.qza`進入相對應 qiime2 環境
-```
+```bash
 source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 
@@ -152,7 +152,7 @@ CMD='qiime feature-classifier classify-sklearn \
 
 ### Option2: Naive Bayes 模型分類 (full-length)
 * [2023.09發布的Naive Bayes分類器，訓練用資料：GreenGenes 13_8，99% OTUs, qiime2-2023.2](https://data.qiime2.org/2023.9/common/gg-13-8-99-nb-classifier.qza)
-```
+```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
@@ -237,7 +237,7 @@ CMD='qiime feature-classifier classify-sklearn \
 ```
 
 ### Option2: Naive Bayes 模型分類 (full-length)
-```
+```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
@@ -327,7 +327,7 @@ CMD='qiime feature-classifier classify-sklearn \
 ```
 
 ### Option2: Naive Bayes 模型分類 (full-length)
-```
+```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
@@ -412,7 +412,7 @@ CMD='qiime feature-classifier classify-sklearn \
 ```
 
 ### Option2: Naive Bayes 模型分類 (full-length)
-```
+```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
@@ -467,7 +467,7 @@ CMD='qiime feature-classifier classify-sklearn \
 ```
 
 ### Option2: Naive Bayes 模型分類 (full-length)
-```
+```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
@@ -498,26 +498,26 @@ MODE=all JOB_TYPE=taxonomy ./shell_tools/check_tmux_jobs.sh
 
 ### 建立合併後導出用資料夾
 * 後續的dehost/pathway都可以在這個資料夾底下接續做
-```
+```bash
   mkdir merge_exported
   cd merge_exported
 ```
 table.qza: ASV abundance table（特徵豐度表、又稱 feature table，帶有ASV ID）
-```
+```bash
   qiime feature-table merge \
   --i-tables table1.qza \
   --i-tables table2.qza \
   --o-merged-table table.qza
 ```
 taxonomy.qza: 每個 ASV 序列對應到的生物分類（門、綱、目、科、屬、種）
-```
+```bash
   qiime feature-table merge-taxa \
   --i-data taxonomy1.qza \
   --i-data taxonomy2.qza \
   --o-merged-data taxonomy.qza
 ```
 rep-seqs.qza: 每個 ASV 的實際 DNA 序列（即 16S 片段字串），實際需要合併，以及用於分類器分類的 input
-```
+```bash
   qiime feature-table merge-seqs \
   --i-data rep-seqs1.qza \
   --i-data rep-seqs2.qza \
@@ -551,7 +551,7 @@ biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
 
 包含: bowtie2, samtools, seqkit 工具包 
 https://useast.ensembl.org/index.html
-```
+```bash
 conda activate host-tools
 ```
 ## 2. 排除宿主基因
@@ -570,7 +570,7 @@ seqkit seq -g -m 350 -M 500 \
   -o phyloseq/dehost_work/filtered_dna-sequences.fasta
 ```
 再檢查代表性序列品質（可選）
-```
+```bash
 seqkit stats phyloseq/dehost_work/filtered_dna-sequences.fasta
 ```
 
@@ -590,13 +590,13 @@ HOST_DB=human ./shell_tools/run_dehost_on_fasta.sh .
 
 ## 3. Dehost pathway 流程前期準備
 ### 依照artifact檔案版本進入qiime2環境
-```
+```bash
 source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 ### 轉檔qiime2對應deshot資料
 * 產出`phyloseq/dehost_output/dehost_otu_table.biom`,`phyloseq/dehost_output/dehost_otu_table.qza`,`phyloseq/dehost_output/dehost_rep_seqs.qza`,`phyloseq/dehost_output/dehost_taxonomy.qza`,`phyloseq/dehost_output/dehost_dna-sequences.fasta`
 * 需要有 `rep-seqs.qza`,`phyloseq/taxonomy.tsv`,`phyloseq/otu_table.tsv`
-```
+```bash
 ./shell_tools/prepare_dehost_qiime2_inputs.sh .
 ```
 完成可以直接跳[Picurst流程產生路徑](#PICRUSt2---Metabolism-Pathway)
@@ -605,7 +605,7 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 
 # 畫圖
 ## 依照artifact版本進入qiime2環境 [optional]
-```
+```bash
 source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 ### Phylogeny Tree [optional]
@@ -649,7 +649,7 @@ CMD='qiime phylogeny align-to-tree-mafft-fasttree \
 <summary><strong>點我展開畫進化樹(optional)</strong></summary>
   
 ### 1. 導出無根進化樹 [optional]
-```
+```bash
 qiime tools export \
 --input-path unrooted-tree.qza \
 --output-path phyloseq
@@ -657,7 +657,7 @@ cd phyloseq; mv tree.nwk unrooted_tree.nwk; cd ../
 ```
 
 ### 2. 導出有根進化樹 [optional]
-```
+```bash
 qiime tools export \
 --input-path rooted-tree.qza \
 --output-path phyloseq
@@ -673,7 +673,7 @@ cd phyloseq; mv tree.nwk rooted_tree.nwk; cd ../
 <summary><strong>點我展開畫OTU圖</strong></summary>
 
 ### 產出taxa-bar.qzv
-```
+```bash
 qiime taxa barplot \
   --i-table table.qza \
   --m-metadata-file metadata.tsv \
@@ -688,7 +688,7 @@ qiime taxa barplot \
 <summary><strong>點我展開畫OTU圖</strong></summary>
 
 ### 1. Taxonomy Collapse  [optional]
-```
+```bash
 qiime taxa collapse \
 --i-table table.qza \
 --i-taxonomy taxonomy.qza \
@@ -697,21 +697,21 @@ qiime taxa collapse \
 ```
 
 ### 2. Relative Frequency  [optional]
-```
+```bash
 qiime feature-table relative-frequency \
 --i-table collapse-table.qza \
 --o-relative-frequency-table relative-table.qza
 ```
 
 ### 3. Export [optional]
-```
+```bash
 qiime tools export \
 --input-path relative-table.qza \
 --output-path export-relative-table
 ```
 
 ### 4. Convert BIOM to TSV (最後用convert-relative-table.tsv上greengene網站跑圖)  [optional]
-```
+```bash
 biom convert \
 -i export-relative-table/feature-table.biom \
 -o convert-relative-table.tsv \
@@ -727,7 +727,7 @@ biom convert \
 <summary><strong>點我展開畫Diversity圖</strong></summary>
   
 ### 1.轉換
-```
+```bash
 qiime diversity core-metrics-phylogenetic \
 --i-phylogeny rooted-tree.qza \
 --i-table table.qza \
@@ -740,7 +740,7 @@ qiime diversity core-metrics-phylogenetic \
 
 ## Alpha Diversity  [optional]
 ### 1.Alpha 稀疏曲線
-```
+```bash
 qiime diversity alpha-rarefaction \
 --i-table table.qza \
 --p-max-depth _ \ 
@@ -750,7 +750,7 @@ qiime diversity alpha-rarefaction \
 ```
 
 ### 2.Shannon
-```
+```bash
 qiime diversity alpha-group-significance \
 --i-alpha-diversity metrics/shannon_vector.qza \
 --m-metadata-file metadata.tsv \
@@ -759,7 +759,7 @@ qiime diversity alpha-group-significance \
 
 ## Beta Diversity  [optional]
 ### weighted_unifrac
-```
+```bash
 qiime diversity beta-group-significance \
 --i-distance-matrix metrics/weighted_unifrac_distance_matrix.qza \
 --m-metadata-file metadata.tsv \
@@ -775,7 +775,7 @@ jaccard
 
 
 ## Exit QIIME2  [optional]
-```
+```bash
 conda deactivate
 ```
 </details><br>
@@ -803,12 +803,12 @@ KEGG 功能:
 則一環境啟動即可。
 
 [PICRUSt2 2.5.2](https://github.com/picrust/picrust2/wiki/PICRUSt2-Tutorial-(v2.5.2)) --> ~20,000 筆序列建製 reference database
-```
+```bash
 conda activate picrust2
 ```
 
 [PICRUSt2-SC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12089645/)  -->  ~27,000筆序列建製 Genome Taxonomy Database (GTDB) r214 基因組樹
-```
+```bash
 conda activate picrust2sc
 ```
 
