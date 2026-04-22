@@ -398,7 +398,7 @@ CMD='qiime feature-classifier classify-sklearn \
 
 模型分類進度查詢
 ```
-MODE=all JOB_TYPE=taxonomy ./shell_tools/check_tmux_jobs.sh
+MODE=latest JOB_TYPE=taxonomy ./shell_tools/check_tmux_jobs.sh
 ```
 
 ### 特殊狀況處理2 (optional)
