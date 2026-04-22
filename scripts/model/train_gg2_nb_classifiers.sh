@@ -101,7 +101,7 @@ has_model() {
 
 # 1. full-length
 if has_model "full-length"; then
-    FULL_OUT="${TRAINED_DIR}/${DOT_PREFIX}.full-length.nb.qza"
+    FULL_OUT="${TRAINED_DIR}/${NB_PREFIX}.full-length.nb.qza"
     run_and_log "full-length" \
         qiime feature-classifier fit-classifier-naive-bayes \
         --i-reference-reads "${REFSEQ_QZA}" \
