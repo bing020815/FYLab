@@ -112,11 +112,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_v3v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg/trained/${CURRENT_ENV}/gg_13_8_99_NB_classifier_V3V4.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -127,11 +127,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_v3 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg/trained/${CURRENT_ENV}/gg_13_8_99_NB_classifier_V3_len200.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -142,11 +142,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg/trained/${CURRENT_ENV}/gg_13_8_99_NB_classifier_V4_len250.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -158,11 +158,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_full \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg/trained/${CURRENT_ENV}/gg_13_8_99_NB_classifier_full-length.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -171,13 +171,13 @@ CMD='qiime feature-classifier classify-sklearn \
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_vsearch_full \
-CMD='qiime feature-classifier classify-consensus-vsearch \
+CMD="qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg/source/gg_13_8_99_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/gg/source/gg_13_8_99_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
-  --verbose' \
+  --verbose" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -198,11 +198,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2022_10_nb_v3v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -213,11 +213,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2022_10_nb_v3 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2_2022_10_backbone_NB_classifier_V3_len200.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -228,11 +228,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2022_10_nb_v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2.2022.10.backbone.V4.nb.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -243,11 +243,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_full \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2.2022.10.backbone.full-length.nb.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -256,13 +256,13 @@ CMD='qiime feature-classifier classify-sklearn \
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2022_10_vsearch_full \
-CMD='qiime feature-classifier classify-consensus-vsearch \
+CMD="qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg2/source/gg2_2022_10_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/gg2/source/gg2_2022_10_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
-  --verbose' \
+  --verbose" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -288,11 +288,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2024_09_nb_v3v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2_2024_09_backbone_NB_classifier_V3V4.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -303,11 +303,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2024_09_nb_v3 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2_2024_09_backbone_NB_classifier_V3_len200.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -318,11 +318,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2024_09_nb_v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2.2024.09.backbone.v4.nb.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -333,11 +333,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_full \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2.2024.09.backbone.full-length.nb.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -346,13 +346,13 @@ CMD='qiime feature-classifier classify-sklearn \
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg2_2024_09_nb_v4 \
-CMD='qiime qiime feature-classifier classify-consensus-vsearch \
+CMD="qiime qiime feature-classifier classify-consensus-vsearch \
   --i-reads rep-seqs.qza \
   --i-classifier /home/adprc/classifier/gg2/source/gg2_2024_09_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/gg2/source/gg2_2024_09_Taxonomy.qza \
-  --p-threads 4' \
+  --p-threads 4 \
   --o-classification taxonomy.qza \
-  --verbose' \
+  --verbose" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -373,11 +373,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=silva138_nb_v3v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_138_99_NB_classifier_V3V4.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -388,11 +388,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=silva138_nb_v3 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_138_99_NB_classifier_V3_len200.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -403,11 +403,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=silva138_nb_v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_138_99_NB_classifier_V4_len250.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -418,11 +418,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_full \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_138_99_NB_classifier_full-length.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -431,13 +431,13 @@ CMD='qiime feature-classifier classify-sklearn \
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=silva138_vsearch_full \
-CMD='qiime feature-classifier classify-consensus-vsearch \
+CMD="qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/SILVA/source/silva_138_99_RefSeq.qza \
   --i-reference-taxonomy /home/adprc/classifier/SILVA/source/silva_138_99_Taxonomy.qza \
   --p-threads 2 \
   --o-classification taxonomy.qza \
-  --verbose' \
+  --verbose" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -458,11 +458,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=silva_dada2_1382_nb_v3v4 \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -473,11 +473,11 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
 JOB_NAME=gg_nb_full \
-CMD='qiime feature-classifier classify-sklearn \
+CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_dada2_zenodo_138.2_NB_classifier_full-length.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
-  --p-n-jobs 2' \
+  --p-n-jobs 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
