@@ -416,7 +416,7 @@ nohup qiime feature-classifier classify-sklearn \
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg/source/gg_13_8_99_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg/trained/qiime2-2023.2/gg_13_8_99_Taxonomy.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg/source/gg_13_8_99_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -464,7 +464,7 @@ nohup qiime feature-classifier classify-sklearn \
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg2/source/gg2_2022_10_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2022_10_Taxonomy.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/source/gg2_2022_10_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -517,7 +517,7 @@ nohup qiime feature-classifier classify-sklearn \
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/gg2/source/gg2_2024_09_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2024_09_Taxonomy.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/source/gg2_2024_09_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -565,7 +565,7 @@ nohup qiime feature-classifier classify-sklearn \
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
   --i-reference-reads /home/adprc/classifier/SILVA/source/silva_138_99_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva_138_99_Taxonomy.qzaa \
+  --i-reference-taxonomy /home/adprc/classifier/SILVA/source/silva_138_99_Taxonomy.qzaa \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
