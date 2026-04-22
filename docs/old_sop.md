@@ -453,7 +453,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [Official released]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2.2022.10.backbone.V4.nb.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2022_10_backbone_NB_classifier_V4_len250.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -506,7 +506,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2.2024.09.backbone.v4.nb.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2.2024.09.backbone.V4.nb.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -554,7 +554,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva-138-99-515-806_V4-nb-classifier.zip \
+--i-classifier /home/adprc/classifier/SILVA/pretrained/official/silva-138-99-515-806_V4-nb-classifier.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
