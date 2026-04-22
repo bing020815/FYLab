@@ -12,6 +12,11 @@ THREADS="${THREADS:-2}"
 
 TOOLS_ENV_NAME="${TOOLS_ENV_NAME:-host-tools}"
 
+# host genome 根目錄
+HOST_GENOME_DIR="${HOST_GENOME_DIR:-/home/adprc/host_genome}"
+# bowtie2 index 所在根目錄
+HOST_INDEX_DIR="${HOST_INDEX_DIR:-${HOST_GENOME_DIR}/genome_index}"
+
 check_cmd() {
     local cmd="$1"
     local hint="$2"
@@ -26,43 +31,43 @@ check_cmd() {
 resolve_host_index() {
     case "${HOST_DB}" in
         dog)
-            HOST_INDEX="/home/adprc/host_genome/dog_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/dog_genome/host_genome_index"
             ;;
         cat)
-            HOST_INDEX="/home/adprc/host_genome/cat_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/cat_genome/host_genome_index"
             ;;
         human)
-            HOST_INDEX="/home/adprc/host_genome/human_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/human_genome/host_genome_index"
             ;;
         mouse)
-            HOST_INDEX="/home/adprc/host_genome/mouse_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/mouse_genome/host_genome_index"
             ;;
         cattle)
-            HOST_INDEX="/home/adprc/host_genome/cattle_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/cattle_genome/host_genome_index"
             ;;
         duck)
-            HOST_INDEX="/home/adprc/host_genome/duck_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/duck_genome/host_genome_index"
             ;;
         goat)
-            HOST_INDEX="/home/adprc/host_genome/goat_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/goat_genome/host_genome_index"
             ;;
         horse)
-            HOST_INDEX="/home/adprc/host_genome/horse_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/horse_genome/host_genome_index"
             ;;
         pig)
-            HOST_INDEX="/home/adprc/host_genome/pig_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/pig_genome/host_genome_index"
             ;;
         chicken)
-            HOST_INDEX="/home/adprc/host_genome/chicken_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/chicken_genome/host_genome_index"
             ;;
         rabbit)
-            HOST_INDEX="/home/adprc/host_genome/rabbit_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/rabbit_genome/host_genome_index"
             ;;
         sheep)
-            HOST_INDEX="/home/adprc/host_genome/sheep_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/sheep_genome/host_genome_index"
             ;;
         turkey)
-            HOST_INDEX="/home/adprc/host_genome/turkey_genome/host_genome_index"
+            HOST_INDEX="${HOST_INDEX_DIR}/turkey_genome/host_genome_index"
             ;;
         *)
             echo "[ERROR] 不支援的 HOST_DB: ${HOST_DB}"
@@ -106,13 +111,16 @@ main() {
     echo "[INFO] Step 2. 判斷 host genome index"
     resolve_host_index
 
-    if ! ls "${HOST_INDEX}"*.bt2* >/dev/null 2>&1; then
+    if ! compgen -G "${HOST_INDEX}"'*.bt2*' > /dev/null; then
         echo "[ERROR] 找不到 bowtie2 index：${HOST_INDEX}"
+        echo "[ERROR] HOST_DB         = ${HOST_DB}"
+        echo "[ERROR] HOST_INDEX_DIR  = ${HOST_INDEX_DIR}"
         exit 1
     fi
 
     echo "[INFO] HOST_DB         = ${HOST_DB}"
     echo "[INFO] HOST_INDEX      = ${HOST_INDEX}"
+    echo "[INFO] HOST_INDEX_DIR  = ${HOST_INDEX_DIR}"
     echo "[INFO] INPUT_FASTA     = ${INPUT_FASTA}"
     echo "[INFO] THREADS         = ${THREADS}"
     echo "[INFO] DEHOST_WORK_DIR = ${DEHOST_WORK_DIR}"
@@ -168,19 +176,34 @@ main() {
     fi
 
     echo "[INFO] Step 12. 顯示 dehost 前後 fasta 統計摘要"
-    if [ -f "${FILTERED_FASTA}" ]; then
-        seqkit stats -T \
-          "${RAW_FASTA}" \
-          "${FILTERED_FASTA}" \
-          "${DEHOST_WORK_DIR}/host_reads.fasta" \
-          "${DEHOST_WORK_DIR}/nonhost.fasta" \
-          | column -t
+    if command -v column >/dev/null 2>&1; then
+        if [ -f "${FILTERED_FASTA}" ]; then
+            seqkit stats -T \
+              "${RAW_FASTA}" \
+              "${FILTERED_FASTA}" \
+              "${DEHOST_WORK_DIR}/host_reads.fasta" \
+              "${DEHOST_WORK_DIR}/nonhost.fasta" \
+              | column -t
+        else
+            seqkit stats -T \
+              "${RAW_FASTA}" \
+              "${DEHOST_WORK_DIR}/host_reads.fasta" \
+              "${DEHOST_WORK_DIR}/nonhost.fasta" \
+              | column -t
+        fi
     else
-        seqkit stats -T \
-          "${RAW_FASTA}" \
-          "${DEHOST_WORK_DIR}/host_reads.fasta" \
-          "${DEHOST_WORK_DIR}/nonhost.fasta" \
-          | column -t
+        if [ -f "${FILTERED_FASTA}" ]; then
+            seqkit stats -T \
+              "${RAW_FASTA}" \
+              "${FILTERED_FASTA}" \
+              "${DEHOST_WORK_DIR}/host_reads.fasta" \
+              "${DEHOST_WORK_DIR}/nonhost.fasta"
+        else
+            seqkit stats -T \
+              "${RAW_FASTA}" \
+              "${DEHOST_WORK_DIR}/host_reads.fasta" \
+              "${DEHOST_WORK_DIR}/nonhost.fasta"
+        fi
     fi
 
     echo
@@ -191,4 +214,3 @@ main() {
 }
 
 main "$@"
-
