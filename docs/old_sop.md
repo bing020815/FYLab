@@ -387,7 +387,7 @@ GreenGenes 16S rRNA gene databas:
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3V4.qza \
+--i-classifier /home/adprc/classifier/gg/trained/qiime2-2023.2/gg_13_8_99_NB_classifier_V3V4.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -396,7 +396,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V3_len200.qza.qza \
+--i-classifier /home/adprc/classifier/gg/trained/qiime2-2023.2/gg_13_8_99_NB_classifier_V3_len200.qza.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -405,7 +405,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg/gg_13_8_99_NB_classifier_V4_len250.qza \
+--i-classifier /home/adprc/classifier/gg/trained/qiime2-2023.2/gg_13_8_99_NB_classifier_V4_len250.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -415,8 +415,8 @@ nohup qiime feature-classifier classify-sklearn \
 ```
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
-  --i-reference-reads /home/adprc/classifier/gg/gg_13_8_99_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg/gg_13_8_99_Taxonomy.qza \
+  --i-reference-reads /home/adprc/classifier/gg/source/gg_13_8_99_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg/trained/qiime2-2023.2/gg_13_8_99_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -435,7 +435,7 @@ Greengenes2 16S rRNA gene databas:
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2022_10_backbone_NB_classifier_V3V4.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -444,7 +444,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2022_10_backbone_NB_classifier_V3_len200.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2022_10_backbone_NB_classifier_V3_len200.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -453,7 +453,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [Official released]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2.2022.10.backbone.V4.nb.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2.2022.10.backbone.V4.nb.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -463,8 +463,8 @@ nohup qiime feature-classifier classify-sklearn \
 ```
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
-  --i-reference-reads /home/adprc/classifier/gg2/gg2_2022_10_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2022_10_Taxonomy.qza \
+  --i-reference-reads /home/adprc/classifier/gg2/source/gg2_2022_10_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2022_10_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -488,7 +488,7 @@ Greengenes2 16S rRNA gene databas:
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3V4.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2024_09_backbone_NB_classifier_V3V4.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -497,7 +497,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2_2024_09_backbone_NB_classifier_V3_len200.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2024_09_backbone_NB_classifier_V3_len200.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -506,7 +506,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/gg2/gg2.2024.09.backbone.v4.nb.qza \
+--i-classifier /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2.2024.09.backbone.v4.nb.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -516,8 +516,8 @@ nohup qiime feature-classifier classify-sklearn \
 ```
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
-  --i-reference-reads /home/adprc/classifier/gg2/gg2_2024_09_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/gg2/gg2_2024_09_Taxonomy.qza \
+  --i-reference-reads /home/adprc/classifier/gg2/source/gg2_2024_09_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/gg2/trained/qiime2-2023.2/gg2_2024_09_Taxonomy.qza \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -536,7 +536,7 @@ SILVA ribosomal RNA database: 官方公開參考序列持續更新 (約 129,000 
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3V4.qza \
+--i-classifier /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva_138_99_NB_classifier_V3V4.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -545,7 +545,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-1: Naive Bayes 模型分類 (V3) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva_138_99_NB_classifier_V3_len200.qza \
+--i-classifier /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva_138_99_NB_classifier_V3_len200.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -554,7 +554,7 @@ nohup qiime feature-classifier classify-sklearn \
 ### Option1-2: Naive Bayes 模型分類 (V4) [official released]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva-138-99-515-806_V4-nb-classifier.zip \
+--i-classifier /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva-138-99-515-806_V4-nb-classifier.zip \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
@@ -564,8 +564,8 @@ nohup qiime feature-classifier classify-sklearn \
 ```
 nohup qiime feature-classifier classify-consensus-vsearch \
   --i-query rep-seqs.qza \
-  --i-reference-reads /home/adprc/classifier/SILVA/silva_138_99_RefSeq.qza \
-  --i-reference-taxonomy /home/adprc/classifier/SILVA/silva_138_99_Taxonomy.qzaa \
+  --i-reference-reads /home/adprc/classifier/SILVA/source/silva_138_99_RefSeq.qza \
+  --i-reference-taxonomy /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva_138_99_Taxonomy.qzaa \
   --p-threads 4 \
   --o-classification taxonomy.qza \
   --verbose > nohup_vsearch.out 2>&1 &
@@ -584,7 +584,7 @@ nohup qiime feature-classifier classify-consensus-vsearch \
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```
 nohup qiime feature-classifier classify-sklearn \
---i-classifier /home/adprc/classifier/SILVA/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza \
+--i-classifier /home/adprc/classifier/SILVA/trained/qiime2-2023.2/silva_dada2_zenodo_138.2_NB_classifier_V3V4.qza \
 --i-reads rep-seqs.qza \
 --o-classification taxonomy.qza \
 --p-n-jobs 2 > nohup.out 2>&1 &
