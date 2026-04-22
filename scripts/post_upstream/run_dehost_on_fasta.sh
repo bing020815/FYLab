@@ -1,4 +1,3 @@
-cat > ./shell_tools/run_dehost_on_fasta.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -192,5 +191,4 @@ main() {
 }
 
 main "$@"
-EOF
-chmod +x ./shell_tools/run_dehost_on_fasta.sh
+
