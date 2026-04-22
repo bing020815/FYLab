@@ -25,9 +25,6 @@ check_cmd() {
 
 resolve_host_index() {
     case "${HOST_DB}" in
-        all)
-            HOST_INDEX="/home/adprc/host_genome/all_genome/host_genome_index"
-            ;;
         dog)
             HOST_INDEX="/home/adprc/host_genome/dog_genome/host_genome_index"
             ;;
@@ -52,9 +49,21 @@ resolve_host_index() {
         pig)
             HOST_INDEX="/home/adprc/host_genome/pig_genome/host_genome_index"
             ;;
+        chicken)
+            HOST_INDEX="/home/adprc/host_genome/chicken_genome/host_genome_index"
+            ;;
+        rabbit)
+            HOST_INDEX="/home/adprc/host_genome/rabbit_genome/host_genome_index"
+            ;;
+        sheep)
+            HOST_INDEX="/home/adprc/host_genome/sheep_genome/host_genome_index"
+            ;;
+        turkey)
+            HOST_INDEX="/home/adprc/host_genome/turkey_genome/host_genome_index"
+            ;;
         *)
             echo "[ERROR] 不支援的 HOST_DB: ${HOST_DB}"
-            echo "[ERROR] 目前支援：all / dog / cat / mouse / cattle / duck / goat / horse / pig"
+            echo "[ERROR] 目前支援：dog / cat / mouse / cattle / duck / goat / horse / pig / chicken / rabbit / sheep / turkey"
             exit 1
             ;;
     esac
