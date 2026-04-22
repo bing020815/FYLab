@@ -813,30 +813,6 @@ seqkit stats phyloseq/dna-sequences.fasta
          2> phyloseq/mapping_host_genome.txt &
   ```
   </details><br>
-  
-  ### all(human, mouse, dog, cat, cattle, duck, goat, horse, pig, rabbit, turkey, chicken, sheep) [pick one fits the project]
-  <details>
-  <summary><strong>使用加強篩選與過濾後語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
-         -f phyloseq/filtered_dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
-  <details>
-  <summary><strong>未使用加強篩選與過濾語法</strong></summary>
-  
-  ```
-  nohup bowtie2 -x /home/adprc/host_genome/all_genome/host_genome_index \
-         -f phyloseq/dna-sequences.fasta \
-         -S phyloseq/mapping_host_genome.sam \
-         -p 2 \
-         2> phyloseq/mapping_host_genome.txt &
-  ```
-  </details><br>
 </details><br>
 
 ## samtools 處理宿主基因
