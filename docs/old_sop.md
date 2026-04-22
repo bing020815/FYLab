@@ -722,7 +722,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>使用加強篩選與過濾後語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/human_genome/host_genome_index \
          -f phyloseq/filtered_dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -733,7 +733,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>未使用加強篩選與過濾語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/human_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/human_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -746,7 +746,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>使用加強篩選與過濾後語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/mouse_genome/host_genome_index \
          -f phyloseq/filtered_dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -757,7 +757,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>未使用加強篩選與過濾語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/mouse_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/mouse_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -770,7 +770,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>使用加強篩選與過濾後語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/dog_genome/host_genome_index \
          -f phyloseq/filtered_dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -781,7 +781,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>未使用加強篩選與過濾語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/dog_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/dog_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -795,7 +795,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>使用加強篩選與過濾後語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/cat_genome/host_genome_index \
          -f phyloseq/filtered_dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
@@ -806,7 +806,7 @@ seqkit stats phyloseq/dna-sequences.fasta
   <summary><strong>未使用加強篩選與過濾語法</strong></summary>
   
   ```
-  nohup bowtie2 -x /home/adprc/host_genome/cat_genome/host_genome_index \
+  nohup bowtie2 -x /home/adprc/host_genome/genome_index/cat_genome/host_genome_index \
          -f phyloseq/dna-sequences.fasta \
          -S phyloseq/mapping_host_genome.sam \
          -p 2 \
