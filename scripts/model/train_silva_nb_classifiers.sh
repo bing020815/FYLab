@@ -1,3 +1,4 @@
+cat > /home/adprc/classifier/SILVA/train_silva_nb_classifiers.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -104,11 +105,16 @@ has_model() {
 
 if has_model "full-length"; then
     FULL_OUT="${TRAINED_DIR}/${PREFIX}_NB_classifier_full-length.qza"
-    run_and_log "full-length" \
-        qiime feature-classifier fit-classifier-naive-bayes \
-        --i-reference-reads "${REFSEQ_QZA}" \
-        --i-reference-taxonomy "${TAXONOMY_QZA}" \
-        --o-classifier "${FULL_OUT}"
+    if [ -f "${FULL_OUT}" ]; then
+        echo "[INFO] 已存在，跳過 full-length：${FULL_OUT}"
+        echo
+    else
+        run_and_log "full-length" \
+            qiime feature-classifier fit-classifier-naive-bayes \
+            --i-reference-reads "${REFSEQ_QZA}" \
+            --i-reference-taxonomy "${TAXONOMY_QZA}" \
+            --o-classifier "${FULL_OUT}"
+    fi
 fi
 
 if has_model "V3V4"; then
@@ -127,11 +133,16 @@ if has_model "V3V4"; then
         echo
     fi
 
-    run_and_log "train_V3V4" \
-        qiime feature-classifier fit-classifier-naive-bayes \
-        --i-reference-reads "${V3V4_READS}" \
-        --i-reference-taxonomy "${TAXONOMY_QZA}" \
-        --o-classifier "${V3V4_OUT}"
+    if [ -f "${V3V4_OUT}" ]; then
+        echo "[INFO] 已存在，跳過 train_V3V4：${V3V4_OUT}"
+        echo
+    else
+        run_and_log "train_V3V4" \
+            qiime feature-classifier fit-classifier-naive-bayes \
+            --i-reference-reads "${V3V4_READS}" \
+            --i-reference-taxonomy "${TAXONOMY_QZA}" \
+            --o-classifier "${V3V4_OUT}"
+    fi
 fi
 
 if has_model "V3_len200"; then
@@ -151,11 +162,16 @@ if has_model "V3_len200"; then
         echo
     fi
 
-    run_and_log "train_V3_len200" \
-        qiime feature-classifier fit-classifier-naive-bayes \
-        --i-reference-reads "${V3_READS}" \
-        --i-reference-taxonomy "${TAXONOMY_QZA}" \
-        --o-classifier "${V3_OUT}"
+    if [ -f "${V3_OUT}" ]; then
+        echo "[INFO] 已存在，跳過 train_V3_len200：${V3_OUT}"
+        echo
+    else
+        run_and_log "train_V3_len200" \
+            qiime feature-classifier fit-classifier-naive-bayes \
+            --i-reference-reads "${V3_READS}" \
+            --i-reference-taxonomy "${TAXONOMY_QZA}" \
+            --o-classifier "${V3_OUT}"
+    fi
 fi
 
 if has_model "V4_len250"; then
@@ -175,13 +191,21 @@ if has_model "V4_len250"; then
         echo
     fi
 
-    run_and_log "train_V4_len250" \
-        qiime feature-classifier fit-classifier-naive-bayes \
-        --i-reference-reads "${V4_READS}" \
-        --i-reference-taxonomy "${TAXONOMY_QZA}" \
-        --o-classifier "${V4_OUT}"
+    if [ -f "${V4_OUT}" ]; then
+        echo "[INFO] 已存在，跳過 train_V4_len250：${V4_OUT}"
+        echo
+    else
+        run_and_log "train_V4_len250" \
+            qiime feature-classifier fit-classifier-naive-bayes \
+            --i-reference-reads "${V4_READS}" \
+            --i-reference-taxonomy "${TAXONOMY_QZA}" \
+            --o-classifier "${V4_OUT}"
+    fi
 fi
 
 echo "[INFO] 全部完成"
 echo "[INFO] 可檢查輸出："
 ls -lh "${TRAINED_DIR}" | grep "${PREFIX}" || true
+EOF
+
+chmod +x /home/adprc/classifier/SILVA/train_silva_nb_classifiers.sh
