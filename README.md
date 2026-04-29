@@ -1116,9 +1116,9 @@ CMD='add_descriptions.py \
 
 Step 0 - Fix 'ko:' prefix issue
 ```bash
-zcat pred_metagenome_unstrat.tsv.gz | \
+zcat KO_metagenome_out/pred_metagenome_unstrat.tsv.gz | \
     sed 's/^ko://g' | \
-    gzip > pred_metagenome_unstrat.no_prefix.tsv.gz
+    gzip > KO_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz
 ```
   
 Step 1 — Pathway abundance prediction
