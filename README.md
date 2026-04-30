@@ -609,7 +609,8 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```bash
 source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
-### Phylogeny Tree [optional]
+### Phylogeny Tree 檔案 [optional]
+* 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted_tree.qza`
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
 
@@ -645,7 +646,8 @@ CMD='qiime phylogeny align-to-tree-mafft-fasttree \
 ```
 </details><br>
 
-## 進化樹 [optional]
+## 進化樹轉出 [optional]
+* 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted_tree.nwk`
 <details>
 <summary><strong>點我展開畫進化樹(optional)</strong></summary>
   
