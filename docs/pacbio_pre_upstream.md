@@ -142,6 +142,7 @@ sample2 Treatment
 
 # 官方nextflow
 [PacBio 官方 nextflow ](https://github.com/pacificbiosciences/HiFi-16S-workflow)流程概念包含:
+* 目前版本: `Nextflow version 25.10.4`
 
 0. 內層分析環境建立
 1. cutadapt primer trimming 與方向統一
