@@ -173,6 +173,10 @@ CMD='qiime demux summarize \
 ```
 MODE=latest JOB_TYPE=demux ./shell_tools/check_tmux_jobs.sh
 ```
+移除`paired-end-demux.qza`肥大檔案
+```
+rm paired-end-demux.qza
+```
 
 ## Denoise 去除雜訊 [標準流程: 270-240 (適用於fastq長度 300 bp)]
 * 將qza檔案去完雜訊後，輸出成： `table.qza`, `stats.qza`, `rep-seqs.qza` 
