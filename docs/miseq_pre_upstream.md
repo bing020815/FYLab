@@ -228,6 +228,12 @@ qiime metadata tabulate \
   --m-input-file stats.qza \
   --o-visualization stats.qzv
 ```
+
+移除`paired-end-demux.qza`肥大檔案
+```
+rm paired-end-demux.qza
+```
+
 ### 直接看序列表長度[optional]
 * 產出`rep-seqs-summary.qzv`
 * https://view.qiime2.org/
@@ -277,11 +283,6 @@ qiime cutadapt trim-reads \
   --i-data rep-seqs1_trimed.qza \
   --i-data rep-seqs2_trimed.qza \
   --o-merged-data rep-seqs.qza
-```
-
-移除`paired-end-demux.qza`肥大檔案
-```
-rm paired-end-demux.qza
 ```
 
 [跳至倒出特徵表步驟](../README.md#qza格式轉檔出存至phyloseq)
