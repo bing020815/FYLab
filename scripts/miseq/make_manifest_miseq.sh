@@ -66,27 +66,53 @@ declare -a duplicate_r2_samples=()
 for filepath in "${FASTQ_FILES[@]}"; do
     filename="$(basename "${filepath}")"
 
-    if [[ "${filename}" =~ ^(.+)_R1(_[0-9]+)?(_trimmed)?\.fastq\.gz$ ]]; then
+    # Case 1: Illumina / MiSeq style
+    # examples:
+    #   T1C557_S35_L001_R1_001.fastq.gz
+    #   T1C557_S35_L001_R2_001.fastq.gz
+    #   T1C557_S35_L001_R1_trimmed.fastq.gz
+    #   T1C557_S35_L001_R2_trimmed.fastq.gz
+    #
+    # sample_id = T1C557
+    if [[ "${filename}" =~ ^(.+)_S[0-9]+_L[0-9]{3}_R([12])(_[0-9]{3})?(_trimmed)?\.fastq\.gz$ ]]; then
         sample_id="${BASH_REMATCH[1]}"
+        read_direction="${BASH_REMATCH[2]}"
+
+    # Case 2: simple style
+    # examples:
+    #   sampleA_R1.fastq.gz
+    #   sampleA_R2.fastq.gz
+    #   sampleA_R1_001.fastq.gz
+    #   sampleA_R2_001.fastq.gz
+    #   sampleA_R1_trimmed.fastq.gz
+    #   sampleA_R2_trimmed.fastq.gz
+    #
+    # sample_id = sampleA
+    elif [[ "${filename}" =~ ^(.+)_R([12])(_[0-9]{3})?(_trimmed)?\.fastq\.gz$ ]]; then
+        sample_id="${BASH_REMATCH[1]}"
+        read_direction="${BASH_REMATCH[2]}"
+
+    else
+        unknown_files+=("${filename}")
+        continue
+    fi
+
+    if [ "${read_direction}" = "1" ]; then
         if [ -n "${forward_map[${sample_id}]:-}" ]; then
             duplicate_r1_samples+=("${sample_id}")
         else
             forward_map["${sample_id}"]="${filepath}"
         fi
-        sample_seen["${sample_id}"]=1
 
-    elif [[ "${filename}" =~ ^(.+)_R2(_[0-9]+)?(_trimmed)?\.fastq\.gz$ ]]; then
-        sample_id="${BASH_REMATCH[1]}"
+    elif [ "${read_direction}" = "2" ]; then
         if [ -n "${reverse_map[${sample_id}]:-}" ]; then
             duplicate_r2_samples+=("${sample_id}")
         else
             reverse_map["${sample_id}"]="${filepath}"
         fi
-        sample_seen["${sample_id}"]=1
-
-    else
-        unknown_files+=("${filename}")
     fi
+
+    sample_seen["${sample_id}"]=1
 done
 
 mapfile -t sample_ids < <(printf '%s\n' "${!sample_seen[@]}" | sort)
@@ -118,6 +144,7 @@ done
 if [ "${#duplicate_r1_samples[@]}" -gt 0 ]; then
     mapfile -t duplicate_r1_samples < <(printf '%s\n' "${duplicate_r1_samples[@]}" | sort -u)
 fi
+
 if [ "${#duplicate_r2_samples[@]}" -gt 0 ]; then
     mapfile -t duplicate_r2_samples < <(printf '%s\n' "${duplicate_r2_samples[@]}" | sort -u)
 fi
@@ -144,9 +171,13 @@ if [ "${unknown_count}" -gt 0 ]; then
     echo "  - sampleA_R1.fastq.gz"
     echo "  - sampleA_R2.fastq.gz"
     echo "  - sampleA_R1_001.fastq.gz"
-    echo "  - sampleA_R2_123.fastq.gz"
+    echo "  - sampleA_R2_001.fastq.gz"
     echo "  - sampleA_R1_trimmed.fastq.gz"
-    echo "  - sampleA_R2_007_trimmed.fastq.gz"
+    echo "  - sampleA_R2_trimmed.fastq.gz"
+    echo "  - sampleA_S1_L001_R1_001.fastq.gz"
+    echo "  - sampleA_S1_L001_R2_001.fastq.gz"
+    echo "  - sampleA_S1_L001_R1_trimmed.fastq.gz"
+    echo "  - sampleA_S1_L001_R2_trimmed.fastq.gz"
 fi
 
 if [ "${duplicate_r1_count}" -gt 0 ]; then
