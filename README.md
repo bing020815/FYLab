@@ -1201,7 +1201,7 @@ JOB_TYPE=picrust_desc \
 PROJECT_DIR=. \
 JOB_NAME=picrust2sc_ko_add_descriptions \
 CMD='add_descriptions.py \
-  -i KO_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz \
+  -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
   -m KO \
   -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz' \
 ./shell_tools/run_in_tmux.sh
