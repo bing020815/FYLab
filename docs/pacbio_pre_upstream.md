@@ -7,13 +7,16 @@
 ```
 
 # Table of Contents:
+First-setup[已設定完]
 1. [|First-setup| 建立環境](#建立環境)
 2. [|First-setup| 建立官方 workflow](#建立官方-workflow)
 3. [|First-setup| 建立官方資料庫](#建立官方資料庫)
-4. [|Pre-upstream| 建立專案](#建立專案)
-5. [|Pre-upstream| 官方nextflow](#官方nextflow)
-6. [|Pre-upstream| Taxonomy 檔案資料整理](#Taxonomy-檔案資料整理)
-7. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
+   
+Pre-upstream[專案流程]
+1. [|Pre-upstream| 建立專案](#建立專案)
+2. [|Pre-upstream| 官方nextflow](#官方nextflow)
+3. [|Pre-upstream| Taxonomy 檔案資料整理](#Taxonomy-檔案資料整理)
+4. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
 
 # HiFi 
 由 PacBio SMRT 定序技術產生的長片段、高準確度基因定序數據。
@@ -61,8 +64,17 @@ nextflow run main.nf --download_db
 <p align="center"><a href="#PacBio-HiFi-16S-pre-upstream-SOP">Top</a></p>
 
 # 建立專案
-基本專案資料夾
+## 基本專案資料夾建立
+* `<owner_name>`： 輸入個人資料夾名
+* `<project_name>`： 輸入專案資料夾名
+```bash
+prepare_project <owner_name> <project_name>
+```
 
+## fastq檔案上傳資料夾
+* 將fastq透過`File WINSCP`或是`Filezilla`工具上傳至專案資料夾
+
+## 基本專案資料結構
 * raw_fastq/：原始 PacBio `.fastq.gz`
 * samples.tsv：官方 workflow 的樣本輸入清單
 * metadata.tsv：樣本分組與描述資料
