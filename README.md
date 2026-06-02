@@ -30,6 +30,11 @@ Windos: Putty
   ```bash
   adprc@140.127.97.66
   ```
+Windos: Powershell
+  + IP:
+  ```ps
+  ssh adprc@140.127.97.66
+  ```
 
 Mac: Terminal
   + Run:
