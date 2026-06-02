@@ -19,6 +19,13 @@ Reverse read  <----------------------------- 300 bp
 4. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
 
 # 專案建立與檔案上傳
+## 區域定義
+```bash
+home/
+├─adprc/workspace/: 工作暫存區
+├─NAS/projects/: 工作儲存區
+```
+
 ## 1. 建立專案
 * `<owner_name>`： 輸入個人資料夾名
 * `<project_name>`： 輸入專案資料夾名
