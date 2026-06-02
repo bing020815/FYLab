@@ -12,7 +12,7 @@ Reverse read  <----------------------------- 300 bp
 ```
 
 # Table of Contents:
-0. [|Pre-upstream| Create project：專案建立](#FastQ-files-Preprocess-前處理Primer)
+0. [|Pre-upstream| Create project：專案建立](#專案建立與檔案上傳)
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
