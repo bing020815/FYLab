@@ -14,7 +14,8 @@
 3. [|Post-upstream| Dehost - 由序列排除host基因](#Dehost-排除host基因)
 4. [|Post-upstream| 畫圖](#畫圖)
 5. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
-6. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
+6. [|Post-upstream| 分析專案歸檔](#分析專案歸檔)
+7. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
 
 # Preset
 ## Folder Management
@@ -1211,6 +1212,16 @@ CMD='add_descriptions.py \
 查詢任務狀態
 ```bash
 MODE=latest JOB_TYPE=picrust_desc ./shell_tools/check_tmux_jobs.sh
+```
+<p align="center"><a href="#FYLab-分析流程">Top</a></p>
+
+
+# 分析專案歸檔
+運作伺服器空間有限，需將完成分析之專案移轉至NAS專案保存區
+* `<owner_name>`： 輸入個人資料夾名
+* `<project_name>`： 輸入專案資料夾名
+```bash
+prepare_project <owner_name> <project_name>
 ```
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
 
