@@ -42,6 +42,8 @@ Mac: Terminal
 ## 1. 建立專案
 * `<owner_name>`： 輸入個人資料夾名
 * `<project_name>`： 輸入專案資料夾名
+* 在workspace區自動建立新專案，並且移動至專案資料夾目錄
+* 重新分析已完成之專案會從NAS移動至workspace區，並且移動至專案資料夾目錄
 ```bash
 prepare_project <owner_name> <project_name>
 ```
