@@ -12,10 +12,24 @@ Reverse read  <----------------------------- 300 bp
 ```
 
 # Table of Contents:
+0. [|Pre-upstream| Create project：專案建立](#FastQ-files-Preprocess-前處理Primer)
 1. [|Pre-upstream| FastQ files Preprocess：前處理Primer](#FastQ-files-Preprocess-前處理Primer)
 2. [|Pre-upstream| QIIME2 - Preparation: 分析前準備](#QIIME2---Preparation-分析前準備)
 3. [|Pre-upstream| QIIME2 - Import Data: 導入資料](#Import-Data-and-Preprocessing)
 4. [|Post-upstream| 接續模型分類流程](#接續模型分類流程)
+
+# 專案建立與檔案上傳
+## 1. 建立專案
+* `<owner_name>`： 輸入個人資料夾名
+* `<project_name>`： 輸入專案資料夾名
+```bash
+prepare_project <owner_name> <project_name>
+```
+
+## 2. fastq檔案上傳資料夾
+* 將fastq透過`File WINSCP`或是`Filezilla`工具上傳至專案資料夾
+
+<p align="center"><a href="#fylab">Top</a></p>
 
 
 # FastQ files Preprocess 前處理 Primer
