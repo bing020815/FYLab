@@ -1221,7 +1221,7 @@ MODE=latest JOB_TYPE=picrust_desc ./shell_tools/check_tmux_jobs.sh
 * `<owner_name>`： 輸入個人資料夾名
 * `<project_name>`： 輸入專案資料夾名
 ```bash
-prepare_project <owner_name> <project_name>
+finish_project <owner_name> <project_name>
 ```
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
 
