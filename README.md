@@ -682,6 +682,16 @@ cd phyloseq; mv tree.nwk rooted_tree.nwk; cd ../
 <details>
 <summary><strong>點我展開畫OTU圖</strong></summary>
 
+* 需要有metadata.tsv，檔案必須使用 Tab 分隔，不是逗號分隔。
+```
+# metadata.tsv 格式
+SampleID	Group
+Sample01	Control
+Sample02	Control
+Sample03	Treatment
+Sample04	Treatment
+```
+
 ### 產出taxa-bar.qzv
 ```bash
 qiime taxa barplot \
