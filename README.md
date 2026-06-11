@@ -735,53 +735,132 @@ biom convert \
 ## Diversity  [optional]
 <details>
 <summary><strong>點我展開畫Diversity圖</strong></summary>
-  
-### 1.轉換
-```bash
-qiime diversity core-metrics-phylogenetic \
---i-phylogeny rooted-tree.qza \
---i-table table.qza \
---p-sampling-depth _ \
---m-metadata-file metadata.tsv \
---output-dir metrics
-```
-註:sample depth - 通常會以`table.qzv`中，觀察 樣本深度最低的數值做為sample depth的數值，才能取樣到所有樣本，若最低的與其他樣本落差太大，則取倒數第二低的數值。
 
+* 需要有metadata.tsv，檔案必須使用 Tab 分隔，不是逗號分隔。
+```
+# metadata.tsv 格式
+SampleID	Group
+Sample01	Control
+Sample02	Control
+Sample03	Treatment
+Sample04	Treatment
+```
 
 ## Alpha Diversity  [optional]
-### 1.Alpha 稀疏曲線
+### 檢視各樣本sequencing depth
+```bash
+qiime feature-table summarize \
+  --i-table table.qza \
+  --m-sample-metadata-file metadata.tsv \
+  --o-visualization table.qzv
+```
+* [QIIME2View](https://view.qiime2.org/)檢視`table.qzv`細節決定`MAX_DEPTH`
+
+
+### Alpha 稀疏曲線
+* `MAX_DEPTH` 請替換為預計檢視的最大 sequencing depth。
+* 稀疏曲線用於觀察指標是否逐漸趨於平穩。
+* 最終使用的 `SAMPLING_DEPTH` 不應只機械式地採用最低值或倒數第二低值。
+* 應同時考量稀疏曲線、樣本深度分布，以及保留的樣本數量。
+* sequencing depth 明顯偏低的樣本可以排除，避免為了保留少數低品質樣本而犧牲整體分析深度。
 ```bash
 qiime diversity alpha-rarefaction \
---i-table table.qza \
---p-max-depth _ \ 
---i-phylogeny rooted-tree.qza \
-(--m-metadata-file metadata.tsv) \
---o-visualization rare.qzv
+  --i-table table.qza \
+  --i-phylogeny rooted-tree.qza \
+  --p-max-depth MAX_DEPTH \
+  --p-metrics shannon simpson chao1 observed_features faith_pd \
+  --m-metadata-file metadata.tsv \
+  --o-visualization rare.qzv
+```
+* [QIIME2View](https://view.qiime2.org/)檢視`rare.qzv`細節決定`SAMPLING_DEPTH`
+
+
+### 計算 diversity metrics
+* 填入對應`SAMPLING_DEPTH`
+* 選擇值為大部分 Alpha diversity 曲線在特定 `SAMPLING_DEPTH` reads 後逐漸平穩
+```bash
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table table.qza \
+  --p-sampling-depth SAMPLING_DEPTH \
+  --m-metadata-file metadata.tsv \
+  --output-dir metrics
 ```
 
-### 2.Shannon
+### 計算 diversity metrics-simpson, chao1
+```bash
+qiime diversity alpha \
+  --i-table metrics/rarefied_table.qza \
+  --p-metric simpson \
+  --o-alpha-diversity metrics/simpson_vector.qza
+```
+```bash
+qiime diversity alpha \
+  --i-table metrics/rarefied_table.qza \
+  --p-metric chao1 \
+  --o-alpha-diversity metrics/chao1_vector.qza
+```
+
+### Shannon index
 ```bash
 qiime diversity alpha-group-significance \
---i-alpha-diversity metrics/shannon_vector.qza \
---m-metadata-file metadata.tsv \
---o-visualization metrics/shannon_vector.qzv
+  --i-alpha-diversity metrics/shannon_vector.qza \
+  --m-metadata-file metadata.tsv \
+  --o-visualization metrics/shannon-group-significance.qzv
+```
+
+### Simpson index
+```bash
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity metrics/simpson_vector.qza \
+  --m-metadata-file metadata.tsv \
+  --o-visualization metrics/simpson-group-significance.qzv
+```
+
+### Chao1 richness estimator
+```bash
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity metrics/chao1_vector.qza \
+  --m-metadata-file metadata.tsv \
+  --o-visualization metrics/chao1-group-significance.qzv
 ```
 
 ## Beta Diversity  [optional]
-### weighted_unifrac
+### Beta diversity 組間比較：PERMANOVA
 ```bash
-qiime diversity beta-group-significance \
---i-distance-matrix metrics/weighted_unifrac_distance_matrix.qza \
---m-metadata-file metadata.tsv \
---m-metadata-column group \
---o-visualization metrics/weighted_unifrac-group-significance.qzv \
---p-pairwise
+for metric in \
+  weighted_unifrac \
+  unweighted_unifrac \
+  bray_curtis \
+  jaccard
+do
+  qiime diversity beta-group-significance \
+    --i-distance-matrix metrics/${metric}_distance_matrix.qza \
+    --m-metadata-file metadata.tsv \
+    --m-metadata-column Group \
+    --p-method permanova \
+    --p-pairwise \
+    --o-visualization metrics/${metric}-permanova.qzv
+done
 ```
-註:
-weighted_unifrac
-unweighted_unifrac
-bray_curtis
-jaccard
+
+### Beta diversity dispersion 檢定：PERMDISP
+```bash
+for metric in \
+  weighted_unifrac \
+  unweighted_unifrac \
+  bray_curtis \
+  jaccard
+do
+  qiime diversity beta-group-significance \
+    --i-distance-matrix metrics/${metric}_distance_matrix.qza \
+    --m-metadata-file metadata.tsv \
+    --m-metadata-column Group \
+    --p-method permdisp \
+    --p-pairwise \
+    --o-visualization metrics/${metric}-permdisp.qzv
+done
+```
 
 
 ## Exit QIIME2  [optional]
