@@ -827,6 +827,12 @@ set -euo pipefail
 # Required conda environment:
 #   conda activate metagenomics-taxonomy
 #
+# Database:
+#   Kraken2 PlusPF 20260226
+#   Includes Standard DB + RefSeq fungi + RefSeq protozoa.
+#   Used to better match BGI/Dr.Tom-style taxonomy coverage:
+#   Bacteria, Archaea, Viruses, Eukaryota-related microbial taxa, and unclassified reads.
+#
 # Input:
 #   results/02_dehost/clean_reads/<sample>_R1.dehost.fq.gz
 #   results/02_dehost/clean_reads/<sample>_R2.dehost.fq.gz
@@ -839,7 +845,7 @@ set -euo pipefail
 #       Read-level classification output. Retained for traceability.
 # ==============================================================================
 
-KRAKEN2_DB="/home/adprc/databases/metagenomics/kraken2/standard"
+KRAKEN2_DB="/home/adprc/databases/metagenomics/kraken2/pluspf_20260226"
 THREADS=12
 
 DEHOST_DIR="results/02_dehost/clean_reads"
@@ -933,6 +939,10 @@ set -euo pipefail
 # Required conda environment:
 #   conda activate metagenomics-taxonomy
 #
+# Database:
+#   Same Kraken2 PlusPF 20260226 database as Step 04.
+#   Bracken uses database150mers.kmer_distrib for read-length-specific abundance re-estimation.
+#
 # Input:
 #   results/04_kraken2/reports/<sample>.kraken2.report.tsv
 #
@@ -944,7 +954,7 @@ set -euo pipefail
 #   Bracken performs abundance re-estimation one taxonomy rank at a time.
 # ==============================================================================
 
-KRAKEN2_DB="/home/adprc/databases/metagenomics/kraken2/standard"
+KRAKEN2_DB="/home/adprc/databases/metagenomics/kraken2/pluspf_20260226"
 READ_LEN=150
 
 KRAKEN2_REPORT_DIR="results/04_kraken2/reports"
@@ -4015,507 +4025,968 @@ EOF
 chmod +x scripts/assembly_based/run_U05_quantify_unigenes.sh
 ```
 
-#### U06a. Prepare a shared taxonomy-aware DIAMOND NR database
+#### U06. Unigene taxonomy by Kraken2 PlusPF
 ```bash
 cd ~/workspaces/Bing/bgi/WMS_project
 
-cat > scripts/assembly_based/run_U06a_prepare_nr_taxonomy_db.sh <<'EOF'
+cat > scripts/assembly_based/run_U06_unigene_taxonomy_kraken2.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
 # ==============================================================================
-# U06a. Prepare a shared taxonomy-aware DIAMOND NR database
+# U06. Taxonomic classification of unigene catalog using Kraken2 PlusPF
 #
 # Required conda environment:
-#   conda activate metagenomics-assembly
+#   conda activate metagenomics-taxonomy
 #
-# Shared database folder:
-#   /home/adprc/databases/metagenomics/nr_diamond/
+# Input:
+#   results/assembly_based/U03_unigene_catalog/unigene_catalog.fna
 #
-# Main output:
-#   nr_diamond.dmnd
+# Output:
+#   results/assembly_based/U06_unigene_taxonomy_kraken2/
+#   ├── unigene.kraken2.output.tsv
+#   ├── unigene.kraken2.report.tsv
+#   └── unigene_taxid.tsv
 #
 # Notes:
-#   - This database is shared across projects.
-#   - Download and database construction may require substantial disk space.
-#   - wget -c resumes interrupted downloads.
+#   - Kraken2 is used here to classify assembled unigene nucleotide sequences.
+#   - Bracken is NOT used here, because Bracken is for abundance re-estimation
+#     from read-level Kraken2 reports.
 # ==============================================================================
 
+KRAKEN2_DB="/home/adprc/databases/metagenomics/kraken2/pluspf_20260226"
 THREADS=12
 
-DB_DIR="/home/adprc/databases/metagenomics/nr_diamond"
+UNIGENE_FASTA="results/assembly_based/U03_unigene_catalog/unigene_catalog.fna"
+OUT_DIR="results/assembly_based/U06_unigene_taxonomy_kraken2"
 
-DOWNLOAD_DIR="${DB_DIR}/downloads"
-TAXONOMY_DIR="${DB_DIR}/taxonomy"
-DIAMOND_DIR="${DB_DIR}/diamond"
+mkdir -p "${OUT_DIR}"
 
-NR_FASTA="${DOWNLOAD_DIR}/nr.gz"
-
-ACCESSION_TO_TAXID="${DOWNLOAD_DIR}/prot.accession2taxid.FULL.gz"
-
-NEW_TAXDUMP_ZIP="${DOWNLOAD_DIR}/new_taxdump.zip"
-
-NODES_DMP="${TAXONOMY_DIR}/nodes.dmp"
-NAMES_DMP="${TAXONOMY_DIR}/names.dmp"
-
-DIAMOND_DB_PREFIX="${DIAMOND_DIR}/nr_diamond"
-DIAMOND_DB="${DIAMOND_DB_PREFIX}.dmnd"
-
-LOG_DIR="${DB_DIR}/logs"
-
-mkdir -p "${DOWNLOAD_DIR}"
-mkdir -p "${TAXONOMY_DIR}"
-mkdir -p "${DIAMOND_DIR}"
-mkdir -p "${LOG_DIR}"
-
-# ==============================================================================
-# Preflight checks
-# ==============================================================================
+OUTPUT="${OUT_DIR}/unigene.kraken2.output.tsv"
+REPORT="${OUT_DIR}/unigene.kraken2.report.tsv"
+TAXID_TABLE="${OUT_DIR}/unigene_taxid.tsv"
+LOG="${OUT_DIR}/unigene.kraken2.log"
 
 echo "============================================================"
-echo "[INFO] U06a. Prepare taxonomy-aware DIAMOND NR database"
+echo "[INFO] U06. Classify unigene catalog using Kraken2 PlusPF"
 echo "============================================================"
 
-command -v diamond >/dev/null 2>&1 || {
-  echo "[ERROR] diamond command not found"
-  echo "[ERROR] Please run:"
-  echo "        conda activate metagenomics-assembly"
+command -v kraken2 >/dev/null 2>&1 || {
+  echo "[ERROR] kraken2 command not found"
+  echo "[ERROR] Please run: conda activate metagenomics-taxonomy"
   exit 1
 }
 
-command -v wget >/dev/null 2>&1 || {
-  echo "[ERROR] wget command not found"
+if [ ! -d "${KRAKEN2_DB}" ]; then
+  echo "[ERROR] Kraken2 database not found:"
+  echo "        ${KRAKEN2_DB}"
   exit 1
-}
+fi
 
-command -v unzip >/dev/null 2>&1 || {
-  echo "[ERROR] unzip command not found"
+if [ ! -s "${UNIGENE_FASTA}" ]; then
+  echo "[ERROR] Unigene FASTA missing or empty:"
+  echo "        ${UNIGENE_FASTA}"
   exit 1
-}
+fi
 
-echo "[INFO] DIAMOND version:"
-diamond version
+kraken2 \
+  --db "${KRAKEN2_DB}" \
+  --threads "${THREADS}" \
+  --report "${REPORT}" \
+  --output "${OUTPUT}" \
+  "${UNIGENE_FASTA}" \
+  2>&1 | tee "${LOG}"
+
+if [ ! -s "${OUTPUT}" ]; then
+  echo "[ERROR] Kraken2 unigene output missing or empty:"
+  echo "        ${OUTPUT}"
+  exit 1
+fi
+
+if [ ! -s "${REPORT}" ]; then
+  echo "[ERROR] Kraken2 unigene report missing or empty:"
+  echo "        ${REPORT}"
+  exit 1
+fi
+
+# Kraken2 output columns:
+#   1 = C/U
+#   2 = sequence ID
+#   3 = taxid
+#   4 = sequence length
+#   5 = LCA mapping information
+awk -F '\t' '
+BEGIN {
+  OFS = "\t"
+  print "unigene_id", "kraken2_status", "taxid", "sequence_length"
+}
+{
+  print $2, $1, $3, $4
+}
+' "${OUTPUT}" > "${TAXID_TABLE}"
+
+if [ ! -s "${TAXID_TABLE}" ]; then
+  echo "[ERROR] unigene taxid table missing or empty:"
+  echo "        ${TAXID_TABLE}"
+  exit 1
+fi
 
 echo
-echo "[INFO] Current filesystem usage:"
-df -h "${DB_DIR}" 2>/dev/null || df -h /home/adprc
+echo "[INFO] U06 completed"
+echo "[INFO] Output directory: ${OUT_DIR}"
+echo
+echo "[INFO] Files:"
+find "${OUT_DIR}" -maxdepth 1 -type f -printf "%f\n" | sort
+EOF
+
+chmod +x scripts/assembly_based/run_U06_unigene_taxonomy_kraken2.sh
+
+#### U07
+```bash
+```
+
+#### U06b. Build taxonomy × unigene × sample abundance table
+```bash
+cd ~/workspaces/Bing/bgi/WMS_project
+
+cat > scripts/assembly_based/run_U06b_build_taxonomy_gene_abundance_table.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
 
 # ==============================================================================
-# Download shared reference files
+# U06b. Build taxonomy × unigene × sample abundance tables
+#
+# Required conda environment:
+#   conda activate metagenomics-taxonomy
+#
+# Input:
+#   results/assembly_based/U06_unigene_taxonomy_kraken2/unigene_taxid.tsv
+#   results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv
+#   results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv
+#   results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv
+#
+# Output:
+#   results/assembly_based/U06b_taxonomy_gene_abundance/
+#   ├── unigene_taxonomy_lineage.tsv
+#   ├── all_level_species_gene_mapped_read_segments.tsv
+#   ├── all_level_species_gene_relative_abundance.tsv
+#   └── all_level_species_gene_tpm.tsv
+#
+# Notes:
+#   - This step generates a BGI-like taxonomy × unigene × sample table.
+#   - This step is NOT KEGG annotation.
+#   - U07 is reserved for functional annotation, such as KEGG / eggNOG / COG / GO.
+#   - NORMALIZE_KINGDOM=true converts NCBI kingdom-like labels into broader
+#     BGI-like labels: Bacteria, Archaea, Viruses, Eukaryota, unclassified.
 # ==============================================================================
 
-if [ ! -s "${NR_FASTA}" ]; then
-  echo
-  echo "============================================================"
-  echo "[INFO] Downloading NCBI NR protein FASTA"
-  echo "============================================================"
+KRAKEN2_DB="/home/adprc/databases/metagenomics/kraken2/pluspf_20260226"
 
-  wget \
-    -c \
-    --tries=20 \
-    --timeout=60 \
-    --retry-connrefused \
-    -O "${NR_FASTA}" \
-    "https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz"
-else
-  echo "[INFO] Existing NR FASTA found. Reuse:"
-  echo "       ${NR_FASTA}"
-fi
+UNIGENE_TAXID="results/assembly_based/U06_unigene_taxonomy_kraken2/unigene_taxid.tsv"
 
-if [ ! -s "${ACCESSION_TO_TAXID}" ]; then
-  echo
-  echo "============================================================"
-  echo "[INFO] Downloading protein accession-to-taxid mapping"
-  echo "============================================================"
+MAPPED_SEGMENTS="results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv"
+RELATIVE_ABUNDANCE="results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv"
+TPM_TABLE="results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv"
 
-  wget \
-    -c \
-    --tries=20 \
-    --timeout=60 \
-    --retry-connrefused \
-    -O "${ACCESSION_TO_TAXID}" \
-    "https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.FULL.gz"
-else
-  echo "[INFO] Existing accession-to-taxid mapping found. Reuse:"
-  echo "       ${ACCESSION_TO_TAXID}"
-fi
+OUT_DIR="results/assembly_based/U06b_taxonomy_gene_abundance"
 
-if [ ! -s "${NEW_TAXDUMP_ZIP}" ]; then
-  echo
-  echo "============================================================"
-  echo "[INFO] Downloading NCBI taxonomy dump"
-  echo "============================================================"
+# true  = BGI-like kingdom labels: k__Bacteria, k__Viruses, k__Archaea, k__Eukaryota
+# false = use the original NCBI rank-derived kingdom label
+# Default: BGI-like kingdom normalization enabled.
+NORMALIZE_KINGDOM="${NORMALIZE_KINGDOM:-true}"
 
-  wget \
-    -c \
-    --tries=20 \
-    --timeout=60 \
-    --retry-connrefused \
-    -O "${NEW_TAXDUMP_ZIP}" \
-    "https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.zip"
-else
-  echo "[INFO] Existing taxonomy dump found. Reuse:"
-  echo "       ${NEW_TAXDUMP_ZIP}"
-fi
+mkdir -p "${OUT_DIR}"
 
-# ==============================================================================
-# Extract taxonomy files
-# ==============================================================================
+echo "============================================================"
+echo "[INFO] U06b. Build taxonomy × unigene × sample abundance tables"
+echo "============================================================"
+echo "[INFO] NORMALIZE_KINGDOM=${NORMALIZE_KINGDOM}"
 
-if [ ! -s "${NODES_DMP}" ] || [ ! -s "${NAMES_DMP}" ]; then
-  echo
-  echo "============================================================"
-  echo "[INFO] Extracting NCBI taxonomy files"
-  echo "============================================================"
+command -v python >/dev/null 2>&1 || {
+  echo "[ERROR] python command not found"
+  exit 1
+}
 
-  unzip \
-    -o \
-    -j \
-    "${NEW_TAXDUMP_ZIP}" \
-    nodes.dmp \
-    names.dmp \
-    -d "${TAXONOMY_DIR}"
-else
-  echo "[INFO] Existing taxonomy files found. Reuse:"
-  echo "       ${NODES_DMP}"
-  echo "       ${NAMES_DMP}"
-fi
-
-# ==============================================================================
-# Validate downloaded files
-# ==============================================================================
+python - <<'PY'
+try:
+    import pandas  # noqa: F401
+except ImportError as exc:
+    raise SystemExit(
+        "[ERROR] Python package not found: pandas\n"
+        "[ERROR] Please install pandas in the current conda environment."
+    ) from exc
+PY
 
 for input_file in \
-  "${NR_FASTA}" \
-  "${ACCESSION_TO_TAXID}" \
-  "${NODES_DMP}" \
-  "${NAMES_DMP}"
+  "${UNIGENE_TAXID}" \
+  "${MAPPED_SEGMENTS}" \
+  "${RELATIVE_ABUNDANCE}" \
+  "${TPM_TABLE}"
 do
   if [ ! -s "${input_file}" ]; then
-    echo "[ERROR] Required database input missing or empty:"
+    echo "[ERROR] Required input missing or empty:"
     echo "        ${input_file}"
     exit 1
   fi
 done
 
+export NORMALIZE_KINGDOM
+
+python - <<'PY'
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import pandas as pd
+
+
+# =============================================================================
+# Configuration
+# =============================================================================
+
+KRAKEN2_DB = Path(
+    "/home/adprc/databases/metagenomics/kraken2/pluspf_20260226"
+)
+
+UNIGENE_TAXID_PATH = Path(
+    "results/assembly_based/U06_unigene_taxonomy_kraken2/unigene_taxid.tsv"
+)
+
+MAPPED_SEGMENTS_PATH = Path(
+    "results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv"
+)
+
+RELATIVE_ABUNDANCE_PATH = Path(
+    "results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv"
+)
+
+TPM_PATH = Path(
+    "results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv"
+)
+
+OUT_DIR = Path(
+    "results/assembly_based/U06b_taxonomy_gene_abundance"
+)
+
+LINEAGE_OUT = OUT_DIR / "unigene_taxonomy_lineage.tsv"
+
+MAPPED_OUT = OUT_DIR / "all_level_species_gene_mapped_read_segments.tsv"
+RELATIVE_OUT = OUT_DIR / "all_level_species_gene_relative_abundance.tsv"
+TPM_OUT = OUT_DIR / "all_level_species_gene_tpm.tsv"
+
+NORMALIZE_KINGDOM = (
+    os.environ.get("NORMALIZE_KINGDOM", "true").strip().lower()
+    in {"1", "true", "yes", "y"}
+)
+
+
+# =============================================================================
+# Locate nodes.dmp and names.dmp
+# =============================================================================
+
+candidate_nodes = [
+    KRAKEN2_DB / "nodes.dmp",
+    KRAKEN2_DB / "taxonomy" / "nodes.dmp",
+]
+
+candidate_names = [
+    KRAKEN2_DB / "names.dmp",
+    KRAKEN2_DB / "taxonomy" / "names.dmp",
+]
+
+NODES_DMP_PATH = next(
+    (
+        path
+        for path in candidate_nodes
+        if path.is_file() and path.stat().st_size > 0
+    ),
+    None,
+)
+
+NAMES_DMP_PATH = next(
+    (
+        path
+        for path in candidate_names
+        if path.is_file() and path.stat().st_size > 0
+    ),
+    None,
+)
+
+if NODES_DMP_PATH is None:
+    raise FileNotFoundError(
+        "nodes.dmp not found. Checked:\n"
+        + "\n".join(str(path) for path in candidate_nodes)
+    )
+
+if NAMES_DMP_PATH is None:
+    raise FileNotFoundError(
+        "names.dmp not found. Checked:\n"
+        + "\n".join(str(path) for path in candidate_names)
+    )
+
+
+# =============================================================================
+# Taxonomy utilities
+# =============================================================================
+
+OUTPUT_RANKS = [
+    "kingdom",
+    "phylum",
+    "class",
+    "order",
+    "family",
+    "genus",
+    "species",
+]
+
+PREFIX_BY_OUTPUT_RANK = {
+    "kingdom": "k",
+    "phylum": "p",
+    "class": "c",
+    "order": "o",
+    "family": "f",
+    "genus": "g",
+    "species": "s",
+}
+
+
+def clean_taxon_name(name: str) -> str:
+    name = str(name).strip()
+    name = name.replace(" ", "_")
+    name = name.replace("\t", "_")
+    name = name.replace(";", "_")
+    return name
+
+
+def parse_dmp_line(line: str) -> list[str]:
+    return [
+        field.strip()
+        for field in line.rstrip("\n").split("|")
+    ]
+
+
+# =============================================================================
+# Load NCBI taxonomy names
+# =============================================================================
+
+taxid_to_name: dict[int, str] = {}
+
+with NAMES_DMP_PATH.open("r", encoding="utf-8", errors="replace") as handle:
+    for line in handle:
+        fields = parse_dmp_line(line)
+
+        if len(fields) < 4:
+            continue
+
+        taxid_text = fields[0]
+        name_txt = fields[1]
+        name_class = fields[3]
+
+        if name_class != "scientific name":
+            continue
+
+        taxid = int(taxid_text)
+        taxid_to_name[taxid] = clean_taxon_name(name_txt)
+
+
+# =============================================================================
+# Load NCBI taxonomy nodes
+# =============================================================================
+
+taxid_to_parent: dict[int, int] = {}
+taxid_to_rank: dict[int, str] = {}
+
+with NODES_DMP_PATH.open("r", encoding="utf-8", errors="replace") as handle:
+    for line in handle:
+        fields = parse_dmp_line(line)
+
+        if len(fields) < 3:
+            continue
+
+        taxid = int(fields[0])
+        parent_taxid = int(fields[1])
+        rank = fields[2]
+
+        taxid_to_parent[taxid] = parent_taxid
+        taxid_to_rank[taxid] = rank
+
+
+def build_rank_lineage(taxid: int) -> dict[str, str]:
+    lineage = {
+        rank: ""
+        for rank in OUTPUT_RANKS
+    }
+
+    if taxid == 0:
+        lineage["kingdom"] = "_unclassified"
+        return lineage
+
+    if taxid not in taxid_to_parent:
+        lineage["kingdom"] = "_unclassified"
+        return lineage
+
+    observed: dict[str, str] = {}
+
+    current = taxid
+    visited: set[int] = set()
+
+    while True:
+        if current in visited:
+            break
+
+        visited.add(current)
+
+        rank = taxid_to_rank.get(current, "")
+        name = taxid_to_name.get(current, "")
+
+        if rank in {
+            "superkingdom",
+            "kingdom",
+            "phylum",
+            "class",
+            "order",
+            "family",
+            "genus",
+            "species",
+        }:
+            output_rank = "kingdom" if rank in {"superkingdom", "kingdom"} else rank
+
+            if output_rank not in observed and name:
+                observed[output_rank] = name
+
+        parent = taxid_to_parent.get(current)
+
+        if parent is None or parent == current:
+            break
+
+        current = parent
+
+    for rank in OUTPUT_RANKS:
+        lineage[rank] = observed.get(rank, "")
+
+    if lineage["kingdom"] == "":
+        lineage["kingdom"] = "_unclassified"
+
+    return lineage
+
+
+def normalize_kingdom_label(row: pd.Series) -> str:
+    """
+    Convert NCBI rank-derived kingdom labels into broad BGI-like labels.
+
+    This is a formatting normalization step, not a claim about BGI's internal
+    proprietary implementation.
+    """
+
+    kingdom = str(row.get("kingdom", ""))
+    phylum = str(row.get("phylum", ""))
+    taxid = int(row.get("taxid", 0))
+
+    if taxid == 0 or kingdom == "_unclassified":
+        return "_unclassified"
+
+    # Bacterial kingdom-like labels observed in current NCBI taxonomy.
+    bacteria_like = {
+        "Bacillati",
+        "Pseudomonadati",
+        "Fusobacteriati",
+        "Thermotogati",
+    }
+
+    # Archaeal kingdom-like labels observed in current NCBI taxonomy.
+    archaea_like = {
+        "Methanobacteriati",
+        "Thermoproteati",
+        "Promethearchaeati",
+    }
+
+    # Viral realm / high-level labels observed from Kraken2 PlusPF taxonomy.
+    virus_like = {
+        "Heunggongvirae",
+        "Bamfordvirae",
+        "Orthornavirae",
+        "Shotokuvirae",
+    }
+
+    # Eukaryotic high-level labels.
+    eukaryota_like = {
+        "Fungi",
+        "Metazoa",
+        "Viridiplantae",
+    }
+
+    if kingdom in bacteria_like:
+        return "Bacteria"
+
+    if kingdom in archaea_like:
+        return "Archaea"
+
+    if kingdom in virus_like:
+        return "Viruses"
+
+    if kingdom in eukaryota_like:
+        return "Eukaryota"
+
+    # Fallback rules based on phylum names.
+    if phylum in {
+        "Bacillota",
+        "Bacteroidota",
+        "Pseudomonadota",
+        "Actinomycetota",
+        "Fusobacteriota",
+        "Thermodesulfobacteriota",
+        "Thermotogota",
+    }:
+        return "Bacteria"
+
+    if phylum in {
+        "Euryarchaeota",
+        "Thermoproteota",
+        "Promethearchaeota",
+    }:
+        return "Archaea"
+
+    # Keep original label when no normalization rule matched.
+    return kingdom
+
+
+def format_taxonomy(row: pd.Series) -> str:
+    parts: list[str] = []
+
+    for rank in OUTPUT_RANKS:
+        prefix = PREFIX_BY_OUTPUT_RANK[rank]
+        value = str(row[rank])
+
+        if rank == "kingdom" and value == "_unclassified":
+            return "k___unclassified"
+
+        parts.append(f"{prefix}__{value}")
+
+    return ";".join(parts)
+
+
+# =============================================================================
+# Build unigene lineage table
+# =============================================================================
+
+taxid_df = pd.read_csv(
+    UNIGENE_TAXID_PATH,
+    sep="\t",
+    dtype={
+        "unigene_id": str,
+        "kraken2_status": str,
+        "taxid": int,
+        "sequence_length": int,
+    },
+)
+
+required_taxid_cols = {
+    "unigene_id",
+    "kraken2_status",
+    "taxid",
+    "sequence_length",
+}
+
+missing_taxid_cols = required_taxid_cols.difference(
+    taxid_df.columns
+)
+
+if missing_taxid_cols:
+    raise ValueError(
+        f"{UNIGENE_TAXID_PATH} is missing required columns: "
+        f"{sorted(missing_taxid_cols)}"
+    )
+
+if taxid_df["unigene_id"].duplicated().any():
+    duplicated = (
+        taxid_df.loc[
+            taxid_df["unigene_id"].duplicated(),
+            "unigene_id",
+        ]
+        .head()
+        .tolist()
+    )
+
+    raise ValueError(
+        f"Duplicated unigene IDs found in taxid table: {duplicated}"
+    )
+
+lineage_records: list[dict[str, str]] = []
+
+for taxid in taxid_df["taxid"].tolist():
+    lineage_records.append(
+        build_rank_lineage(int(taxid))
+    )
+
+lineage_df = pd.DataFrame(lineage_records)
+
+lineage_full_df = pd.concat(
+    [
+        taxid_df.reset_index(drop=True),
+        lineage_df,
+    ],
+    axis=1,
+)
+
+lineage_full_df["original_kingdom"] = lineage_full_df["kingdom"]
+
+if NORMALIZE_KINGDOM:
+    lineage_full_df["kingdom"] = lineage_full_df.apply(
+        normalize_kingdom_label,
+        axis=1,
+    )
+
+lineage_full_df["taxonomy"] = lineage_full_df.apply(
+    format_taxonomy,
+    axis=1,
+)
+
+lineage_full_df.to_csv(
+    LINEAGE_OUT,
+    sep="\t",
+    index=False,
+)
+
+
+# =============================================================================
+# Merge taxonomy with abundance matrices
+# =============================================================================
+
+def build_taxonomy_gene_abundance(
+    abundance_path: Path,
+    output_path: Path,
+) -> pd.DataFrame:
+    abundance_df = pd.read_csv(
+        abundance_path,
+        sep="\t",
+        dtype={
+            "unigene_id": str,
+        },
+    )
+
+    if "unigene_id" not in abundance_df.columns:
+        raise ValueError(
+            f"{abundance_path} must contain column: unigene_id"
+        )
+
+    if abundance_df["unigene_id"].duplicated().any():
+        duplicated = (
+            abundance_df.loc[
+                abundance_df["unigene_id"].duplicated(),
+                "unigene_id",
+            ]
+            .head()
+            .tolist()
+        )
+
+        raise ValueError(
+            f"Duplicated unigene IDs found in {abundance_path}: {duplicated}"
+        )
+
+    merged_df = lineage_full_df[
+        [
+            "unigene_id",
+            "taxonomy",
+        ]
+    ].merge(
+        abundance_df,
+        on="unigene_id",
+        how="inner",
+        validate="one_to_one",
+    )
+
+    if merged_df.shape[0] != lineage_full_df.shape[0]:
+        raise ValueError(
+            f"Merge row count mismatch for {abundance_path}: "
+            f"{merged_df.shape[0]} vs {lineage_full_df.shape[0]}"
+        )
+
+    merged_df = merged_df.rename(
+        columns={
+            "unigene_id": "gene",
+        }
+    )
+
+    sample_columns = [
+        col
+        for col in merged_df.columns
+        if col not in {
+            "taxonomy",
+            "gene",
+        }
+    ]
+
+    merged_df = merged_df[
+        [
+            "taxonomy",
+            "gene",
+            *sample_columns,
+        ]
+    ]
+
+    merged_df.to_csv(
+        output_path,
+        sep="\t",
+        index=False,
+    )
+
+    return merged_df
+
+
+mapped_df = build_taxonomy_gene_abundance(
+    MAPPED_SEGMENTS_PATH,
+    MAPPED_OUT,
+)
+
+relative_df = build_taxonomy_gene_abundance(
+    RELATIVE_ABUNDANCE_PATH,
+    RELATIVE_OUT,
+)
+
+tpm_df = build_taxonomy_gene_abundance(
+    TPM_PATH,
+    TPM_OUT,
+)
+
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+status_counts = (
+    taxid_df["kraken2_status"]
+    .value_counts()
+    .sort_index()
+)
+
+original_kingdom_counts = (
+    lineage_full_df["original_kingdom"]
+    .value_counts()
+    .sort_values(ascending=False)
+)
+
+kingdom_counts = (
+    lineage_full_df["kingdom"]
+    .value_counts()
+    .sort_values(ascending=False)
+)
+
+print()
+print("============================================================")
+print("[INFO] U06b completed")
+print("============================================================")
+
+print(f"[INFO] NORMALIZE_KINGDOM: {NORMALIZE_KINGDOM}")
+print(f"[INFO] nodes.dmp: {NODES_DMP_PATH}")
+print(f"[INFO] names.dmp: {NAMES_DMP_PATH}")
+print(f"[INFO] Unigenes: {lineage_full_df.shape[0]:,}")
+
+print()
+print("[INFO] Kraken2 status counts:")
+print(status_counts.to_string())
+
+print()
+print("[INFO] Original kingdom counts:")
+print(original_kingdom_counts.to_string())
+
+print()
+print("[INFO] Output kingdom counts:")
+print(kingdom_counts.to_string())
+
+print()
+print("[INFO] Output files:")
+for path in [
+    LINEAGE_OUT,
+    MAPPED_OUT,
+    RELATIVE_OUT,
+    TPM_OUT,
+]:
+    print(f"  {path}")
+PY
+
+for output_file in \
+  "${OUT_DIR}/unigene_taxonomy_lineage.tsv" \
+  "${OUT_DIR}/all_level_species_gene_mapped_read_segments.tsv" \
+  "${OUT_DIR}/all_level_species_gene_relative_abundance.tsv" \
+  "${OUT_DIR}/all_level_species_gene_tpm.tsv"
+do
+  if [ ! -s "${output_file}" ]; then
+    echo "[ERROR] Expected output missing or empty:"
+    echo "        ${output_file}"
+    exit 1
+  fi
+done
+
 echo
-echo "[INFO] Downloaded reference files:"
-ls -lh \
-  "${NR_FASTA}" \
-  "${ACCESSION_TO_TAXID}" \
-  "${NODES_DMP}" \
-  "${NAMES_DMP}"
-
-# ==============================================================================
-# Build taxonomy-aware DIAMOND database
-#
-# --taxonmap:
-#   accession -> NCBI taxid mapping
-#
-# --taxonnodes:
-#   NCBI taxonomy hierarchy
-#
-# --taxonnames:
-#   scientific names
-# ==============================================================================
-
-if [ -s "${DIAMOND_DB}" ]; then
-  echo
-  echo "[INFO] Existing taxonomy-aware DIAMOND database found. Skip:"
-  echo "       ${DIAMOND_DB}"
-else
-  echo
-  echo "============================================================"
-  echo "[INFO] Building taxonomy-aware DIAMOND NR database"
-  echo "============================================================"
-
-  diamond makedb \
-    --in "${NR_FASTA}" \
-    --db "${DIAMOND_DB_PREFIX}" \
-    --taxonmap "${ACCESSION_TO_TAXID}" \
-    --taxonnodes "${NODES_DMP}" \
-    --taxonnames "${NAMES_DMP}" \
-    --threads "${THREADS}" \
-    2>&1 | tee "${LOG_DIR}/diamond_makedb.log"
-fi
-
-if [ ! -s "${DIAMOND_DB}" ]; then
-  echo "[ERROR] DIAMOND database missing or empty:"
-  echo "        ${DIAMOND_DB}"
-  exit 1
-fi
-
-echo
-echo "============================================================"
-echo "[INFO] U06a taxonomy-aware DIAMOND database completed"
-echo "============================================================"
-
-echo
-echo "[INFO] DIAMOND database:"
-ls -lh "${DIAMOND_DB}"
-
-echo
-echo "[INFO] DIAMOND database information:"
-diamond dbinfo \
-  --db "${DIAMOND_DB_PREFIX}"
+echo "[INFO] U06b output files:"
+find "${OUT_DIR}" -maxdepth 1 -type f -printf "%f\n" | sort
 EOF
 
-chmod +x scripts/assembly_based/run_U06a_prepare_nr_taxonomy_db.sh
+chmod +x scripts/assembly_based/run_U06b_build_taxonomy_gene_abundance_table.sh
 ```
 
-#### U06b. DIAMOND taxonomy annotation
+#### U07. Functional annotation using eggNOG-mapper
 ```bash
 cd ~/workspaces/Bing/bgi/WMS_project
 
-cat > scripts/assembly_based/run_U06b_diamond_taxonomy_annotation.sh <<'EOF'
+cat > scripts/assembly_based/run_U07_functional_annotation_eggnog.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
 # ==============================================================================
-# U06b. Classify unigene proteins taxonomically using DIAMOND NR + LCA
+# U07. Functional annotation of unigene catalog using eggNOG-mapper
 #
 # Required conda environment:
-#   conda activate metagenomics-assembly
-#
-# Shared database prepared by U06a:
-#   /home/adprc/databases/metagenomics/nr_diamond/diamond/nr_diamond.dmnd
+#   conda activate metagenomics-eggnog
 #
 # Input:
 #   results/assembly_based/U03_unigene_catalog/unigene_catalog.faa
 #
 # Output:
-#   results/assembly_based/U06_taxonomy_annotation/
-#   ├── diamond/
-#   │   └── unigene_taxonomy_lca.tsv
+#   results/assembly_based/U07_functional_annotation_eggnog/
+#   ├── unigene.emapper.annotations
+#   ├── unigene.emapper.seed_orthologs
+#   ├── unigene.emapper.hits
 #   └── logs/
-#       └── diamond_taxonomy_annotation.log
-#
-# DIAMOND output format 102:
-#   column 1 = query ID
-#   column 2 = NCBI taxonomy ID; 0 means unclassified
-#   column 3 = best known taxonomy-hit E-value
-#   column 4 = text lineage, enabled by --include-lineage
-#
-# LCA rule:
-#   --top 10 includes alignments whose scores are within 10% of the top score.
 #
 # Notes:
-#   - This step may take substantial time for a full NR database.
-#   - The output is taxonomy classification, not a general alignment report.
+#   - This step performs functional annotation, not taxonomic annotation.
+#   - eggNOG-mapper can provide KO, KEGG pathway, COG category, GO terms,
+#     EC numbers, eggNOG OGs, and functional descriptions.
+#   - U08 will parse this annotation and merge functional terms with U05
+#     unigene abundance tables.
 # ==============================================================================
 
 THREADS=12
 
-QUERY_FAA="results/assembly_based/U03_unigene_catalog/unigene_catalog.faa"
+INPUT_FASTA="results/assembly_based/U03_unigene_catalog/unigene_catalog.faa"
 
-DIAMOND_DB_PREFIX="/home/adprc/databases/metagenomics/nr_diamond/diamond/nr_diamond"
-DIAMOND_DB="${DIAMOND_DB_PREFIX}.dmnd"
+EGGNOG_DATA_DIR="/home/adprc/databases/metagenomics/eggnog_mapper/data"
 
-OUT_DIR="results/assembly_based/U06_taxonomy_annotation"
-DIAMOND_OUT_DIR="${OUT_DIR}/diamond"
-LOG_DIR="${OUT_DIR}/logs"
+OUT_DIR="results/assembly_based/U07_functional_annotation_eggnog"
+OUT_PREFIX="unigene"
 
-RAW_TAXONOMY_OUT="${DIAMOND_OUT_DIR}/unigene_taxonomy_lca.tsv"
-LOG="${LOG_DIR}/diamond_taxonomy_annotation.log"
+mkdir -p "${OUT_DIR}/logs"
 
-mkdir -p "${DIAMOND_OUT_DIR}"
-mkdir -p "${LOG_DIR}"
-
-# ==============================================================================
-# Preflight checks
-# ==============================================================================
+LOG="${OUT_DIR}/logs/${OUT_PREFIX}.emapper.log"
 
 echo "============================================================"
-echo "[INFO] U06b. DIAMOND NR taxonomy annotation"
+echo "[INFO] U07. Functional annotation using eggNOG-mapper"
 echo "============================================================"
+echo "[INFO] Input FASTA: ${INPUT_FASTA}"
+echo "[INFO] eggNOG data dir: ${EGGNOG_DATA_DIR}"
+echo "[INFO] Output dir: ${OUT_DIR}"
+echo "[INFO] Threads: ${THREADS}"
 
-command -v diamond >/dev/null 2>&1 || {
-  echo "[ERROR] diamond command not found"
-  echo "[ERROR] Please run:"
-  echo "        conda activate metagenomics-assembly"
+command -v emapper.py >/dev/null 2>&1 || {
+  echo "[ERROR] emapper.py command not found"
+  echo "[ERROR] Please run: conda activate metagenomics-eggnog"
   exit 1
 }
 
-if [ ! -s "${QUERY_FAA}" ]; then
-  echo "[ERROR] Unigene protein catalog missing or empty:"
-  echo "        ${QUERY_FAA}"
+command -v diamond >/dev/null 2>&1 || {
+  echo "[ERROR] diamond command not found"
+  echo "[ERROR] Please run: conda activate metagenomics-eggnog"
+  exit 1
+}
+
+if [ ! -s "${INPUT_FASTA}" ]; then
+  echo "[ERROR] Input protein FASTA missing or empty:"
+  echo "        ${INPUT_FASTA}"
   exit 1
 fi
 
-if [ ! -s "${DIAMOND_DB}" ]; then
-  echo "[ERROR] Taxonomy-aware DIAMOND NR database is not ready:"
-  echo "        ${DIAMOND_DB}"
-  echo
-  echo "[ERROR] Wait for U06a to complete before running U06b."
-  exit 1
-fi
+for db_file in \
+  "${EGGNOG_DATA_DIR}/eggnog.db" \
+  "${EGGNOG_DATA_DIR}/eggnog.taxa.db" \
+  "${EGGNOG_DATA_DIR}/eggnog_proteins.dmnd"
+do
+  if [ ! -s "${db_file}" ]; then
+    echo "[ERROR] Required eggNOG database file missing or empty:"
+    echo "        ${db_file}"
+    exit 1
+  fi
+done
 
-echo "[INFO] DIAMOND version:"
-diamond version
-
-echo
-echo "[INFO] Query protein catalog:"
-ls -lh "${QUERY_FAA}"
-
-echo
-echo "[INFO] DIAMOND NR database:"
-ls -lh "${DIAMOND_DB}"
-
-# ==============================================================================
-# Skip completed annotation
-# ==============================================================================
-
-if [ -s "${RAW_TAXONOMY_OUT}" ]; then
-  echo
-  echo "[INFO] Existing DIAMOND taxonomy output found. Skip:"
-  echo "       ${RAW_TAXONOMY_OUT}"
-  exit 0
-fi
-
-# ==============================================================================
-# Run taxonomy annotation
-#
-# --outfmt 102:
-#   Generate one LCA taxonomy classification per query sequence.
-#
-# --include-lineage:
-#   Add text lineage as the fourth output column.
-#
-# --top 10:
-#   Use hits with scores no more than 10% below the best score for LCA.
-#
-# --sensitive:
-#   Improve sensitivity relative to DIAMOND default mode.
-#
-# --evalue 1e-5:
-#   Discard weak matches beyond this threshold.
-# ==============================================================================
-
-echo
-echo "============================================================"
-echo "[INFO] Running DIAMOND blastp taxonomy classification"
-echo "============================================================"
-
-diamond blastp \
-  --query "${QUERY_FAA}" \
-  --db "${DIAMOND_DB_PREFIX}" \
-  --out "${RAW_TAXONOMY_OUT}" \
-  --outfmt 102 \
-  --include-lineage \
-  --top 10 \
-  --sensitive \
-  --evalue 1e-5 \
-  --threads "${THREADS}" \
+emapper.py \
+  -i "${INPUT_FASTA}" \
+  --itype proteins \
+  --data_dir "${EGGNOG_DATA_DIR}" \
+  --cpu "${THREADS}" \
+  -m diamond \
+  --sensmode more-sensitive \
+  --override \
+  --output "${OUT_PREFIX}" \
+  --output_dir "${OUT_DIR}" \
   2>&1 | tee "${LOG}"
 
-# ==============================================================================
-# Validate output
-# ==============================================================================
+ANNOTATION_FILE="${OUT_DIR}/${OUT_PREFIX}.emapper.annotations"
 
-if [ ! -s "${RAW_TAXONOMY_OUT}" ]; then
-  echo "[ERROR] DIAMOND taxonomy output missing or empty:"
-  echo "        ${RAW_TAXONOMY_OUT}"
+if [ ! -s "${ANNOTATION_FILE}" ]; then
+  echo "[ERROR] eggNOG-mapper annotation file missing or empty:"
+  echo "        ${ANNOTATION_FILE}"
   exit 1
 fi
 
 echo
 echo "============================================================"
-echo "[INFO] U06b DIAMOND taxonomy annotation completed"
+echo "[INFO] U07 eggNOG functional annotation completed"
 echo "============================================================"
 
-echo
-echo "[INFO] Output:"
-ls -lh "${RAW_TAXONOMY_OUT}"
-
-echo
-echo "[INFO] Preview:"
-head -n 5 "${RAW_TAXONOMY_OUT}"
+echo "[INFO] Output files:"
+find "${OUT_DIR}" -maxdepth 2 -type f -printf "%p\n" | sort
 EOF
 
-chmod +x scripts/assembly_based/run_U06b_diamond_taxonomy_annotation.sh
+chmod +x scripts/assembly_based/run_U07_functional_annotation_eggnog.sh
 ```
 
-#### U06c. Build cohort-level unigene taxonomy tables
+#### U08. Build KEGG gene abundance tables from eggNOG-mapper annotation
 ```bash
 cd ~/workspaces/Bing/bgi/WMS_project
 
-cat > scripts/assembly_based/run_U06c_build_taxonomy_tables.sh <<'EOF'
+cat > scripts/assembly_based/run_U08_build_kegg_abundance_tables.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
 # ==============================================================================
-# U06c. Build cohort-level unigene taxonomy tables
+# U08. Build KEGG gene abundance tables from eggNOG-mapper annotation
 #
 # Required conda environment:
 #   conda activate metagenomics-assembly
 #
 # Input:
-#   results/assembly_based/U06_taxonomy_annotation/diamond/
-#   └── unigene_taxonomy_lca.tsv
-#
-#   results/assembly_based/U05_unigene_abundance/
-#   ├── unigene_mapped_read_segments.tsv
-#   ├── unigene_relative_abundance.tsv
-#   └── unigene_tpm.tsv
-#
-#   Shared NCBI taxonomy:
-#   /home/adprc/databases/metagenomics/nr_diamond/taxonomy/
-#   ├── nodes.dmp
-#   └── names.dmp
+#   results/assembly_based/U07_functional_annotation_eggnog/unigene.emapper.annotations
+#   results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv
+#   results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv
+#   results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv
 #
 # Output:
-#   results/assembly_based/U06_taxonomy_annotation/
-#   ├── tables/
-#   │   ├── unigene_taxonomy_annotation.tsv
-#   │   ├── unigene_taxonomy_relative_abundance.tsv
-#   │   ├── unigene_taxonomy_mapped_read_segments.tsv
-#   │   └── unigene_taxonomy_presence_absence.tsv
-#   │
-#   ├── rank_tables/
-#   │   ├── taxonomy_kingdom_relative_abundance.tsv
-#   │   ├── taxonomy_phylum_relative_abundance.tsv
-#   │   ├── taxonomy_class_relative_abundance.tsv
-#   │   ├── taxonomy_order_relative_abundance.tsv
-#   │   ├── taxonomy_family_relative_abundance.tsv
-#   │   ├── taxonomy_genus_relative_abundance.tsv
-#   │   └── taxonomy_species_relative_abundance.tsv
-#   │
-#   └── delivery_like/
-#       ├── all_level_species_gene_presence_absence.tsv
-#       ├── all_spe_genus_transpose.tsv
-#       └── all_spe_species_transpose.tsv
+#   results/assembly_based/U08_kegg_abundance/
+#   ├── gene_kegg_annotation.tsv
+#   ├── all_relab_gene_kegg_unstratified.tsv
+#   ├── all_tpm_gene_kegg_unstratified.tsv
+#   ├── all_mapped_segments_gene_kegg_unstratified.tsv
+#   └── kegg_abundance_summary.tsv
 #
-# Matrix orientation:
-#   rows    = taxa or unigenes
-#   columns = samples
+# Notes:
+#   - This step parses KEGG-related columns from eggNOG-mapper output.
+#   - The main BGI-like output is all_relab_gene_kegg_unstratified.tsv.
+#   - "unstratified" here means gene-level KEGG annotation merged with abundance,
+#     not taxon-stratified functional profiling.
 # ==============================================================================
 
-RAW_TAXONOMY="results/assembly_based/U06_taxonomy_annotation/diamond/unigene_taxonomy_lca.tsv"
+ANNOTATION_FILE="results/assembly_based/U07_functional_annotation_eggnog/unigene.emapper.annotations"
 
-COUNTS="results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv"
-RELAB="results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv"
-TPM="results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv"
+MAPPED_SEGMENTS="results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv"
+RELATIVE_ABUNDANCE="results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv"
+TPM_TABLE="results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv"
 
-NODES_DMP="/home/adprc/databases/metagenomics/nr_diamond/taxonomy/nodes.dmp"
-NAMES_DMP="/home/adprc/databases/metagenomics/nr_diamond/taxonomy/names.dmp"
+OUT_DIR="results/assembly_based/U08_kegg_abundance"
 
-OUT_DIR="results/assembly_based/U06_taxonomy_annotation"
-TABLE_DIR="${OUT_DIR}/tables"
-RANK_DIR="${OUT_DIR}/rank_tables"
-DELIVERY_DIR="${OUT_DIR}/delivery_like"
-LOG_DIR="${OUT_DIR}/logs"
-
-mkdir -p "${TABLE_DIR}"
-mkdir -p "${RANK_DIR}"
-mkdir -p "${DELIVERY_DIR}"
-mkdir -p "${LOG_DIR}"
-
-# ==============================================================================
-# Preflight checks
-# ==============================================================================
+mkdir -p "${OUT_DIR}"
 
 echo "============================================================"
-echo "[INFO] U06c. Build unigene taxonomy tables"
+echo "[INFO] U08. Build KEGG gene abundance tables"
 echo "============================================================"
 
 command -v python >/dev/null 2>&1 || {
@@ -4529,17 +5000,15 @@ try:
 except ImportError as exc:
     raise SystemExit(
         "[ERROR] Python package not found: pandas\n"
-        "[ERROR] Please install pandas in metagenomics-assembly environment."
+        "[ERROR] Please install pandas in the current conda environment."
     ) from exc
 PY
 
 for input_file in \
-  "${RAW_TAXONOMY}" \
-  "${COUNTS}" \
-  "${RELAB}" \
-  "${TPM}" \
-  "${NODES_DMP}" \
-  "${NAMES_DMP}"
+  "${ANNOTATION_FILE}" \
+  "${MAPPED_SEGMENTS}" \
+  "${RELATIVE_ABUNDANCE}" \
+  "${TPM_TABLE}"
 do
   if [ ! -s "${input_file}" ]; then
     echo "[ERROR] Required input missing or empty:"
@@ -4548,15 +5017,10 @@ do
   fi
 done
 
-# ==============================================================================
-# Build taxonomy tables
-# ==============================================================================
-
 python - <<'PY'
 from __future__ import annotations
 
 from pathlib import Path
-
 import pandas as pd
 
 
@@ -4564,662 +5028,445 @@ import pandas as pd
 # Configuration
 # =============================================================================
 
-RAW_TAXONOMY = Path(
-    "results/assembly_based/U06_taxonomy_annotation/"
-    "diamond/unigene_taxonomy_lca.tsv"
+ANNOTATION_PATH = Path(
+    "results/assembly_based/U07_functional_annotation_eggnog/unigene.emapper.annotations"
 )
 
-COUNTS_PATH = Path(
-    "results/assembly_based/U05_unigene_abundance/"
-    "unigene_mapped_read_segments.tsv"
+MAPPED_SEGMENTS_PATH = Path(
+    "results/assembly_based/U05_unigene_abundance/unigene_mapped_read_segments.tsv"
 )
 
-RELAB_PATH = Path(
-    "results/assembly_based/U05_unigene_abundance/"
-    "unigene_relative_abundance.tsv"
+RELATIVE_ABUNDANCE_PATH = Path(
+    "results/assembly_based/U05_unigene_abundance/unigene_relative_abundance.tsv"
 )
 
 TPM_PATH = Path(
-    "results/assembly_based/U05_unigene_abundance/"
-    "unigene_tpm.tsv"
-)
-
-NODES_DMP = Path(
-    "/home/adprc/databases/metagenomics/nr_diamond/"
-    "taxonomy/nodes.dmp"
-)
-
-NAMES_DMP = Path(
-    "/home/adprc/databases/metagenomics/nr_diamond/"
-    "taxonomy/names.dmp"
+    "results/assembly_based/U05_unigene_abundance/unigene_tpm.tsv"
 )
 
 OUT_DIR = Path(
-    "results/assembly_based/U06_taxonomy_annotation"
+    "results/assembly_based/U08_kegg_abundance"
 )
 
-TABLE_DIR = OUT_DIR / "tables"
-RANK_DIR = OUT_DIR / "rank_tables"
-DELIVERY_DIR = OUT_DIR / "delivery_like"
+GENE_KEGG_ANNOTATION_OUT = OUT_DIR / "gene_kegg_annotation.tsv"
 
-TABLE_DIR.mkdir(parents=True, exist_ok=True)
-RANK_DIR.mkdir(parents=True, exist_ok=True)
-DELIVERY_DIR.mkdir(parents=True, exist_ok=True)
+RELATIVE_OUT = OUT_DIR / "all_relab_gene_kegg_unstratified.tsv"
+TPM_OUT = OUT_DIR / "all_tpm_gene_kegg_unstratified.tsv"
+MAPPED_OUT = OUT_DIR / "all_mapped_segments_gene_kegg_unstratified.tsv"
 
-STANDARD_RANKS = [
-    ("kingdom", "superkingdom", "k__"),
-    ("phylum", "phylum", "p__"),
-    ("class", "class", "c__"),
-    ("order", "order", "o__"),
-    ("family", "family", "f__"),
-    ("genus", "genus", "g__"),
-    ("species", "species", "s__"),
-]
+SUMMARY_OUT = OUT_DIR / "kegg_abundance_summary.tsv"
 
 
 # =============================================================================
-# NCBI taxonomy helpers
+# Read eggNOG-mapper annotation
 # =============================================================================
 
-def parse_dmp_line(line: str) -> list[str]:
-    """
-    Parse NCBI taxonomy dump lines such as:
-        tax_id | parent_tax_id | rank |
-    """
-    return [
-        field.strip()
-        for field in line.rstrip("\n").split("|")
-    ]
+def read_emapper_annotations(path: Path) -> pd.DataFrame:
+    header_line = None
+    data_start_line = None
 
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line_number, line in enumerate(handle):
+            stripped = line.rstrip("\n")
 
-def load_taxonomy_nodes(
-    path: Path,
-) -> tuple[dict[int, int], dict[int, str]]:
-    parent_by_taxid: dict[int, int] = {}
-    rank_by_taxid: dict[int, str] = {}
+            if stripped.startswith("#query"):
+                header_line = stripped.lstrip("#").split("\t")
+                data_start_line = line_number + 1
+                break
 
-    with path.open("rt", encoding="utf-8") as handle:
-        for line in handle:
-            fields = parse_dmp_line(line)
+    if header_line is None or data_start_line is None:
+        raise ValueError(
+            f"Cannot find '#query' header line in {path}"
+        )
 
-            if len(fields) < 3:
-                continue
-
-            taxid = int(fields[0])
-            parent_taxid = int(fields[1])
-            rank = fields[2]
-
-            parent_by_taxid[taxid] = parent_taxid
-            rank_by_taxid[taxid] = rank
-
-    return parent_by_taxid, rank_by_taxid
-
-
-def load_scientific_names(
-    path: Path,
-) -> dict[int, str]:
-    scientific_name_by_taxid: dict[int, str] = {}
-
-    with path.open("rt", encoding="utf-8") as handle:
-        for line in handle:
-            fields = parse_dmp_line(line)
-
-            if len(fields) < 4:
-                continue
-
-            taxid = int(fields[0])
-            name_text = fields[1]
-            name_class = fields[3]
-
-            if name_class == "scientific name":
-                scientific_name_by_taxid[taxid] = name_text
-
-    return scientific_name_by_taxid
-
-
-parent_by_taxid, rank_by_taxid = load_taxonomy_nodes(
-    NODES_DMP
-)
-
-name_by_taxid = load_scientific_names(
-    NAMES_DMP
-)
-
-
-# =============================================================================
-# Taxonomy lineage resolver
-# =============================================================================
-
-lineage_cache: dict[int, dict[str, str]] = {}
-
-
-def sanitize_taxon_name(name: str) -> str:
-    return (
-        str(name)
-        .strip()
-        .replace(" ", "_")
-        .replace(";", "_")
-        .replace("|", "_")
+    df = pd.read_csv(
+        path,
+        sep="\t",
+        comment="#",
+        names=header_line,
+        header=None,
+        skiprows=data_start_line,
+        dtype=str,
     )
 
+    if "query" not in df.columns:
+        raise ValueError(
+            f"{path} does not contain required column: query"
+        )
 
-def resolve_lineage(
-    taxid: int,
-) -> dict[str, str]:
-    """
-    Return one standardized lineage dictionary.
+    return df
 
-    Missing ranks are represented as 'unclassified'.
-    """
-    if taxid in lineage_cache:
-        return lineage_cache[taxid]
 
-    output = {
-        output_rank: "unclassified"
-        for output_rank, _, _ in STANDARD_RANKS
+annotation_df = read_emapper_annotations(
+    ANNOTATION_PATH
+)
+
+annotation_df = annotation_df.rename(
+    columns={
+        "query": "gene",
     }
-
-    if taxid <= 0 or taxid not in parent_by_taxid:
-        lineage_cache[taxid] = output
-        return output
-
-    current = taxid
-    visited: set[int] = set()
-
-    while current not in visited:
-        visited.add(current)
-
-        current_rank = rank_by_taxid.get(
-            current,
-            "",
-        )
-
-        current_name = name_by_taxid.get(
-            current,
-            "unclassified",
-        )
-
-        for (
-            output_rank,
-            ncbi_rank,
-            _prefix,
-        ) in STANDARD_RANKS:
-            if current_rank == ncbi_rank:
-                output[output_rank] = sanitize_taxon_name(
-                    current_name
-                )
-
-        parent = parent_by_taxid.get(
-            current,
-            current,
-        )
-
-        if parent == current:
-            break
-
-        current = parent
-
-    lineage_cache[taxid] = output
-
-    return output
-
-
-def build_taxonomy_string(
-    lineage: dict[str, str],
-) -> str:
-    return ";".join(
-        f"{prefix}{lineage[output_rank]}"
-        for output_rank, _, prefix in STANDARD_RANKS
-    )
-
-
-# =============================================================================
-# Load DIAMOND taxonomy classifications
-#
-# Expected DIAMOND outfmt 102 + --include-lineage:
-#   query_id
-#   taxid
-#   evalue
-#   lineage_text
-# =============================================================================
-
-taxonomy_df = pd.read_csv(
-    RAW_TAXONOMY,
-    sep="\t",
-    header=None,
-    names=[
-        "unigene_id",
-        "taxid",
-        "best_taxonomy_hit_evalue",
-        "diamond_lineage_text",
-    ],
-    dtype={
-        "unigene_id": str,
-        "taxid": str,
-        "diamond_lineage_text": str,
-    },
 )
 
-taxonomy_df["unigene_id"] = (
-    taxonomy_df["unigene_id"]
-    .astype(str)
-)
+annotation_df["gene"] = annotation_df["gene"].astype(str)
 
-taxonomy_df["taxid"] = pd.to_numeric(
-    taxonomy_df["taxid"],
-    errors="coerce",
-).fillna(0).astype(int)
-
-taxonomy_df["best_taxonomy_hit_evalue"] = pd.to_numeric(
-    taxonomy_df["best_taxonomy_hit_evalue"],
-    errors="coerce",
-).fillna(0.0)
-
-taxonomy_df["diamond_lineage_text"] = (
-    taxonomy_df["diamond_lineage_text"]
-    .fillna("")
-    .astype(str)
-)
-
-if taxonomy_df["unigene_id"].duplicated().any():
-    duplicated_ids = (
-        taxonomy_df.loc[
-            taxonomy_df["unigene_id"].duplicated(),
-            "unigene_id",
+if annotation_df["gene"].duplicated().any():
+    duplicated = (
+        annotation_df.loc[
+            annotation_df["gene"].duplicated(),
+            "gene",
         ]
         .head()
         .tolist()
     )
 
     raise ValueError(
-        "Duplicated unigene classifications found: "
-        f"{duplicated_ids}"
+        f"Duplicated gene IDs found in eggNOG annotation: {duplicated}"
     )
 
 
 # =============================================================================
-# Load U05 abundance tables
+# Identify KEGG-related columns
 # =============================================================================
 
-counts_df = pd.read_csv(
-    COUNTS_PATH,
-    sep="\t",
-    index_col=0,
-)
-
-relab_df = pd.read_csv(
-    RELAB_PATH,
-    sep="\t",
-    index_col=0,
-)
-
-tpm_df = pd.read_csv(
-    TPM_PATH,
-    sep="\t",
-    index_col=0,
-)
-
-for a_df in [
-    counts_df,
-    relab_df,
-    tpm_df,
-]:
-    a_df.index = a_df.index.astype(str)
-    a_df.index.name = "unigene_id"
-
-if not counts_df.index.equals(relab_df.index):
-    raise ValueError(
-        "Counts and relative-abundance unigene IDs do not match."
-    )
-
-if not counts_df.index.equals(tpm_df.index):
-    raise ValueError(
-        "Counts and TPM unigene IDs do not match."
-    )
-
-if not counts_df.columns.equals(relab_df.columns):
-    raise ValueError(
-        "Counts and relative-abundance sample columns do not match."
-    )
-
-if not counts_df.columns.equals(tpm_df.columns):
-    raise ValueError(
-        "Counts and TPM sample columns do not match."
-    )
-
-
-# =============================================================================
-# Ensure all catalog unigenes receive a classification row
-# =============================================================================
-
-taxonomy_df = (
-    pd.DataFrame(
-        {
-            "unigene_id": counts_df.index,
-        }
-    )
-    .merge(
-        taxonomy_df,
-        on="unigene_id",
-        how="left",
-        validate="one_to_one",
-    )
-)
-
-taxonomy_df["taxid"] = (
-    taxonomy_df["taxid"]
-    .fillna(0)
-    .astype(int)
-)
-
-taxonomy_df["best_taxonomy_hit_evalue"] = (
-    taxonomy_df["best_taxonomy_hit_evalue"]
-    .fillna(0.0)
-)
-
-taxonomy_df["diamond_lineage_text"] = (
-    taxonomy_df["diamond_lineage_text"]
-    .fillna("")
-)
-
-
-# =============================================================================
-# Expand taxids to standardized lineage ranks
-# =============================================================================
-
-lineage_records: list[dict[str, str]] = []
-
-for taxid in taxonomy_df["taxid"]:
-    lineage_records.append(
-        resolve_lineage(
-            int(taxid)
-        )
-    )
-
-lineage_df = pd.DataFrame(
-    lineage_records
-)
-
-taxonomy_df = pd.concat(
-    [
-        taxonomy_df.reset_index(drop=True),
-        lineage_df.reset_index(drop=True),
+candidate_columns = {
+    "KEGG_ko": [
+        "KEGG_ko",
+        "KEGG KO",
+        "kegg_ko",
     ],
-    axis=1,
+    "KEGG_Pathway": [
+        "KEGG_Pathway",
+        "KEGG Pathway",
+        "kegg_pathway",
+    ],
+    "KEGG_Module": [
+        "KEGG_Module",
+        "KEGG Module",
+        "kegg_module",
+    ],
+    "KEGG_Reaction": [
+        "KEGG_Reaction",
+        "KEGG Reaction",
+        "kegg_reaction",
+    ],
+    "KEGG_rclass": [
+        "KEGG_rclass",
+        "KEGG rclass",
+        "kegg_rclass",
+    ],
+    "BRITE": [
+        "BRITE",
+        "brite",
+    ],
+    "KEGG_TC": [
+        "KEGG_TC",
+        "KEGG TC",
+        "kegg_tc",
+    ],
+    "CAZy": [
+        "CAZy",
+        "cazy",
+    ],
+    "BiGG_Reaction": [
+        "BiGG_Reaction",
+        "BiGG Reaction",
+        "bigg_reaction",
+    ],
+    "EC": [
+        "EC",
+        "EC_number",
+        "EC number",
+    ],
+    "COG_category": [
+        "COG_category",
+        "COG category",
+        "cog_category",
+    ],
+    "Description": [
+        "Description",
+        "description",
+    ],
+    "Preferred_name": [
+        "Preferred_name",
+        "Preferred name",
+        "preferred_name",
+    ],
+}
+
+resolved_columns: dict[str, str | None] = {}
+
+for output_col, candidates in candidate_columns.items():
+    resolved_columns[output_col] = next(
+        (
+            col
+            for col in candidates
+            if col in annotation_df.columns
+        ),
+        None,
+    )
+
+
+def get_annotation_column(output_col: str) -> pd.Series:
+    source_col = resolved_columns[output_col]
+
+    if source_col is None:
+        return pd.Series(
+            ["-"] * annotation_df.shape[0],
+            index=annotation_df.index,
+        )
+
+    return (
+        annotation_df[source_col]
+        .fillna("-")
+        .replace("", "-")
+    )
+
+
+gene_kegg_df = pd.DataFrame(
+    {
+        "gene": annotation_df["gene"],
+        "KEGG_ko": get_annotation_column("KEGG_ko"),
+        "KEGG_Pathway": get_annotation_column("KEGG_Pathway"),
+        "KEGG_Module": get_annotation_column("KEGG_Module"),
+        "KEGG_Reaction": get_annotation_column("KEGG_Reaction"),
+        "KEGG_rclass": get_annotation_column("KEGG_rclass"),
+        "BRITE": get_annotation_column("BRITE"),
+        "KEGG_TC": get_annotation_column("KEGG_TC"),
+        "CAZy": get_annotation_column("CAZy"),
+        "BiGG_Reaction": get_annotation_column("BiGG_Reaction"),
+        "EC": get_annotation_column("EC"),
+        "COG_category": get_annotation_column("COG_category"),
+        "Preferred_name": get_annotation_column("Preferred_name"),
+        "Description": get_annotation_column("Description"),
+    }
 )
 
-taxonomy_df["taxonomy"] = [
-    build_taxonomy_string(
-        row.to_dict()
-    )
-    for _, row in taxonomy_df[
-        [
-            output_rank
-            for output_rank, _, _ in STANDARD_RANKS
-        ]
-    ].iterrows()
+# Keep genes with at least one KEGG-related annotation.
+kegg_related_cols = [
+    "KEGG_ko",
+    "KEGG_Pathway",
+    "KEGG_Module",
+    "KEGG_Reaction",
+    "KEGG_rclass",
+    "BRITE",
+    "KEGG_TC",
+    "EC",
 ]
 
-taxonomy_df.to_csv(
-    TABLE_DIR / "unigene_taxonomy_annotation.tsv",
-    sep="\t",
-    index=False,
+has_kegg_annotation = (
+    gene_kegg_df[kegg_related_cols]
+    .ne("-")
+    .any(axis=1)
 )
 
-
-# =============================================================================
-# Build unigene-level taxonomy + abundance delivery tables
-# =============================================================================
-
-taxonomy_indexed_df = taxonomy_df.set_index(
-    "unigene_id"
-)
-
-taxonomy_and_gene_df = taxonomy_indexed_df[
-    ["taxonomy"]
+gene_kegg_df = gene_kegg_df.loc[
+    has_kegg_annotation
 ].copy()
 
-taxonomy_relab_df = taxonomy_and_gene_df.join(
-    relab_df,
-    how="left",
-)
-
-taxonomy_counts_df = taxonomy_and_gene_df.join(
-    counts_df,
-    how="left",
-)
-
-presence_absence_df = (
-    counts_df > 0
-).astype(int)
-
-taxonomy_presence_absence_df = taxonomy_and_gene_df.join(
-    presence_absence_df,
-    how="left",
-)
-
-taxonomy_relab_df.reset_index().to_csv(
-    TABLE_DIR / "unigene_taxonomy_relative_abundance.tsv",
-    sep="\t",
-    index=False,
-)
-
-taxonomy_counts_df.reset_index().to_csv(
-    TABLE_DIR / "unigene_taxonomy_mapped_read_segments.tsv",
-    sep="\t",
-    index=False,
-)
-
-taxonomy_presence_absence_df.reset_index().to_csv(
-    TABLE_DIR / "unigene_taxonomy_presence_absence.tsv",
+gene_kegg_df.to_csv(
+    GENE_KEGG_ANNOTATION_OUT,
     sep="\t",
     index=False,
 )
 
 
 # =============================================================================
-# Build rank-level tables
+# Merge KEGG annotation with abundance matrices
 # =============================================================================
 
-for (
-    output_rank,
-    _ncbi_rank,
-    prefix,
-) in STANDARD_RANKS:
-    rank_taxa = (
-        prefix
-        + taxonomy_indexed_df[output_rank].astype(str)
-    )
-
-    rank_relab_df = (
-        relab_df
-        .groupby(rank_taxa)
-        .sum()
-    )
-
-    rank_counts_df = (
-        counts_df
-        .groupby(rank_taxa)
-        .sum()
-    )
-
-    rank_presence_absence_df = (
-        rank_counts_df > 0
-    ).astype(int)
-
-    rank_relab_df.index.name = output_rank
-    rank_counts_df.index.name = output_rank
-    rank_presence_absence_df.index.name = output_rank
-
-    rank_relab_df.to_csv(
-        RANK_DIR
-        / f"taxonomy_{output_rank}_relative_abundance.tsv",
+def build_gene_kegg_abundance(
+    abundance_path: Path,
+    output_path: Path,
+) -> pd.DataFrame:
+    abundance_df = pd.read_csv(
+        abundance_path,
         sep="\t",
-        index=True,
+        dtype={
+            "unigene_id": str,
+        },
     )
 
-    rank_counts_df.to_csv(
-        RANK_DIR
-        / f"taxonomy_{output_rank}_mapped_read_segments.tsv",
-        sep="\t",
-        index=True,
-    )
+    if "unigene_id" not in abundance_df.columns:
+        raise ValueError(
+            f"{abundance_path} must contain column: unigene_id"
+        )
 
-    rank_presence_absence_df.to_csv(
-        RANK_DIR
-        / f"taxonomy_{output_rank}_presence_absence.tsv",
-        sep="\t",
-        index=True,
-    )
+    if abundance_df["unigene_id"].duplicated().any():
+        duplicated = (
+            abundance_df.loc[
+                abundance_df["unigene_id"].duplicated(),
+                "unigene_id",
+            ]
+            .head()
+            .tolist()
+        )
 
+        raise ValueError(
+            f"Duplicated unigene IDs found in {abundance_path}: {duplicated}"
+        )
 
-# =============================================================================
-# Build BGI-like delivery tables
-# =============================================================================
-
-delivery_gene_pa_df = (
-    taxonomy_presence_absence_df
-    .reset_index()
-    .rename(
+    abundance_df = abundance_df.rename(
         columns={
             "unigene_id": "gene",
         }
     )
-)
 
-delivery_gene_pa_df = delivery_gene_pa_df[
-    [
-        "taxonomy",
-        "gene",
-        *counts_df.columns.tolist(),
-    ]
-]
-
-delivery_gene_pa_df.to_csv(
-    DELIVERY_DIR
-    / "all_level_species_gene_presence_absence.tsv",
-    sep="\t",
-    index=False,
-)
-
-for rank_name in [
-    "phylum",
-    "genus",
-    "species",
-]:
-    source_path = (
-        RANK_DIR
-        / f"taxonomy_{rank_name}_relative_abundance.tsv"
+    merged_df = gene_kegg_df.merge(
+        abundance_df,
+        on="gene",
+        how="inner",
+        validate="one_to_one",
     )
 
-    destination_path = (
-        DELIVERY_DIR
-        / f"all_spe_{rank_name}_transpose.tsv"
-    )
-
-    source_df = pd.read_csv(
-        source_path,
-        sep="\t",
-        index_col=0,
-    )
-
-    source_df.to_csv(
-        destination_path,
-        sep="\t",
-        index=True,
-    )
-
-
-# =============================================================================
-# QC summary
-# =============================================================================
-
-classified_mask = taxonomy_df["taxid"] > 0
-
-summary_df = pd.DataFrame(
-    [
-        {
-            "catalog_unigenes": len(taxonomy_df),
-            "classified_unigenes": int(classified_mask.sum()),
-            "unclassified_unigenes": int((~classified_mask).sum()),
-            "classified_fraction": float(classified_mask.mean()),
+    sample_columns = [
+        col
+        for col in merged_df.columns
+        if col not in {
+            "gene",
+            "KEGG_ko",
+            "KEGG_Pathway",
+            "KEGG_Module",
+            "KEGG_Reaction",
+            "KEGG_rclass",
+            "BRITE",
+            "KEGG_TC",
+            "CAZy",
+            "BiGG_Reaction",
+            "EC",
+            "COG_category",
+            "Preferred_name",
+            "Description",
         }
     ]
+
+    merged_df = merged_df[
+        [
+            "gene",
+            "KEGG_ko",
+            "KEGG_Pathway",
+            "KEGG_Module",
+            "KEGG_Reaction",
+            "KEGG_rclass",
+            "BRITE",
+            "KEGG_TC",
+            "CAZy",
+            "BiGG_Reaction",
+            "EC",
+            "COG_category",
+            "Preferred_name",
+            "Description",
+            *sample_columns,
+        ]
+    ]
+
+    merged_df.to_csv(
+        output_path,
+        sep="\t",
+        index=False,
+    )
+
+    return merged_df
+
+
+relative_df = build_gene_kegg_abundance(
+    RELATIVE_ABUNDANCE_PATH,
+    RELATIVE_OUT,
+)
+
+tpm_df = build_gene_kegg_abundance(
+    TPM_PATH,
+    TPM_OUT,
+)
+
+mapped_df = build_gene_kegg_abundance(
+    MAPPED_SEGMENTS_PATH,
+    MAPPED_OUT,
+)
+
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+summary_rows = [
+    {
+        "metric": "total_emapper_annotated_genes",
+        "value": int(annotation_df.shape[0]),
+    },
+    {
+        "metric": "genes_with_kegg_related_annotation",
+        "value": int(gene_kegg_df.shape[0]),
+    },
+    {
+        "metric": "relative_abundance_output_rows",
+        "value": int(relative_df.shape[0]),
+    },
+    {
+        "metric": "tpm_output_rows",
+        "value": int(tpm_df.shape[0]),
+    },
+    {
+        "metric": "mapped_segments_output_rows",
+        "value": int(mapped_df.shape[0]),
+    },
+]
+
+summary_df = pd.DataFrame(
+    summary_rows
 )
 
 summary_df.to_csv(
-    TABLE_DIR / "unigene_taxonomy_summary.tsv",
+    SUMMARY_OUT,
     sep="\t",
     index=False,
 )
 
 print()
 print("============================================================")
-print("[INFO] U06c taxonomy-table construction completed")
+print("[INFO] U08 completed")
 print("============================================================")
 
 print()
-print("[INFO] Taxonomy annotation summary:")
-print(
-    summary_df.to_string(
-        index=False,
-    )
-)
+print("[INFO] Resolved eggNOG columns:")
+for output_col, source_col in resolved_columns.items():
+    print(f"{output_col}: {source_col}")
 
 print()
-print("[INFO] Main output folders:")
-print(f"       {TABLE_DIR}")
-print(f"       {RANK_DIR}")
-print(f"       {DELIVERY_DIR}")
+print("[INFO] Summary:")
+print(summary_df.to_string(index=False))
+
+print()
+print("[INFO] Output files:")
+for path in [
+    GENE_KEGG_ANNOTATION_OUT,
+    RELATIVE_OUT,
+    TPM_OUT,
+    MAPPED_OUT,
+    SUMMARY_OUT,
+]:
+    print(f"  {path}")
 PY
 
-# ==============================================================================
-# Validate key outputs
-# ==============================================================================
-
 for output_file in \
-  "${TABLE_DIR}/unigene_taxonomy_annotation.tsv" \
-  "${TABLE_DIR}/unigene_taxonomy_relative_abundance.tsv" \
-  "${TABLE_DIR}/unigene_taxonomy_mapped_read_segments.tsv" \
-  "${TABLE_DIR}/unigene_taxonomy_presence_absence.tsv" \
-  "${TABLE_DIR}/unigene_taxonomy_summary.tsv" \
-  "${RANK_DIR}/taxonomy_genus_relative_abundance.tsv" \
-  "${RANK_DIR}/taxonomy_species_relative_abundance.tsv" \
-  "${DELIVERY_DIR}/all_level_species_gene_presence_absence.tsv" \
-  "${DELIVERY_DIR}/all_spe_genus_transpose.tsv" \
-  "${DELIVERY_DIR}/all_spe_species_transpose.tsv"
+  "${OUT_DIR}/gene_kegg_annotation.tsv" \
+  "${OUT_DIR}/all_relab_gene_kegg_unstratified.tsv" \
+  "${OUT_DIR}/all_tpm_gene_kegg_unstratified.tsv" \
+  "${OUT_DIR}/all_mapped_segments_gene_kegg_unstratified.tsv" \
+  "${OUT_DIR}/kegg_abundance_summary.tsv"
 do
   if [ ! -s "${output_file}" ]; then
-    echo "[ERROR] Expected U06c output missing or empty:"
+    echo "[ERROR] Expected output missing or empty:"
     echo "        ${output_file}"
     exit 1
   fi
 done
 
 echo
-echo "============================================================"
-echo "[INFO] U06c taxonomy-table construction completed"
-echo "============================================================"
-
-echo
-echo "[INFO] Main outputs:"
-
-find "${OUT_DIR}" \
-  -type f \
-  -name "*.tsv" \
-  -printf "%p\n" \
-  | sort
+echo "[INFO] U08 output files:"
+find "${OUT_DIR}" -maxdepth 1 -type f -printf "%f\n" | sort
 EOF
 
-chmod +x scripts/assembly_based/run_U06c_build_taxonomy_tables.sh
-```
-
-#### U07
-```bash
-```
-
-#### U08
-```bash
+chmod +x scripts/assembly_based/run_U08_build_kegg_abundance_tables.sh
 ```
 
 
@@ -5444,29 +5691,28 @@ bash scripts/assembly_based/run_U04_map_reads_to_catalog.sh
 bash scripts/assembly_based/run_U05_quantify_unigenes.sh
 ```
 
-### Prepare taxonomy-aware DIAMOND NR database (One-time setup)
-```bash
-bash scripts/assembly_based/run_U06a_prepare_nr_taxonomy_db.sh
-```
-
-### DIAMOND taxonomy annotation
-```bash
-bash scripts/assembly_based/run_U06b_diamond_taxonomy_annotation.sh
-```
-
 ### Build Taxonomy Tables
+Using Kraken2 PlusPF to classify unigene catalog sequences and generate taxonomy tables.
 ```bash
-bash scripts/assembly_based/run_U06c_build_taxonomy_tables.sh
+bash scripts/assembly_based/run_U06_unigene_taxonomy_kraken2.sh
 ```
 
-### 
+Build taxonomy × unigene × sample abundance tables by merging Kraken2 taxonomy with unigene abundance matrices.
+* Normalize kingdom labels into broad BGI-like labels (Bacteria, Archaea, Viruses, Eukaryota, unclassified) to facilitate downstream analysis and interpretation.
+```bash
+bash scripts/assembly_based/run_U06b_build_taxonomy_gene_abundance_table.sh
+```
+
+### Functional annotation
 eggNOG-mapper 2.1.13
 eggNOG DB version: 5.0.2
 ```bash
+bash scripts/assembly_based/run_U07_functional_annotation_eggnog.sh
 ```
 
 ### 
 ```bash
+bash scripts/assembly_based/run_U08_build_kegg_abundance_tables.sh
 ```
 
 ### 06. 下游統計與視覺化
