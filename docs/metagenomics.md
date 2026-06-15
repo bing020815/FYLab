@@ -1,18 +1,18 @@
 # Shotgun Metagenomics Pipeline
 Metagenomics SOP 定位
 
-用途： analysis
-輸入：.R1.fastq.gz + .R2.fastq.gz + metadata.tsv
-核心工具：fastp + kraken2 + bracken + R/Python plotting
-輸出：統計圖、pathway、heatmap、barplot
+1. 用途： analysis
+2. 輸入：.R1.fastq.gz + .R2.fastq.gz + metadata.tsv
+3. 核心工具：fastp + kraken2 + bracken + R/Python plotting
+4. 輸出：統計圖、pathway、heatmap、barplot
 
-fastp = 原始 reads 品質控制、adapter trimming 與低品質 reads 過濾
-Bowtie2 = 對人類基因組 index 比對，去除宿主 reads
-MetaPhlAn = marker-based taxonomy profiling
-Kraken2 = k-mer-based taxonomy classification
-Bracken = 依據 Kraken2 report 重新估算 genus / species abundance
-HUMAnN = gene family、pathway abundance 與 pathway coverage profiling
-R / Python = 下游統計分析與繪圖
+* fastp = 原始 reads 品質控制、adapter trimming 與低品質 reads 過濾
+* Bowtie2 = 對人類基因組 index 比對，去除宿主 reads
+* MetaPhlAn = marker-based taxonomy profiling
+* Kraken2 = k-mer-based taxonomy classification
+* Bracken = 依據 Kraken2 report 重新估算 genus / species abundance
+* HUMAnN = gene family、pathway abundance 與 pathway coverage profiling
+* R / Python = 下游統計分析與繪圖
 
 ```
 host-tools
@@ -5559,8 +5559,6 @@ bash scripts/run_04_kraken2.sh
 
 #### Bracken
 重新分配 reads，估算 species/genus abundance
-abundance re-estimation
-
 ```bash
 bash scripts/run_05_bracken_all_ranks.sh
 ```
@@ -5609,7 +5607,8 @@ combine_bracken_outputs.py \
 * [HUMAnN version 3.9.0](https://github.com/biobakery/humann)
 - ChocoPhlAn：nucleotide database
 - UniRef：protein database
-使用 HUMAnN 可相容的 MetaPhlAn database mpa_vJun23_CHOCOPhlAnSGB_202403
+* 使用 HUMAnN 可相容的 MetaPhlAn database mpa_vJun23_CHOCOPhlAnSGB_202403
+
 運作順序:
 ```
 MetaPhlAn-compatible profile
