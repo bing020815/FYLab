@@ -14,6 +14,7 @@ Bracken = 依據 Kraken2 report 重新估算 genus / species abundance
 HUMAnN = gene family、pathway abundance 與 pathway coverage profiling
 R / Python = 下游統計分析與繪圖
 
+```
 host-tools
 └── fastp、seqkit、Bowtie2
     用於 QC 與去宿主 reads
@@ -25,6 +26,7 @@ metagenomics-taxonomy
 metagenomics-humann
 └── HUMAnN 3.9 + MetaPhlAn 4.1.1 + vJun23 DB
     用於 functional profiling
+```
 
 ### Shared databases:
 ```bash
