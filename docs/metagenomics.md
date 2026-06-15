@@ -5743,11 +5743,6 @@ bash scripts/assembly_based/run_U08_build_kegg_abundance_tables.sh
 
 
 ### 分析架構應用
-MetaPhlAn = 論文 taxonomy 主線
-Kraken2 + Bracken = 補充驗證與廣泛掃描
-HUMAnN = functional profiling 主線
-Bracken × HUMAnN pathway = 可以做統計關聯
-
 ```bash
 Primary taxonomy analysis
 └── MetaPhlAn 4.2.4 + vJan25
@@ -5755,7 +5750,7 @@ Primary taxonomy analysis
     └── species abundance table
 
 Secondary taxonomy validation
-└── Kraken2 Standard DB
+└── Kraken2 PlusPF DB
     ├── read-level classification output
     ├── all-level taxonomy report
     └── all-level cohort matrix
