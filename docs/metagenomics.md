@@ -5707,11 +5707,13 @@ bash scripts/assembly_based/run_U06b_build_taxonomy_gene_abundance_table.sh
 eggNOG-mapper 2.1.13
 eggNOG DB version: 5.0.2
 ```bash
+conda activate metagenomics-eggnog
 bash scripts/assembly_based/run_U07_functional_annotation_eggnog.sh
 ```
 
-### 
+### Build KEGG gene abundance tables from eggNOG-mapper annotation
 ```bash
+conda activate metagenomics-assembly
 bash scripts/assembly_based/run_U08_build_kegg_abundance_tables.sh
 ```
 
