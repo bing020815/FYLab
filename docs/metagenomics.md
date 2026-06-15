@@ -5518,9 +5518,18 @@ du -sh results/02_dehost
 
 ### Taxonomic profiling
 啟動 metagenomics-taxonomy conda 環境：
-* MetaPhlAn version 4.2.4 (21 Oct 2025)      
-* Kraken version 2.17.1
-* Bracken
+* [MetaPhlAn version 4.2.4 (21 Oct 2025)](https://github.com/biobakery/metaphlan)   
+```
+Blanco-Míguez A, Beghini F, Cumbo F, McIver LJ, Thompson KN, Zolfo M, Manghi P, Dubois L, Huang KD, Thomas AM, Nickols WA, Piccinno G, Piperni E, Punčochář M, Valles-Colomer M, Tett A, Giordano F, Davies R, Wolf J, Berry SE, Spector TD, Franzosa EA, Pasolli E, Asnicar F, Huttenhower C, Segata N. Extending and improving metagenomic taxonomic profiling with uncharacterized species using MetaPhlAn 4. Nat Biotechnol. 2023 Nov;41(11):1633-1644. doi: 10.1038/s41587-023-01688-w. Epub 2023 Feb 23. PMID: 36823356; PMCID: PMC10635831.
+``` 
+* [Kraken version 2.17.1](https://github.com/DerrickWood/kraken2)
+```
+Lu J, Rincon N, Wood DE, Breitwieser FP, Pockrandt C, Langmead B, Salzberg SL, Steinegger M. Metagenome analysis using the Kraken software suite. Nat Protoc. 2022 Dec;17(12):2815-2839. doi: 10.1038/s41596-022-00738-y. Epub 2022 Sep 28. Erratum in: Nat Protoc. 2026 Feb;21(2):872. doi: 10.1038/s41596-024-01064-1. PMID: 36171387; PMCID: PMC9725748.
+```
+* [Bracken version 3.0.1](https://github.com/jenniferlu717/Bracken)
+```
+Lu J, Breitwieser FP, Thielen P, Salzberg SL. Bracken: estimating species abundance in metagenomics data. PeerJ Comput Sci. 2017;3:e104. doi: 10.7717/peerj-cs.104. Epub 2017 Jan 2. PMID: 40271438; PMCID: PMC12016282.
+```
 ```bash
 conda activate metagenomics-taxonomy
 ```
@@ -5538,9 +5547,10 @@ bash scripts/run_03_metaphlan.sh
 ```
 
 #### Kraken2
-Kraken2: Standard prebuilt DB[https://benlangmead.github.io/aws-indexes/k2]
-判斷 reads 可能屬於哪個分類節點
+[Kraken2: PlusPF prebuilt DB](https://benlangmead.github.io/aws-indexes/k2)
+* Includes RefSeq complete genomes plus GTDB representative genomes (bacteria, archaea, viruses, fungi, protozoa)
 
+判斷 reads 可能屬於哪個分類節點
 ```bash
 bash scripts/run_04_kraken2.sh
 ```
@@ -5594,7 +5604,7 @@ combine_bracken_outputs.py \
 
 ### Functional profiling
 啟動 metagenomics-function conda 環境：
-* HUMAnN version 3.9.0
+* [HUMAnN version 3.9.0](https://github.com/biobakery/humann)
 - ChocoPhlAn：nucleotide database
 - UniRef：protein database
 使用 HUMAnN 可相容的 MetaPhlAn database mpa_vJun23_CHOCOPhlAnSGB_202403
@@ -5663,7 +5673,10 @@ contig
 └────────────────────────────────────────────┘
 
 #### MEGAHIT assembly
-MEGAHIT v1.2.9
+[MEGAHIT v1.2.9](https://github.com/voutcn/MEGAHIT)
+```
+Li D, Liu CM, Luo R, Sadakane K, Lam TW. MEGAHIT: an ultra-fast single-node solution for large and complex metagenomics assembly via succinct de Bruijn graph. Bioinformatics. 2015 May 15;31(10):1674-6. doi: 10.1093/bioinformatics/btv033. Epub 2015 Jan 20. PMID: 25609793; PMCID: PMC4410642.
+```
 ```bash
 conda activate metagenomics-assembly
 ```
@@ -5704,8 +5717,12 @@ bash scripts/assembly_based/run_U06b_build_taxonomy_gene_abundance_table.sh
 ```
 
 ### Functional annotation
-eggNOG-mapper 2.1.13
-eggNOG DB version: 5.0.2
+[eggNOG-mapper 2.1.13](https://github.com/eggnogdb/eggnog-mapper)
+* eggNOG DB version: 5.0.2
+```
+Ana Hernández-Plaza, Ziqi Deng, Fabian Robledo-Yagüe, Damian Szklarczyk, Christian von Mering, Peer Bork, Jaime Huerta-Cepas, eggNOG v7: phylogeny-based orthology predictions and functional annotations, Nucleic Acids Research, Volume 54, Issue D1, 6 January 2026, Pages D402–D408, https://doi.org/10.1093/nar/gkaf1249
+```
+
 ```bash
 conda activate metagenomics-eggnog
 bash scripts/assembly_based/run_U07_functional_annotation_eggnog.sh
