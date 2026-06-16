@@ -5665,6 +5665,7 @@ df -h
 ```
 
 ### Assembly-based analysis
+```
 reads
   ↓ 拼接
 contig
@@ -5672,6 +5673,7 @@ contig
 ┌────────────────────────────────────────────┐
 │ gene_1 │ gene_2 │ gene_3 │ gene_4 │ gene_5 │
 └────────────────────────────────────────────┘
+```
 
 #### MEGAHIT assembly
 [MEGAHIT v1.2.9](https://github.com/voutcn/MEGAHIT)
