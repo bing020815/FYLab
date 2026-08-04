@@ -153,9 +153,21 @@ format_duration <- function(seconds) {
 }
 
 started_at <- Sys.time()
+
+report_progress <- function(percent, step, detail = "", status = "running") {
+  elapsed <- as.numeric(difftime(Sys.time(), started_at, units = "secs"))
+  suffix <- if (nzchar(detail)) paste0(" | ", detail) else ""
+  cat(sprintf(
+    "[KTU2][%3d%%][%s][%s] %s%s\n",
+    as.integer(percent), status, format_duration(elapsed), step, suffix
+  ))
+  flush.console()
+}
+
 log_message <- function(text) {
   elapsed <- as.numeric(difftime(Sys.time(), started_at, units = "secs"))
-  message(sprintf("[%s] %s", format_duration(elapsed), text))
+  cat(sprintf("[KTU2][INFO][%s] %s\n", format_duration(elapsed), text))
+  flush.console()
 }
 
 read_feature_table <- function(path) {
@@ -307,6 +319,12 @@ read_manifest <- function(path) {
   stats::setNames(df$value, df$parameter)
 }
 
+options(error = function() {
+  cat("[KTU2][FAILED] Unhandled error; see stderr log for details.\n")
+  flush.console()
+  quit(save = "no", status = 1L, runLast = FALSE)
+})
+
 cfg <- tryCatch(parse_args(commandArgs(trailingOnly = TRUE)), error = function(e) {
   message("ERROR: ", conditionMessage(e))
   usage(1L)
@@ -345,6 +363,8 @@ core_dir <- file.path(variant_dir, "core")
 annotation_dir <- file.path(variant_dir, "annotation", safe_db_ver)
 dir.create(core_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(annotation_dir, recursive = TRUE, showWarnings = FALSE)
+
+report_progress(2, "Initialising", paste0("variant=", variant, "; db=", cfg$db_ver))
 
 core_paths <- list(
   counts = file.path(core_dir, "ktu_counts.tsv"),
@@ -403,10 +423,15 @@ message("FASTA         : ", fasta_path)
 message("Core action   : ", if (reuse_core) "reuse" else "build")
 message(strrep("=", 72))
 
+report_progress(5, "Reading ASV count table", table_path)
 feature_input <- read_feature_table(table_path)
 feature_table <- feature_input$data
 sample_columns <- feature_input$sample_columns
+
+report_progress(10, "Reading representative FASTA", fasta_path)
 fasta <- read_fasta_ids(fasta_path)
+
+report_progress(15, "Validating ASV IDs", sprintf("table=%d; fasta=%d", nrow(feature_table), length(fasta)))
 
 if (!setequal(feature_table$FeatureID, names(fasta))) {
   only_table <- setdiff(feature_table$FeatureID, names(fasta))
@@ -424,9 +449,9 @@ feature_table <- feature_table[match(names(fasta), feature_table$FeatureID), , d
 feature_ids <- feature_table$FeatureID
 
 if (!reuse_core) {
-  log_message(sprintf(
-    "Running KTU2 on %d ASVs and %d samples...",
-    length(feature_ids), length(sample_columns)
+  report_progress(20, "Running KTU clustering", sprintf(
+    "method=%s; ASVs=%d; samples=%d; cores=%d",
+    cfg$method, length(feature_ids), length(sample_columns), cfg$cores
   ))
 
   common_args <- list(
@@ -450,6 +475,8 @@ if (!reuse_core) {
   } else {
     ktu_result <- do.call(KTU2::klustering, common_args)
   }
+
+  report_progress(60, "KTU clustering completed")
 
   required_names <- c("KTU.table", "ReqSeq", "clusters")
   if (!all(required_names %in% names(ktu_result))) {
@@ -514,6 +541,8 @@ if (!reuse_core) {
     tolerance = 0, check.attributes = FALSE
   ))) stop("Read-count conservation failed after KTU aggregation.")
 
+  report_progress(65, "Writing shared KTU core outputs", core_dir)
+
   write.table(
     data.frame(FeatureID = rownames(ktu_counts), ktu_counts, check.names = FALSE),
     core_paths$counts, sep = "\t", quote = FALSE, row.names = FALSE
@@ -547,9 +576,9 @@ if (!reuse_core) {
     built_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S %z")
   )
   write_manifest(manifest, core_paths$manifest)
-  log_message("KTU core written successfully.")
+  report_progress(70, "KTU core written successfully", core_dir)
 } else {
-  log_message("Reusing existing KTU core.")
+  report_progress(70, "Reusing existing KTU core", core_dir)
 }
 
 # Load shared core for reference-DB-specific annotation.
@@ -564,6 +593,7 @@ ktu_id_mapping <- read.delim(
   core_paths$id_mapping, sep = "\t", check.names = FALSE, stringsAsFactors = FALSE
 )
 
+report_progress(75, "Reading reference DB taxonomy", taxonomy_path)
 taxonomy_df <- read_taxonomy(taxonomy_path)
 rank_df <- parse_taxonomy_ranks(taxonomy_df$Taxon)
 taxonomy_ranked <- cbind(
@@ -597,7 +627,7 @@ taxonomy_aligned$FeatureID <- mapping_df$ASV_ID
 rank_columns <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 ktu_ids <- ktu_counts_df$KTU_ID
 
-log_message("Building reference-DB-specific KTU taxonomy consensus...")
+report_progress(80, "Building KTU taxonomy consensus", sprintf("0/%d KTUs", length(ktu_ids)))
 taxonomy_rows <- vector("list", length(ktu_ids))
 for (i in seq_along(ktu_ids)) {
   ktu_id <- ktu_ids[[i]]
@@ -623,6 +653,11 @@ for (i in seq_along(ktu_ids)) {
     row[[paste0(rank, "_assigned_asv_n")]] <- consensus$assigned_n
   }
   taxonomy_rows[[i]] <- row
+
+  if (i == length(ktu_ids) || i %% 100L == 0L) {
+    pct <- 80L + floor(15L * i / max(1L, length(ktu_ids)))
+    report_progress(pct, "Building KTU taxonomy consensus", sprintf("%d/%d KTUs", i, length(ktu_ids)))
+  }
 }
 
 taxonomy_summary <- do.call(rbind, lapply(taxonomy_rows, function(row) {
@@ -650,6 +685,8 @@ annotation_paths <- list(
   ),
   summary = file.path(annotation_dir, "annotation_summary.tsv")
 )
+
+report_progress(96, "Writing reference DB annotation outputs", annotation_dir)
 
 write.table(
   taxonomy_summary,
@@ -680,13 +717,18 @@ annotation_summary <- c(
 write_manifest(annotation_summary, annotation_paths$summary)
 
 elapsed <- as.numeric(difftime(Sys.time(), started_at, units = "secs"))
-message("")
-message(strrep("=", 72))
-message("KTU2 workflow completed successfully")
-message("Variant          : ", variant)
-message("Reference DB     : ", cfg$db_ver)
-message("KTU count        : ", nrow(ktu_counts_df))
-message("Core directory   : ", core_dir)
-message("Annotation dir   : ", annotation_dir)
-message("Elapsed          : ", format_duration(elapsed))
-message(strrep("=", 72))
+report_progress(100, "Completed", sprintf(
+  "variant=%s; db=%s; KTUs=%d; core=%s; annotation=%s",
+  variant, cfg$db_ver, nrow(ktu_counts_df), core_dir, annotation_dir
+), status = "completed")
+
+cat("\n", strrep("=", 72), "\n", sep = "")
+cat("KTU2 workflow completed successfully\n")
+cat("Variant          : ", variant, "\n", sep = "")
+cat("Reference DB     : ", cfg$db_ver, "\n", sep = "")
+cat("KTU count        : ", nrow(ktu_counts_df), "\n", sep = "")
+cat("Core directory   : ", core_dir, "\n", sep = "")
+cat("Annotation dir   : ", annotation_dir, "\n", sep = "")
+cat("Elapsed          : ", format_duration(elapsed), "\n", sep = "")
+cat(strrep("=", 72), "\n", sep = "")
+flush.console()
