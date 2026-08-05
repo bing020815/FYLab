@@ -885,13 +885,13 @@ conda deactivate
 
 # KTU 分類
 
-* 啟用R環境
+* 啟用 R 環境
 ```bash
 conda activate fylab-r
 ```
 
 ## KTU 轉換
-* 透過 [K-mer-based 方法]https://github.com/poyuliu/KTU)分群 ASV，縮小序列被分類的維度
+* 透過 [K-mer-based 方法](https://github.com/poyuliu/KTU)分群 ASV，縮小序列被分類的維度
 * 使用 [KTU2](https://github.com/poyuliu/KTU2) 配合 `ktusp` 方法，進行分類
 * 預設使用原始 `otu_table.tsv`, `taxonomy.tsv`, `dna-sequences.fasta` 進行轉換
 * 若要使用 `dehost_otu_table.tsv`, `dehost_taxonomy.tsv`, `dna-sequences.fasta` 進行轉換
