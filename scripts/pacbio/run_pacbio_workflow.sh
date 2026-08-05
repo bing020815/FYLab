@@ -17,6 +17,7 @@ RESUME="${RESUME:-false}"
 RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
 EXTRA_ARGS="${EXTRA_ARGS:-}"
 TIMEZONE="${TIMEZONE:-Asia/Taipei}"
+TMUX_TERM="${TMUX_TERM:-xterm-256color}"
 NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR:-/home/adprc/nf_conda}"
 
 STDOUT_LOG="${LOG_DIR}/nextflow.stdout.log"
@@ -225,7 +226,9 @@ EOF
             exit 1
         fi
 
-        tmux new-session -d -s "${TMUX_SESSION_NAME}" "bash '${runner_script}'"
+        env TERM="${TMUX_TERM}" \
+        tmux new-session -d -s "${TMUX_SESSION_NAME}" \
+          "bash '${runner_script}'"
         tmux set-environment -t "${TMUX_SESSION_NAME}" PROJECT_DIR "${PROJECT_DIR}"
 
         echo "[INFO] 已建立 tmux session: ${TMUX_SESSION_NAME}"
