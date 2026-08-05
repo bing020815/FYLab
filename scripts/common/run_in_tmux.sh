@@ -12,6 +12,7 @@ RUN_IN_TMUX="${RUN_IN_TMUX:-true}"
 TIMEZONE="${TIMEZONE:-Asia/Taipei}"
 LOG_DIR="${LOG_DIR:-${PROJECT_DIR}/logs}"
 SHOW_INFO="${SHOW_INFO:-true}"
+TMUX_TERM="${TMUX_TERM:-xterm-256color}"
 
 if [ -z "${JOB_TYPE}" ]; then
     echo "[ERROR] JOB_TYPE 不可為空"
@@ -205,7 +206,9 @@ if [ "${RUN_IN_TMUX}" = "true" ]; then
         exit 1
     fi
 
-    tmux new-session -d -s "${SESSION_NAME}" "bash \"${RUNNER_SCRIPT}\""
+    env TERM="${TMUX_TERM}" \
+    tmux new-session -d -s "${SESSION_NAME}" \
+      "bash \"${RUNNER_SCRIPT}\""
 
     if [ "${SHOW_INFO}" = "true" ]; then
         echo "[INFO] 已建立 tmux session: ${SESSION_NAME}"
