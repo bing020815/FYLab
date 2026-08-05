@@ -96,6 +96,11 @@ EOF
 }
 
 write_status_running
+
+# 任務啟動前先建立空白 log，避免 session 未啟動時連 log 都不存在
+: > "${STDOUT_LOG}"
+: > "${STDERR_LOG}"
+
 ln -sfn "${STDOUT_LOG}" "${LATEST_STDOUT_LINK}"
 ln -sfn "${STDERR_LOG}" "${LATEST_STDERR_LINK}"
 ln -sfn "${STATUS_FILE}" "${LATEST_STATUS_LINK}"
