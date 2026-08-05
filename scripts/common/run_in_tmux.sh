@@ -150,7 +150,7 @@ show_info=${SHOW_INFO}
 EOSTATUS
 }
 
-trap 'finish $?' EXIT
+trap 'finish \$?' EXIT
 
 {
 EOF
