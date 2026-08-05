@@ -13,9 +13,10 @@
 2. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
 3. [|Post-upstream| Dehost - 由序列排除host基因](#Dehost-排除host基因)
 4. [|Post-upstream| 畫圖](#畫圖)
-5. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
-6. [|Post-upstream| 分析專案歸檔](#分析專案歸檔)
-7. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
+5. [|Post-upstream| KTU 分類](#ktu-分類)
+6. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
+7. [|Post-upstream| 分析專案歸檔](#分析專案歸檔)
+8. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
 
 # Preset
 ## Folder Management
@@ -880,6 +881,98 @@ conda deactivate
 </details><br>
 
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
+
+
+# KTU 分類
+
+* 啟用R環境
+```bash
+conda activate fylab-r
+```
+
+## KTU 轉換
+* 透過 [K-mer-based 方法]https://github.com/poyuliu/KTU)分群 ASV，縮小序列被分類的維度
+* 使用 [KTU2](https://github.com/poyuliu/KTU2) 配合 `ktusp` 方法，進行分類
+* 預設使用原始 `otu_table.tsv`, `taxonomy.tsv`, `dna-sequences.fasta` 進行轉換
+* 若要使用 `dehost_otu_table.tsv`, `dehost_taxonomy.tsv`, `dna-sequences.fasta` 進行轉換
+  * 在指令上加上 `--dehost` 
+* Citation:
+  ```
+  Liu, P.-Y., Yang, S.-H., & Yang, S.-Y. (2022). KTU: K-mer Taxonomic Units improve the biological relevance of amplicon sequence variant microbiota data. Methods in Ecology and Evolution, 13, 560– 568. https://doi.org/10.1111/2041-210X.13758
+  ```
+
+<details>
+<summary><strong>GG1 轉 KTU 語法</strong></summary>
+
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gg1_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gg1 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>GG2 轉 KTU 語法</strong></summary>
+
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gg2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gg2 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>SILVA 138 轉 KTU 語法</strong></summary>
+
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_silva138_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver silva_138 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>SILVA DaDa2 Zenodo 138.2 轉 KTU 語法</strong></summary>
+
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_silva_dada2_138.2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver silva_dada2_138.2 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+
+查詢任務狀態
+```bash
+MODE=latest JOB_TYPE=ktu2 ./shell_tools/check_tmux_jobs.sh
+```
+
+<p align="center"><a href="#FYLab-分析流程">Top</a></p>
+
+
+
+
+![PICRUSt2](img/picrust2_flow.png)
 
 # PICRUSt2 - Metabolism Pathway
 ![PICRUSt2](img/picrust2_flow.png)
