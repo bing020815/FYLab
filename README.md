@@ -1,10 +1,9 @@
 # FYLab 分析流程
 基因定序上游分析流程使用說明，或是使用[舊流程觀看對照](./docs/old_sop.md)
 
-* 20260419 updated
+* 20260805 updated
 ```
-  + 分流Pre-upstrean [20260415]
-  + 優化執行命令流程 [20260419]
+  + KTU方法分類 [20260805]
 ```
 
 # Table of Contents:
