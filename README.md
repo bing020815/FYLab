@@ -917,15 +917,30 @@ CMD="Rscript rscript/run_ktu2.R \
 </details><br>
 
 <details>
-<summary><strong>GG2 轉 KTU 語法</strong></summary>
+<summary><strong>GG2_202209 轉 KTU 語法</strong></summary>
 
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
-JOB_NAME=ktu2_gg2_standard \
+JOB_NAME=ktu2_gg2_202209_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg2 \
+--db-ver gg2_202209 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>GG2_202210 轉 KTU 語法</strong></summary>
+
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gg2_202210_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gg2_202210 \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
