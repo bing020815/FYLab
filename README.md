@@ -885,9 +885,18 @@ conda deactivate
 
 # KTU 分類
 
-* 啟用 R 環境
+## 啟用 R 環境
 ```bash
 conda activate fylab-r
+```
+
+## 執行下載檔
+```bash
+mkdir -p rscript
+cd rscript
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/r/run_ktu2.R
+chmod +x run_ktu2.R
+cd ..
 ```
 
 ## KTU 轉換
