@@ -23,9 +23,9 @@ set -euo pipefail
 #
 #   ID
 #   forward_name
-#   f_sequencce
+#   f_sequence
 #   reverse_name
-#   r_sequencce
+#   r_sequence
 #
 #
 # Behavior
