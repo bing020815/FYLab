@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+WORKDIR="$(pwd)"
+
+if [[ "$(basename "$WORKDIR")" != "hifi_reads" ]]; then
+    echo "ERROR: Run this command from a hifi_reads directory."
+    exit 1
+fi
+
+RUN_DIR="$(basename "$(dirname "$(dirname "$WORKDIR")")")"
+SESSION="pacbio_${RUN_DIR//[^a-zA-Z0-9_-]/_}"
+
+echo "========================================"
+echo "PacBio Demultiplex Status"
+echo "========================================"
+echo
+echo "Run:"
+echo "  $RUN_DIR"
+echo
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+
+    echo "Status:"
+    echo "  RUNNING / SESSION ACTIVE"
+    echo
+    echo "tmux:"
+    echo "  $SESSION"
+    echo
+
+    echo "Latest output:"
+    echo "----------------------------------------"
+
+    tmux capture-pane -pt "$SESSION" -S -20
+
+    echo "----------------------------------------"
+
+else
+
+    if [[ -f "pacbio_demux_runtime.txt" ]]; then
+        echo "Status:"
+        echo "  COMPLETED"
+        echo
+        cat pacbio_demux_runtime.txt
+
+    elif [[ -f "pacbio_demux.log" ]]; then
+        echo "Status:"
+        echo "  SESSION NOT RUNNING"
+        echo
+        echo "Last log output:"
+        echo "----------------------------------------"
+        tail -30 pacbio_demux.log
+        echo "----------------------------------------"
+
+    else
+        echo "Status:"
+        echo "  NOT STARTED"
+    fi
+
+fi
