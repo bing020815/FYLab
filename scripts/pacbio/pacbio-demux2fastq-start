@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+WORKDIR="$(pwd)"
+
+# Require execution from hifi_reads
+if [[ "$(basename "$WORKDIR")" != "hifi_reads" ]]; then
+    echo "ERROR: Run this command from a hifi_reads directory."
+    echo
+    echo "Current directory:"
+    echo "  $WORKDIR"
+    exit 1
+fi
+
+# Get run name from:
+# <run>/1_A01/hifi_reads
+RUN_DIR="$(basename "$(dirname "$(dirname "$WORKDIR")")")"
+
+# Safe tmux session name
+SESSION="pacbio_${RUN_DIR//[^a-zA-Z0-9_-]/_}"
+
+LOG="$WORKDIR/pacbio_demux.log"
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+    echo "ERROR: A PacBio demultiplex session already exists:"
+    echo "  $SESSION"
+    echo
+    echo "Check with:"
+    echo "  pacbio-demux-status"
+    exit 1
+fi
+
+echo "Starting PacBio demultiplex..."
+echo
+echo "Run:"
+echo "  $RUN_DIR"
+echo
+echo "Working directory:"
+echo "  $WORKDIR"
+echo
+echo "tmux session:"
+echo "  $SESSION"
+echo
+echo "Log:"
+echo "  $LOG"
+echo
+
+tmux new-session -d \
+    -s "$SESSION" \
+    "cd '$WORKDIR' && \
+     source '$HOME/miniconda3/etc/profile.d/conda.sh' && \
+     conda activate pacbio_demux && \
+     '$HOME/scripts/pacbio_demux2fastq.sh' 2>&1 | tee '$LOG'; \
+     exec bash"
+
+echo "PacBio demultiplex started in background."
+echo
+echo "Check status:"
+echo "  pacbio-demux-status"
+echo
+echo "Open session:"
+echo "  pacbio-demux-attach"
