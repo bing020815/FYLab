@@ -2,10 +2,21 @@
 
 set -euo pipefail
 
+# ============================================================
+# PacBio demultiplex status
+#
+# Usage:
+#
+#   cd <run>/1_A01/hifi_reads
+#   pacbio-demux2fastq-status
+# ============================================================
+
+
 WORKDIR="$(pwd)"
 
+
 # ------------------------------------------------------------
-# Require hifi_reads directory
+# Require hifi_reads
 # ------------------------------------------------------------
 
 if [[ "$(basename "$WORKDIR")" != "hifi_reads" ]]; then
@@ -28,6 +39,8 @@ SESSION="pacbio_${RUN_DIR//[^a-zA-Z0-9_-]/_}"
 
 LOG="$WORKDIR/pacbio_demux.log"
 
+STATUS_FILE="$WORKDIR/pacbio_demux.status"
+
 RUNTIME_REPORT="$WORKDIR/pacbio_demux_runtime.txt"
 
 
@@ -41,9 +54,9 @@ echo "  $RUN_DIR"
 echo
 
 
-# ------------------------------------------------------------
-# RUNNING
-# ------------------------------------------------------------
+# ============================================================
+# ACTIVE SESSION
+# ============================================================
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then
 
@@ -68,9 +81,59 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 
 
-# ------------------------------------------------------------
+# ============================================================
 # COMPLETED
-# ------------------------------------------------------------
+# ============================================================
+
+if [[ -f "$STATUS_FILE" ]] && \
+   [[ "$(cat "$STATUS_FILE")" == "COMPLETED" ]] && \
+   [[ -f "$RUNTIME_REPORT" ]]; then
+
+    echo "Status:"
+    echo "  COMPLETED"
+    echo
+
+    cat "$RUNTIME_REPORT"
+
+    exit 0
+fi
+
+
+# ============================================================
+# FAILED
+# ============================================================
+
+if [[ -f "$STATUS_FILE" ]] && \
+   [[ "$(cat "$STATUS_FILE")" == "FAILED" ]]; then
+
+    echo "Status:"
+    echo "  FAILED"
+    echo
+
+    if [[ -f "$LOG" ]]; then
+
+        echo "Latest log output:"
+        echo "----------------------------------------"
+
+        tail -40 "$LOG"
+
+        echo "----------------------------------------"
+        echo
+
+        echo "Full log:"
+        echo "  $LOG"
+
+    fi
+
+    exit 1
+fi
+
+
+# ============================================================
+# COMPLETION REPORT EXISTS
+#
+# Fallback for older runs that do not have status file.
+# ============================================================
 
 if [[ -f "$RUNTIME_REPORT" ]]; then
 
@@ -84,17 +147,17 @@ if [[ -f "$RUNTIME_REPORT" ]]; then
 fi
 
 
-# ------------------------------------------------------------
-# FAILED / STOPPED
-# ------------------------------------------------------------
+# ============================================================
+# STOPPED / UNKNOWN
+# ============================================================
 
 if [[ -f "$LOG" ]]; then
 
     echo "Status:"
-    echo "  FAILED / STOPPED"
+    echo "  STOPPED / UNKNOWN"
     echo
 
-    echo "No active tmux session and no completion report was found."
+    echo "No active PacBio tmux session and no completion report."
     echo
 
     echo "Latest log output:"
@@ -112,9 +175,9 @@ if [[ -f "$LOG" ]]; then
 fi
 
 
-# ------------------------------------------------------------
+# ============================================================
 # NOT STARTED
-# ------------------------------------------------------------
+# ============================================================
 
 echo "Status:"
 echo "  NOT STARTED"
