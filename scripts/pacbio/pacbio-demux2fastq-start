@@ -2,62 +2,199 @@
 
 set -euo pipefail
 
+# ============================================================
+# PacBio demux background launcher
+#
+# Usage:
+#
+#   cd <run>/1_A01/hifi_reads
+#   pacbio-demux2fastq-start
+#
+# Creates ONE run-specific tmux session:
+#
+#   pacbio_<run_name>
+#
+# This script NEVER kills the tmux server and NEVER touches
+# unrelated tmux sessions.
+# ============================================================
+
+
 WORKDIR="$(pwd)"
 
-# Require execution from hifi_reads
+
+# ------------------------------------------------------------
+# Require hifi_reads
+# ------------------------------------------------------------
+
 if [[ "$(basename "$WORKDIR")" != "hifi_reads" ]]; then
-    echo "ERROR: Run this command from a hifi_reads directory."
+    echo "ERROR:"
+    echo "Run this command from a hifi_reads directory."
     echo
     echo "Current directory:"
     echo "  $WORKDIR"
     exit 1
 fi
 
-# Get run name from:
+
+# ------------------------------------------------------------
+# Dependencies
+# ------------------------------------------------------------
+
+if ! command -v tmux >/dev/null 2>&1; then
+    echo "ERROR: tmux not found."
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# Identify run
+#
+# Expected:
 # <run>/1_A01/hifi_reads
+# ------------------------------------------------------------
+
 RUN_DIR="$(basename "$(dirname "$(dirname "$WORKDIR")")")"
 
-# Safe tmux session name
 SESSION="pacbio_${RUN_DIR//[^a-zA-Z0-9_-]/_}"
 
 LOG="$WORKDIR/pacbio_demux.log"
 
+STATUS_FILE="$WORKDIR/pacbio_demux.status"
+
+RUNTIME_REPORT="$WORKDIR/pacbio_demux_runtime.txt"
+
+
+# ------------------------------------------------------------
+# Protect existing PacBio session
+# ------------------------------------------------------------
+
 if tmux has-session -t "$SESSION" 2>/dev/null; then
-    echo "ERROR: A PacBio demultiplex session already exists:"
+    echo "ERROR:"
+    echo "A PacBio demultiplex session for this run already exists."
+    echo
+    echo "Session:"
     echo "  $SESSION"
     echo
     echo "Check with:"
-    echo "  pacbio-demux-status"
+    echo "  pacbio-demux2fastq-status"
     exit 1
 fi
 
+
+# ------------------------------------------------------------
+# Prevent accidental rerun
+# ------------------------------------------------------------
+
+if [[ -f "$RUNTIME_REPORT" ]]; then
+    echo "ERROR:"
+    echo "This run already has a completion report:"
+    echo
+    echo "  $RUNTIME_REPORT"
+    echo
+    echo "The pipeline will not be started again automatically."
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# Find Conda
+# ------------------------------------------------------------
+
+if [[ ! -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]]; then
+    echo "ERROR:"
+    echo "Conda initialization script not found:"
+    echo
+    echo "  $HOME/miniconda3/etc/profile.d/conda.sh"
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# Check core script
+# ------------------------------------------------------------
+
+CORE_SCRIPT="$HOME/scripts/pacbio_demux2fastq.sh"
+
+if [[ ! -x "$CORE_SCRIPT" ]]; then
+    echo "ERROR:"
+    echo "Core script is missing or not executable:"
+    echo
+    echo "  $CORE_SCRIPT"
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# Clean status from a previous failed/test run
+#
+# Do NOT delete FASTQ, Lima, log or runtime results here.
+# ------------------------------------------------------------
+
+rm -f "$STATUS_FILE"
+
+
+# ------------------------------------------------------------
+# Start information
+# ------------------------------------------------------------
+
 echo "Starting PacBio demultiplex..."
 echo
+
 echo "Run:"
 echo "  $RUN_DIR"
 echo
+
 echo "Working directory:"
 echo "  $WORKDIR"
 echo
+
 echo "tmux session:"
 echo "  $SESSION"
 echo
+
 echo "Log:"
 echo "  $LOG"
 echo
 
-tmux new-session -d \
+
+# ------------------------------------------------------------
+# Launch run-specific tmux
+#
+# Important:
+#
+# - No "exec bash" at the end.
+# - No tmux kill-session.
+# - No tmux kill-server.
+#
+# When the pipeline finishes, THIS session naturally exits.
+# Other users' tmux sessions are untouched.
+# ------------------------------------------------------------
+
+tmux new-session \
+    -d \
     -s "$SESSION" \
     "cd '$WORKDIR' && \
      source '$HOME/miniconda3/etc/profile.d/conda.sh' && \
      conda activate pacbio_demux && \
-     '$HOME/scripts/pacbio_demux2fastq.sh' 2>&1 | tee '$LOG'; \
-     exec bash"
+     echo RUNNING > '$STATUS_FILE' && \
+     set -o pipefail; \
+     '$CORE_SCRIPT' 2>&1 | tee '$LOG'; \
+     PIPESTATUS_CODE=\${PIPESTATUS[0]}; \
+     if [[ \$PIPESTATUS_CODE -eq 0 ]]; then \
+         echo COMPLETED > '$STATUS_FILE'; \
+     else \
+         echo FAILED > '$STATUS_FILE'; \
+     fi; \
+     exit \$PIPESTATUS_CODE"
+
 
 echo "PacBio demultiplex started in background."
 echo
+
 echo "Check status:"
-echo "  pacbio-demux-status"
+echo "  pacbio-demux2fastq-status"
 echo
-echo "Open session:"
-echo "  pacbio-demux-attach"
+
+echo "Open active session:"
+echo "  pacbio-demux2fastq-attach"
+echo
