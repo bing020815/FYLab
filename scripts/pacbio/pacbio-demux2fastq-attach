@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+WORKDIR="$(pwd)"
+
+if [[ "$(basename "$WORKDIR")" != "hifi_reads" ]]; then
+    echo "ERROR: Run this command from a hifi_reads directory."
+    exit 1
+fi
+
+RUN_DIR="$(basename "$(dirname "$(dirname "$WORKDIR")")")"
+SESSION="pacbio_${RUN_DIR//[^a-zA-Z0-9_-]/_}"
+
+if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+    echo "ERROR: No active tmux session:"
+    echo "  $SESSION"
+    exit 1
+fi
+
+tmux attach-session -t "$SESSION"
