@@ -4,27 +4,53 @@ set -euo pipefail
 
 WORKDIR="$(pwd)"
 
+# ------------------------------------------------------------
+# Require hifi_reads directory
+# ------------------------------------------------------------
+
 if [[ "$(basename "$WORKDIR")" != "hifi_reads" ]]; then
-    echo "ERROR: Run this command from a hifi_reads directory."
+    echo "ERROR:"
+    echo "Run this command from a hifi_reads directory."
+    echo
+    echo "Current directory:"
+    echo "  $WORKDIR"
     exit 1
 fi
 
+
+# ------------------------------------------------------------
+# Identify run
+# ------------------------------------------------------------
+
 RUN_DIR="$(basename "$(dirname "$(dirname "$WORKDIR")")")"
+
 SESSION="pacbio_${RUN_DIR//[^a-zA-Z0-9_-]/_}"
+
+LOG="$WORKDIR/pacbio_demux.log"
+
+RUNTIME_REPORT="$WORKDIR/pacbio_demux_runtime.txt"
+
 
 echo "========================================"
 echo "PacBio Demultiplex Status"
 echo "========================================"
 echo
+
 echo "Run:"
 echo "  $RUN_DIR"
 echo
 
+
+# ------------------------------------------------------------
+# RUNNING
+# ------------------------------------------------------------
+
 if tmux has-session -t "$SESSION" 2>/dev/null; then
 
     echo "Status:"
-    echo "  RUNNING / SESSION ACTIVE"
+    echo "  RUNNING"
     echo
+
     echo "tmux:"
     echo "  $SESSION"
     echo
@@ -32,30 +58,63 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
     echo "Latest output:"
     echo "----------------------------------------"
 
-    tmux capture-pane -pt "$SESSION" -S -20
+    tmux capture-pane \
+        -pt "$SESSION" \
+        -S -30
 
     echo "----------------------------------------"
 
-else
-
-    if [[ -f "pacbio_demux_runtime.txt" ]]; then
-        echo "Status:"
-        echo "  COMPLETED"
-        echo
-        cat pacbio_demux_runtime.txt
-
-    elif [[ -f "pacbio_demux.log" ]]; then
-        echo "Status:"
-        echo "  SESSION NOT RUNNING"
-        echo
-        echo "Last log output:"
-        echo "----------------------------------------"
-        tail -30 pacbio_demux.log
-        echo "----------------------------------------"
-
-    else
-        echo "Status:"
-        echo "  NOT STARTED"
-    fi
-
+    exit 0
 fi
+
+
+# ------------------------------------------------------------
+# COMPLETED
+# ------------------------------------------------------------
+
+if [[ -f "$RUNTIME_REPORT" ]]; then
+
+    echo "Status:"
+    echo "  COMPLETED"
+    echo
+
+    cat "$RUNTIME_REPORT"
+
+    exit 0
+fi
+
+
+# ------------------------------------------------------------
+# FAILED / STOPPED
+# ------------------------------------------------------------
+
+if [[ -f "$LOG" ]]; then
+
+    echo "Status:"
+    echo "  FAILED / STOPPED"
+    echo
+
+    echo "No active tmux session and no completion report was found."
+    echo
+
+    echo "Latest log output:"
+    echo "----------------------------------------"
+
+    tail -40 "$LOG"
+
+    echo "----------------------------------------"
+    echo
+
+    echo "Full log:"
+    echo "  $LOG"
+
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# NOT STARTED
+# ------------------------------------------------------------
+
+echo "Status:"
+echo "  NOT STARTED"
