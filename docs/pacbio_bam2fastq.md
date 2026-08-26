@@ -72,17 +72,6 @@ Lima demultiplexed BAM
 ```
 
 
-
-# Lima
-由 PacBio SMRT 定序技術產生的長片段、高準確度基因定序數據。
-* 透過「環形一致性定序（CCS）」技術，將單一 DNA 分子重複讀取並校正，廣泛應用於基因組組裝、變異檢測、以及單倍型定相。
-
-![hifi reads](../img/hifi_reads.png)
-* [Wenger, A.M., Peluso, P., Rowell, W.J. et al. Accurate circular consensus long-read sequencing improves variant detection and assembly of a human genome. Nat Biotechnol 37, 1155–1162 (2019)](https://doi.org/10.1038/s41587-019-0217-9)
-
-<p align="center"><a href="#PacBio-transform-.bam-to-.fastq.gz">Top</a></p>
-
-
 # 轉檔Fastq
 移動到指定 run 的 `hifi_reads.bam` 所在的資料夾，並執行以下指令：
 ```bash
@@ -97,4 +86,5 @@ pacbio-demux2fastq-stats
 [回到主要流程](../README.md)
 
 <p align="center"><a href="#PacBio-transform-.bam-to-.fastq.gz">Top</a></p>
+
 
