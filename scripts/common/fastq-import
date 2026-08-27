@@ -4,17 +4,21 @@ set -euo pipefail
 
 
 # ============================================================
-# FASTQ Import v1
+# FASTQ Import v1.1
 # ============================================================
 #
 # Purpose:
 #   Copy PacBio FASTQ.gz files from a source directory
-#   (for example, mounted NAS / Vega output)
+#   (e.g. mounted NAS / Vega output)
 #   into an existing personal analysis workspace.
+#
+# Source example:
+#
+#   /home/vega_output/<run>/1_A01/hifi_reads/fastq/
 #
 # Destination:
 #
-#   /home/adprc/workspaces/<OWNER>/<PROJECT>/fastq/
+#   /home/adprc/workspaces/<OWNER>/<PROJECT>/raw_fastq/
 #
 # Expected FASTQ naming:
 #
@@ -30,11 +34,12 @@ set -euo pipefail
 #
 # Safety:
 #
-#   - Source files are never deleted.
-#   - Source files are never modified.
-#   - rsync --delete is never used.
-#   - Existing destination FASTQ files are not overwritten.
-#   - The project must already exist.
+#   - Source files are NEVER deleted.
+#   - Source files are NEVER modified.
+#   - rsync --delete is NEVER used.
+#   - Existing destination FASTQ files are NOT overwritten.
+#   - OWNER and PROJECT must already exist.
+#   - raw_fastq/ is created automatically if necessary.
 #
 # ============================================================
 
@@ -58,7 +63,8 @@ usage() {
 FASTQ Import
 ============
 
-Copy PacBio FASTQ.gz files into an existing analysis workspace.
+Copy PacBio FASTQ.gz files from NAS / Vega output into
+an existing analysis workspace.
 
 
 USAGE
@@ -79,10 +85,8 @@ Show help:
   fastq-import --help
 
 
-EXAMPLES
---------
-
-Import all FASTQ files:
+EXAMPLE: IMPORT ALL
+-------------------
 
   fastq-import --all \
     "/home/vega_output/r21201_20260820_071510/1_A01/hifi_reads/fastq" \
@@ -90,7 +94,8 @@ Import all FASTQ files:
     kmuh_CRC
 
 
-Import selected Sample IDs:
+EXAMPLE: IMPORT SELECTED SAMPLES
+--------------------------------
 
   fastq-import --list samples.txt \
     "/home/vega_output/r21201_20260820_071510/1_A01/hifi_reads/fastq" \
@@ -98,7 +103,12 @@ Import selected Sample IDs:
     kmuh_CRC
 
 
-Paths containing spaces are supported:
+PATHS WITH SPACES
+-----------------
+
+Source, owner and project names may contain spaces.
+
+Use quotes:
 
   fastq-import --all \
     "/home/vega_output/PacBio Run 20260820/fastq" \
@@ -109,7 +119,9 @@ Paths containing spaces are supported:
 SAMPLE LIST FORMAT
 ------------------
 
-One Sample ID per line:
+One Sample ID per line.
+
+Example:
 
   CRC001
   CRC003
@@ -129,23 +141,29 @@ Comments beginning with # are allowed:
   CRC017
 
 
-Do NOT include the FASTQ suffix.
+Do NOT include:
 
-Correct:
+  .hifi_reads.fastq.gz
+
+
+For example:
 
   CRC001
 
-Incorrect:
+automatically matches:
 
   CRC001.hifi_reads.fastq.gz
 
 
-CRC001 automatically matches:
-
-  CRC001.hifi_reads.fastq.gz
+Sample IDs must NOT contain whitespace.
 
 
-Sample IDs must not contain whitespace.
+SOURCE
+------
+
+Typical PacBio source:
+
+  /home/vega_output/<run>/1_A01/hifi_reads/fastq/
 
 
 DESTINATION
@@ -153,22 +171,22 @@ DESTINATION
 
 FASTQ files are copied to:
 
-  /home/adprc/workspaces/<OWNER>/<PROJECT>/fastq/
+  /home/adprc/workspaces/<OWNER>/<PROJECT>/raw_fastq/
 
 
-The OWNER and PROJECT directories must already exist.
+OWNER and PROJECT must already exist.
 
-If the project exists but fastq/ does not exist,
-fastq/ will be created automatically.
+If raw_fastq/ does not exist, it will be created automatically.
 
 
 SAFETY
 ------
 
-  - Source files are never deleted.
-  - Source files are never modified.
+  - Source FASTQ files are never deleted.
+  - Source FASTQ files are never modified.
+  - Files are copied, not moved.
   - rsync --delete is never used.
-  - Existing FASTQ files are not overwritten.
+  - Existing destination FASTQ files are not overwritten.
   - Missing requested Sample IDs stop the import before copying.
   - Unknown projects are not automatically created.
 
@@ -268,6 +286,9 @@ command -v stat >/dev/null 2>&1 ||
 command -v find >/dev/null 2>&1 ||
     die "find is not available."
 
+command -v sed >/dev/null 2>&1 ||
+    die "sed is not available."
+
 
 # ============================================================
 # Validate source directory
@@ -317,7 +338,7 @@ SOURCE="$(
 
 OWNER_DIR="${WORKSPACE_ROOT}/${OWNER}"
 DEST_PROJECT="${OWNER_DIR}/${PROJECT}"
-DEST_FASTQ="${DEST_PROJECT}/fastq"
+DEST_FASTQ="${DEST_PROJECT}/raw_fastq"
 
 
 # ============================================================
@@ -443,7 +464,7 @@ else
 
 
         # ----------------------------------------------------
-        # Ignore duplicate Sample IDs
+        # Duplicate Sample ID
         # ----------------------------------------------------
 
         if [[ -n "${SEEN_SAMPLES[$SAMPLE]+x}" ]]; then
@@ -484,8 +505,7 @@ else
 
 
     # --------------------------------------------------------
-    # If any requested FASTQ is missing:
-    # stop before copying anything.
+    # Any missing sample stops the whole import before rsync.
     # --------------------------------------------------------
 
     if [[ "$MISSING" -gt 0 ]]; then
@@ -512,10 +532,9 @@ FILE_COUNT="${FILE_COUNT//[[:space:]]/}"
 # Check destination conflicts
 # ============================================================
 #
-# Existing destination FASTQ files are not overwritten.
+# Existing destination FASTQ files are NOT overwritten.
 #
-# The destination fastq/ directory may not exist yet.
-# That is OK.
+# raw_fastq/ itself does not need to exist yet.
 #
 # ============================================================
 
@@ -655,12 +674,12 @@ echo
 
 
 # ============================================================
-# Create destination FASTQ directory
+# Create raw_fastq directory
 # ============================================================
 #
-# Project must already exist.
+# OWNER and PROJECT already passed validation.
 #
-# Only fastq/ may be created automatically.
+# Only raw_fastq/ is allowed to be created automatically.
 #
 # ============================================================
 
@@ -718,6 +737,14 @@ echo
 # ============================================================
 # FASTQ validation
 # ============================================================
+#
+# Validation:
+#
+#   1. Destination FASTQ exists.
+#   2. Source and destination file sizes match.
+#   3. gzip -t passes.
+#
+# ============================================================
 
 echo "========================================"
 echo "FASTQ validation"
@@ -745,7 +772,7 @@ while IFS= read -r FASTQ_NAME; do
 
 
     # --------------------------------------------------------
-    # Compare source and destination file sizes
+    # Compare source / destination sizes
     # --------------------------------------------------------
 
     SOURCE_SIZE="$(
@@ -764,7 +791,7 @@ while IFS= read -r FASTQ_NAME; do
 
 
     # --------------------------------------------------------
-    # Validate gzip integrity
+    # gzip integrity check
     # --------------------------------------------------------
 
     if ! gzip -t "$DEST_FILE"; then
