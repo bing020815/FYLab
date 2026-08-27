@@ -1,0 +1,619 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# ============================================================
+# FASTQ Import
+#
+# Safely copy FASTQ.gz files from a source directory
+# (e.g. mounted NAS / Vega output) into a personal workspace.
+#
+# Source files are NEVER deleted or modified.
+#
+# Usage:
+#
+#   All FASTQ:
+#     fastq-import --all SOURCE OWNER PROJECT
+#
+#   Selected samples:
+#     fastq-import --list SAMPLE_LIST SOURCE OWNER PROJECT
+#
+# Destination:
+#
+#   /home/adprc/workspaces/<OWNER>/<PROJECT>/fastq/
+#
+# Expected FASTQ naming:
+#
+#   <SampleID>.hifi_reads.fastq.gz
+#
+# ============================================================
+
+
+WORKSPACE_ROOT="/home/adprc/workspaces"
+
+MODE=""
+SAMPLE_LIST=""
+
+
+# ============================================================
+# Helpers
+# ============================================================
+
+usage() {
+    cat <<'EOF'
+
+FASTQ Import
+============
+
+Copy FASTQ.gz files into a personal analysis workspace.
+
+Usage:
+
+  All FASTQ files:
+
+    fastq-import --all SOURCE OWNER PROJECT
+
+
+  Selected Sample IDs:
+
+    fastq-import --list SAMPLE_LIST SOURCE OWNER PROJECT
+
+
+Examples:
+
+  fastq-import --all \
+    /home/vega_output/run/1_A01/hifi_reads/fastq \
+    Bing kmuh_CRC
+
+
+  fastq-import --list samples.txt \
+    /home/vega_output/run/1_A01/hifi_reads/fastq \
+    Bing kmuh_CRC
+
+
+Sample list format:
+
+  One Sample ID per line.
+
+  Example:
+
+    Sample001
+    Sample017
+    Sample038
+
+
+Expected FASTQ:
+
+  Sample001.hifi_reads.fastq.gz
+
+
+Destination:
+
+  /home/adprc/workspaces/<OWNER>/<PROJECT>/fastq/
+
+
+Safety:
+
+  - Source files are never deleted.
+  - Source files are never modified.
+  - rsync --delete is NOT used.
+  - Existing destination FASTQ files are not overwritten.
+
+EOF
+}
+
+
+die() {
+    echo
+    echo "ERROR: $*" >&2
+    echo
+    exit 1
+}
+
+
+format_duration() {
+    local seconds="$1"
+
+    printf '%02d:%02d:%02d' \
+        $((seconds / 3600)) \
+        $(((seconds % 3600) / 60)) \
+        $((seconds % 60))
+}
+
+
+# ============================================================
+# Parse arguments
+# ============================================================
+
+if [[ $# -lt 1 ]]; then
+    usage
+    exit 1
+fi
+
+
+case "$1" in
+
+    --all)
+        MODE="all"
+
+        if [[ $# -ne 4 ]]; then
+            usage
+            exit 1
+        fi
+
+        SOURCE="$2"
+        OWNER="$3"
+        PROJECT="$4"
+        ;;
+
+
+    --list)
+        MODE="list"
+
+        if [[ $# -ne 5 ]]; then
+            usage
+            exit 1
+        fi
+
+        SAMPLE_LIST="$2"
+        SOURCE="$3"
+        OWNER="$4"
+        PROJECT="$5"
+        ;;
+
+
+    -h|--help)
+        usage
+        exit 0
+        ;;
+
+
+    *)
+        die "Unknown option: $1"
+        ;;
+esac
+
+
+# ============================================================
+# Dependencies
+# ============================================================
+
+command -v rsync >/dev/null 2>&1 ||
+    die "rsync is not installed."
+
+command -v gzip >/dev/null 2>&1 ||
+    die "gzip is not installed."
+
+
+# ============================================================
+# Validate source
+# ============================================================
+
+[[ -d "$SOURCE" ]] ||
+    die "Source directory does not exist: $SOURCE"
+
+
+SOURCE="$(cd "$SOURCE" && pwd -P)"
+
+
+# ============================================================
+# Validate owner/project
+# ============================================================
+
+[[ "$OWNER" =~ ^[A-Za-z0-9._-]+$ ]] ||
+    die "Invalid owner name: $OWNER"
+
+[[ "$PROJECT" =~ ^[A-Za-z0-9._-]+$ ]] ||
+    die "Invalid project name: $PROJECT"
+
+
+OWNER_DIR="${WORKSPACE_ROOT}/${OWNER}"
+
+DEST_PROJECT="${OWNER_DIR}/${PROJECT}"
+
+DEST_FASTQ="${DEST_PROJECT}/fastq"
+
+
+# Do NOT silently create an unknown project.
+[[ -d "$OWNER_DIR" ]] ||
+    die "Workspace owner does not exist: $OWNER_DIR"
+
+[[ -d "$DEST_PROJECT" ]] ||
+    die "Project does not exist: $DEST_PROJECT"
+
+
+# ============================================================
+# Validate sample list
+# ============================================================
+
+if [[ "$MODE" == "list" ]]; then
+
+    [[ -f "$SAMPLE_LIST" ]] ||
+        die "Sample list does not exist: $SAMPLE_LIST"
+
+    SAMPLE_LIST="$(cd "$(dirname "$SAMPLE_LIST")" && pwd -P)/$(basename "$SAMPLE_LIST")"
+
+fi
+
+
+# ============================================================
+# Build import list
+# ============================================================
+
+TMP_DIR="$(mktemp -d)"
+
+trap 'rm -rf -- "$TMP_DIR"' EXIT
+
+FILE_LIST="${TMP_DIR}/files.txt"
+
+: > "$FILE_LIST"
+
+
+if [[ "$MODE" == "all" ]]; then
+
+    while IFS= read -r -d '' file; do
+        basename "$file"
+    done < <(
+        find "$SOURCE" \
+            -maxdepth 1 \
+            -type f \
+            -name "*.hifi_reads.fastq.gz" \
+            -print0
+    ) | sort > "$FILE_LIST"
+
+
+else
+
+    declare -A SEEN_SAMPLES=()
+
+    MISSING=0
+
+    while IFS= read -r SAMPLE || [[ -n "$SAMPLE" ]]; do
+
+        # Remove Windows CR if present.
+        SAMPLE="${SAMPLE%$'\r'}"
+
+        # Trim leading/trailing whitespace.
+        SAMPLE="$(
+            printf '%s' "$SAMPLE" |
+            sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+        )"
+
+        # Ignore blank lines.
+        [[ -z "$SAMPLE" ]] && continue
+
+        # Allow comments.
+        [[ "$SAMPLE" == \#* ]] && continue
+
+
+        if [[ -n "${SEEN_SAMPLES[$SAMPLE]+x}" ]]; then
+            echo "WARNING: Duplicate Sample ID ignored: $SAMPLE"
+            continue
+        fi
+
+        SEEN_SAMPLES["$SAMPLE"]=1
+
+
+        FASTQ_NAME="${SAMPLE}.hifi_reads.fastq.gz"
+
+        if [[ ! -f "${SOURCE}/${FASTQ_NAME}" ]]; then
+
+            echo "MISSING: ${FASTQ_NAME}" >&2
+
+            MISSING=$((MISSING + 1))
+
+            continue
+        fi
+
+
+        printf '%s\n' "$FASTQ_NAME" >> "$FILE_LIST"
+
+    done < "$SAMPLE_LIST"
+
+
+    if [[ "$MISSING" -gt 0 ]]; then
+        die "$MISSING requested FASTQ file(s) were not found. Nothing was copied."
+    fi
+
+fi
+
+
+FILE_COUNT=$(wc -l < "$FILE_LIST")
+
+FILE_COUNT="${FILE_COUNT//[[:space:]]/}"
+
+
+[[ "$FILE_COUNT" -gt 0 ]] ||
+    die "No FASTQ files selected for import."
+
+
+# ============================================================
+# Check destination conflicts
+# ============================================================
+
+CONFLICT_COUNT=0
+
+
+while IFS= read -r FASTQ_NAME; do
+
+    if [[ -e "${DEST_FASTQ}/${FASTQ_NAME}" ]]; then
+
+        echo "EXISTS: ${DEST_FASTQ}/${FASTQ_NAME}" >&2
+
+        CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+
+    fi
+
+done < "$FILE_LIST"
+
+
+if [[ "$CONFLICT_COUNT" -gt 0 ]]; then
+
+    die "$CONFLICT_COUNT destination FASTQ file(s) already exist. Existing files will not be overwritten."
+
+fi
+
+
+# ============================================================
+# Calculate source size
+# ============================================================
+
+TOTAL_BYTES=0
+
+
+while IFS= read -r FASTQ_NAME; do
+
+    SIZE=$(stat -c '%s' "${SOURCE}/${FASTQ_NAME}")
+
+    TOTAL_BYTES=$((TOTAL_BYTES + SIZE))
+
+done < "$FILE_LIST"
+
+
+if command -v numfmt >/dev/null 2>&1; then
+
+    TOTAL_HUMAN=$(numfmt --to=iec-i --suffix=B "$TOTAL_BYTES")
+
+else
+
+    TOTAL_HUMAN="${TOTAL_BYTES} bytes"
+
+fi
+
+
+# ============================================================
+# Summary
+# ============================================================
+
+echo
+echo "========================================"
+echo "FASTQ Import"
+echo "========================================"
+echo
+
+echo "Mode:"
+if [[ "$MODE" == "all" ]]; then
+    echo "  All FASTQ"
+else
+    echo "  Sample list"
+fi
+
+echo
+echo "Source:"
+echo "  $SOURCE"
+
+echo
+echo "Destination:"
+echo "  $DEST_FASTQ"
+
+echo
+echo "FASTQ files:"
+echo "  $FILE_COUNT"
+
+echo
+echo "Total size:"
+echo "  $TOTAL_HUMAN"
+
+if [[ "$MODE" == "list" ]]; then
+    echo
+    echo "Sample list:"
+    echo "  $SAMPLE_LIST"
+fi
+
+echo
+echo "Source protection:"
+echo "  READ/COPY ONLY"
+echo
+echo "Existing destination FASTQ:"
+echo "  WILL NOT OVERWRITE"
+
+echo
+
+
+# ============================================================
+# Create destination fastq directory
+# ============================================================
+
+mkdir -p "$DEST_FASTQ"
+
+
+# ============================================================
+# Manifest before transfer
+# ============================================================
+
+MANIFEST="${DEST_FASTQ}/fastq_import_manifest.tsv"
+
+START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+
+TRANSFER_START=$(date +%s)
+
+
+# ============================================================
+# rsync
+# ============================================================
+
+echo "========================================"
+echo "Starting rsync"
+echo "========================================"
+echo
+
+
+rsync \
+    -ah \
+    --info=progress2 \
+    --files-from="$FILE_LIST" \
+    --ignore-existing \
+    "${SOURCE}/" \
+    "${DEST_FASTQ}/"
+
+
+TRANSFER_END=$(date +%s)
+
+TRANSFER_SECONDS=$((TRANSFER_END - TRANSFER_START))
+
+
+echo
+echo "rsync completed."
+echo
+echo "Transfer runtime:"
+echo "  $(format_duration "$TRANSFER_SECONDS")"
+echo
+
+
+# ============================================================
+# Validation
+# ============================================================
+
+echo "========================================"
+echo "FASTQ validation"
+echo "========================================"
+echo
+
+
+VALIDATION_START=$(date +%s)
+
+VALIDATED=0
+
+
+while IFS= read -r FASTQ_NAME; do
+
+    SOURCE_FILE="${SOURCE}/${FASTQ_NAME}"
+
+    DEST_FILE="${DEST_FASTQ}/${FASTQ_NAME}"
+
+
+    [[ -f "$DEST_FILE" ]] ||
+        die "Destination FASTQ missing after rsync: $DEST_FILE"
+
+
+    SOURCE_SIZE=$(stat -c '%s' "$SOURCE_FILE")
+
+    DEST_SIZE=$(stat -c '%s' "$DEST_FILE")
+
+
+    if [[ "$SOURCE_SIZE" -ne "$DEST_SIZE" ]]; then
+
+        die "File size mismatch: $FASTQ_NAME"
+
+    fi
+
+
+    if ! gzip -t "$DEST_FILE"; then
+
+        die "gzip validation failed: $DEST_FILE"
+
+    fi
+
+
+    VALIDATED=$((VALIDATED + 1))
+
+done < "$FILE_LIST"
+
+
+VALIDATION_END=$(date +%s)
+
+VALIDATION_SECONDS=$((VALIDATION_END - VALIDATION_START))
+
+
+echo
+echo "Validated FASTQ files:"
+echo "  $VALIDATED"
+
+echo
+echo "Validation runtime:"
+echo "  $(format_duration "$VALIDATION_SECONDS")"
+
+echo
+
+
+# ============================================================
+# Write manifest
+# ============================================================
+
+END_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+
+
+{
+    printf 'sample_id\tfastq\tsource\tdestination\tsize_bytes\n'
+
+    while IFS= read -r FASTQ_NAME; do
+
+        SAMPLE_ID="${FASTQ_NAME%.hifi_reads.fastq.gz}"
+
+        SIZE=$(stat -c '%s' "${DEST_FASTQ}/${FASTQ_NAME}")
+
+        printf '%s\t%s\t%s\t%s\t%s\n' \
+            "$SAMPLE_ID" \
+            "$FASTQ_NAME" \
+            "${SOURCE}/${FASTQ_NAME}" \
+            "${DEST_FASTQ}/${FASTQ_NAME}" \
+            "$SIZE"
+
+    done < "$FILE_LIST"
+
+} > "$MANIFEST"
+
+
+# ============================================================
+# Complete
+# ============================================================
+
+TOTAL_END=$(date +%s)
+
+TOTAL_SECONDS=$((TOTAL_END - TRANSFER_START))
+
+
+echo "========================================"
+echo "FASTQ import completed successfully"
+echo "========================================"
+echo
+
+echo "Start:"
+echo "  $START_TIME"
+
+echo
+echo "End:"
+echo "  $END_TIME"
+
+echo
+echo "Imported:"
+echo "  $VALIDATED FASTQ files"
+
+echo
+echo "Destination:"
+echo "  $DEST_FASTQ"
+
+echo
+echo "Manifest:"
+echo "  $MANIFEST"
+
+echo
+echo "Runtime:"
+echo "  Transfer:   $(format_duration "$TRANSFER_SECONDS")"
+echo "  Validation: $(format_duration "$VALIDATION_SECONDS")"
+echo "  Total:      $(format_duration "$TOTAL_SECONDS")"
+
+echo
+echo "NAS/source files:"
+echo "  NOT MODIFIED"
+echo
