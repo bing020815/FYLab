@@ -74,8 +74,63 @@ nextflow run main.nf --download_db
 prepare_project "owner_name" "project_name"
 ```
 
-## fastq檔案上傳資料夾
+## [option1] fastq檔案上傳資料夾 
 * 將fastq透過`File WINSCP`或是`Filezilla`工具上傳至專案資料夾
+
+## [option2] 使用工具移動下機fastq資料
+### Step1. 確認fastq是在哪批`run`, ex: `r21201_20260820_071510`
+```bash
+## fastq檔案通常會放在 ##
+/home/vega_output/r21201_20260820_071510/1_A01/hifi_reads/fastq
+  ├── Sample001.hifi_reads.fastq.gz
+  ├── Sample002.hifi_reads.fastq.gz
+  ├── ...
+  └── Sample150.hifi_reads.fastq.gz
+```
+
+### Step2. 使用`fastq-import`工具來移動複製fastq檔案
+* 工具使用可以整批run移動複製、依據清單複製
+* `fastq-import --all "source_fasq_folder" "owner_name" "project_name"`
+* `fastq-import --list "samplesID list file" "source_fasq_folder" "owner_name" "project_name"`
+
+<details>
+<summary><strong>移動整批run</strong></summary>
+ 
+```bash
+fastq-import --all \
+  "/home/vega_output/<run_number>/1_A01/hifi_reads/fastq" \
+  <project_owner> \
+  <project_name>
+```
+</details>
+
+
+<details>
+<summary><strong>依照清單ID移動整批run</strong></summary>
+* 需要提供SampleID清單的`samples.txt` 
+* SampleID 不能有空格
+```
+# CRC samples
+CRC001
+CRC002
+CRC003
+
+# Additional samples
+CRC017
+CRC105
+```
+
+
+執行移動複製清單fastq   
+```
+fastq-import --list samples.txt \
+  "/home/vega_output/<run_number>/1_A01/hifi_reads/fastq" \
+  <project_owner> \
+  <project_name>
+```
+</details>
+
+
 
 ## 基本專案資料結構
 * raw_fastq/：原始 PacBio `.fastq.gz`
@@ -101,7 +156,7 @@ project_name/
 conda activate pacbio16s
 ```
 
-## Step2. 所有 PacBio `.fastq.gz` 放入 raw_fastq/，並確認：
+## Step2. 確認所有 `.fastq.gz` 放入 `raw_fastq/`：
 ```bash
 ls raw_fastq/*.fastq.gz
 ```
