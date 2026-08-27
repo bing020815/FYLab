@@ -78,7 +78,7 @@ prepare_project "owner_name" "project_name"
 * 將fastq透過`File WINSCP`或是`Filezilla`工具上傳至專案資料夾
 
 ## [option2] 使用工具移動下機fastq資料
-### Step1. 確認fastq是在哪批`run`, ex: `r21201_20260820_071510`
+### Step-1. 確認fastq是在哪批`run`, ex: `r21201_20260820_071510`
 ```bash
 ## fastq檔案通常會放在 ##
 /home/vega_output/r21201_20260820_071510/1_A01/hifi_reads/fastq
@@ -88,7 +88,7 @@ prepare_project "owner_name" "project_name"
   └── Sample150.hifi_reads.fastq.gz
 ```
 
-### Step2. 使用`fastq-import`工具來移動複製fastq檔案
+### Step-2. 使用`fastq-import`工具來移動複製fastq檔案
 * 工具使用可以整批run移動複製、依據清單複製
 * `fastq-import --all "source_fasq_folder" "owner_name" "project_name"`
 * `fastq-import --list "samplesID list file" "source_fasq_folder" "owner_name" "project_name"`
@@ -130,7 +130,6 @@ fastq-import --list samples.txt \
 ```
 
 </details>
-
 
 
 ## 基本專案資料結構
