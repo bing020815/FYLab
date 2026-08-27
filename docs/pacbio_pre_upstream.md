@@ -107,6 +107,7 @@ fastq-import --all \
 
 <details>
 <summary><strong>依照清單ID移動整批run</strong></summary>
+        
 * 需要提供SampleID清單的`samples.txt` 
 * SampleID 不能有空格
 ```
@@ -120,7 +121,6 @@ CRC017
 CRC105
 ```
 
-
 執行移動複製清單fastq   
 ```
 fastq-import --list samples.txt \
@@ -128,6 +128,7 @@ fastq-import --list samples.txt \
   <project_owner> \
   <project_name>
 ```
+
 </details>
 
 
