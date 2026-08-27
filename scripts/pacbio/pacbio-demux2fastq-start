@@ -113,7 +113,8 @@ fi
 # Check core script
 # ------------------------------------------------------------
 
-CORE_SCRIPT="$HOME/scripts/pacbio_demux2fastq.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CORE_SCRIPT="${SCRIPT_DIR}/pacbio_demux2fastq.sh"
 
 if [[ ! -x "$CORE_SCRIPT" ]]; then
     echo "ERROR:"
