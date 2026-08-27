@@ -75,7 +75,7 @@ Lima demultiplexed BAM
 # 轉檔Fastq
 移動到指定 run 的 `hifi_reads.bam` 所在的資料夾
 ```bash
-cd [/home/vega_output/run/1_A01/hifi_reads]
+cd "/home/vega_output/<run_number>/1_A01/hifi_reads"
 ```
 
 執行轉檔腳本指令
