@@ -8,16 +8,25 @@ set -euo pipefail
 #   1. table.qza -> feature-table.biom -> otu_table.tsv
 #   2. rep-seqs.qza -> dna-sequences.fasta
 #   3. taxonomy.qza / taxonomy.tsv -> taxonomy.tsv
-#   4. 從 logs/latest_taxonomy.status 反查 taxonomy 執行方式
-#   5. classify-sklearn：
-#        - 取得實際 classifier
-#        - 計算 SHA256
-#        - 從全域 classifier_manifest.tsv 查 reference DB Metadata
-#   6. classify-consensus-vsearch：
-#        - 記錄 reference reads / taxonomy
-#   7. 建立：
-#        phyloseq/taxonomy_source.txt
-#        phyloseq/analysis_metadata.txt
+#
+#   4. 從 logs/latest_denoise.status 反查 DADA2 設定
+#      - denoise-paired
+#      - denoise-single
+#
+#   5. 從 logs/latest_taxonomy.status 反查 taxonomy 執行方式
+#
+#   6. classify-sklearn：
+#      - classifier path
+#      - SHA256
+#      - classifier_manifest.tsv
+#
+#   7. classify-consensus-vsearch：
+#      - reference reads
+#      - reference taxonomy
+#
+#   8. 建立：
+#      phyloseq/taxonomy_source.txt
+#      phyloseq/analysis_metadata.txt
 #
 # 使用：
 #   ./shell_tools/export_table_qza_to_phyloseq.sh
@@ -47,6 +56,8 @@ OUTDIR_NAME="${OUTDIR_NAME:-phyloseq}"
 OUTDIR="${PROJECT_DIR}/${OUTDIR_NAME}"
 
 LOG_DIR="${PROJECT_DIR}/logs"
+
+LATEST_DENOISE_STATUS="${LOG_DIR}/latest_denoise.status"
 LATEST_TAXONOMY_STATUS="${LOG_DIR}/latest_taxonomy.status"
 
 CLASSIFIER_MANIFEST="${CLASSIFIER_MANIFEST:-/home/adprc/classifier/classifier_manifest.tsv}"
@@ -135,8 +146,10 @@ extract_cmd_argument() {
             for (i = 1; i <= NF; i++) {
                 if ($i == target && i < NF) {
                     value = $(i + 1)
+
                     gsub(/^["'\''"]/, "", value)
                     gsub(/["'\''"]$/, "", value)
+
                     print value
                     exit
                 }
@@ -156,11 +169,6 @@ prepare_taxonomy_source() {
     TAXONOMY_SOURCE_TYPE=""
     TAXONOMY_SOURCE_FILE=""
     TAXONOMY_INPUT=""
-
-
-    # --------------------------------------------------------
-    # Existing project taxonomy_source.txt
-    # --------------------------------------------------------
 
     if [ -f "${PROJECT_TAXONOMY_SOURCE}" ]; then
 
@@ -187,10 +195,6 @@ prepare_taxonomy_source() {
         fi
     fi
 
-
-    # --------------------------------------------------------
-    # Fallback
-    # --------------------------------------------------------
 
     if [ -z "${TAXONOMY_INPUT}" ]; then
 
@@ -228,7 +232,7 @@ prepare_taxonomy_source() {
 
 
 # ============================================================
-# Export table.qza
+# Export table
 # ============================================================
 
 export_table_and_biom() {
@@ -322,14 +326,168 @@ prepare_taxonomy_tsv() {
 
 
 # ============================================================
+# Denoise provenance
+# ============================================================
+
+infer_denoise_provenance() {
+
+    DENOISE_METHOD="unknown"
+
+    DENOISE_JOB_STATUS="unknown"
+    DENOISE_JOB_NAME=""
+    DENOISE_JOB_ID=""
+    DENOISE_JOB_START=""
+    DENOISE_JOB_END=""
+
+    DENOISE_CMD=""
+
+    DENOISE_INPUT=""
+
+    DENOISE_TRIM_LEFT=""
+    DENOISE_TRUNC_LEN=""
+
+    DENOISE_TRIM_LEFT_F=""
+    DENOISE_TRIM_LEFT_R=""
+    DENOISE_TRUNC_LEN_F=""
+    DENOISE_TRUNC_LEN_R=""
+
+    DENOISE_THREADS=""
+
+
+    if [ ! -f "${LATEST_DENOISE_STATUS}" ]; then
+
+        echo "[WARN] 找不到 ${LATEST_DENOISE_STATUS}"
+        echo "[WARN] denoise provenance 將不完整"
+
+        return
+    fi
+
+
+    DENOISE_JOB_STATUS="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "status"
+    )"
+
+    DENOISE_JOB_NAME="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "job_name"
+    )"
+
+    DENOISE_JOB_ID="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "job_id"
+    )"
+
+    DENOISE_JOB_START="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "start_time"
+    )"
+
+    DENOISE_JOB_END="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "end_time"
+    )"
+
+    DENOISE_CMD="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "cmd_full"
+    )"
+
+
+    # ========================================================
+    # DADA2 paired
+    # ========================================================
+
+    if [[ "${DENOISE_CMD}" == *"dada2 denoise-paired"* ]]; then
+
+        DENOISE_METHOD="dada2-paired"
+
+        DENOISE_INPUT="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--i-demultiplexed-seqs"
+        )"
+
+        DENOISE_TRIM_LEFT_F="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-trim-left-f"
+        )"
+
+        DENOISE_TRIM_LEFT_R="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-trim-left-r"
+        )"
+
+        DENOISE_TRUNC_LEN_F="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-trunc-len-f"
+        )"
+
+        DENOISE_TRUNC_LEN_R="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-trunc-len-r"
+        )"
+
+        DENOISE_THREADS="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-n-threads"
+        )"
+
+
+    # ========================================================
+    # DADA2 single
+    # ========================================================
+
+    elif [[ "${DENOISE_CMD}" == *"dada2 denoise-single"* ]]; then
+
+        DENOISE_METHOD="dada2-single"
+
+        DENOISE_INPUT="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--i-demultiplexed-seqs"
+        )"
+
+        DENOISE_TRIM_LEFT="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-trim-left"
+        )"
+
+        DENOISE_TRUNC_LEN="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-trunc-len"
+        )"
+
+        DENOISE_THREADS="$(
+            extract_cmd_argument \
+                "${DENOISE_CMD}" \
+                "--p-n-threads"
+        )"
+
+
+    else
+
+        echo "[WARN] 無法辨識 denoise command 類型"
+
+    fi
+}
+
+
+# ============================================================
 # Classifier manifest lookup
-#
-# 使用 Python csv 解析 TSV。
-#
-# Match priority：
-#   1. classifier_path 完全一致
-#   2. classifier_file + qiime_env_name
-#
 # ============================================================
 
 lookup_classifier_manifest() {
@@ -395,12 +553,12 @@ with open(
         rows.append(cleaned)
 
 
-# ============================================================
-# Priority 1:
-# classifier_path exact match
-# ============================================================
-
 match = None
+
+
+# ------------------------------------------------------------
+# Priority 1: classifier_path exact match
+# ------------------------------------------------------------
 
 for row in rows:
 
@@ -409,10 +567,9 @@ for row in rows:
         break
 
 
-# ============================================================
-# Priority 2:
-# classifier_file + qiime_env_name
-# ============================================================
+# ------------------------------------------------------------
+# Priority 2: filename + env
+# ------------------------------------------------------------
 
 if match is None:
 
@@ -468,7 +625,6 @@ keys = [
 ]
 
 
-# 一欄一行輸出，避免 shell tab parsing 問題
 for key in keys:
     print(match.get(key, ""))
 
@@ -485,15 +641,10 @@ PY
     fi
 
 
-    # --------------------------------------------------------
-    # 一行對一個變數
-    # --------------------------------------------------------
-
     mapfile -t MANIFEST_VALUES <<< "${lookup_output}"
 
 
     if [ "${#MANIFEST_VALUES[@]}" -lt 10 ]; then
-
         echo "[WARN] classifier manifest 欄位數不足"
         return 1
     fi
@@ -517,7 +668,7 @@ PY
 
 
 # ============================================================
-# Infer taxonomy provenance
+# Taxonomy provenance
 # ============================================================
 
 infer_taxonomy_provenance() {
@@ -550,10 +701,6 @@ infer_taxonomy_provenance() {
     SKLEARN_VERSION=""
     TRAINING_TYPE=""
 
-
-    # --------------------------------------------------------
-    # Read latest taxonomy status
-    # --------------------------------------------------------
 
     if [ ! -f "${LATEST_TAXONOMY_STATUS}" ]; then
 
@@ -601,11 +748,6 @@ infer_taxonomy_provenance() {
     )"
 
 
-    if [ "${TAXONOMY_JOB_STATUS}" != "completed" ]; then
-        echo "[WARN] latest taxonomy job status=${TAXONOMY_JOB_STATUS}"
-    fi
-
-
     # ========================================================
     # classify-sklearn
     # ========================================================
@@ -613,7 +755,6 @@ infer_taxonomy_provenance() {
     if [[ "${TAXONOMY_CMD}" == *"classify-sklearn"* ]]; then
 
         TAXONOMY_METHOD="classify-sklearn"
-
 
         CLASSIFIER_PATH="$(
             extract_cmd_argument \
@@ -652,13 +793,11 @@ infer_taxonomy_provenance() {
 
         TAXONOMY_METHOD="classify-consensus-vsearch"
 
-
         REFERENCE_READS="$(
             extract_cmd_argument \
                 "${TAXONOMY_CMD}" \
                 "--i-reference-reads"
         )"
-
 
         REFERENCE_TAXONOMY="$(
             extract_cmd_argument \
@@ -666,10 +805,6 @@ infer_taxonomy_provenance() {
                 "--i-reference-taxonomy"
         )"
 
-
-    # ========================================================
-    # Unknown
-    # ========================================================
 
     else
 
@@ -681,23 +816,9 @@ infer_taxonomy_provenance() {
 
 # ============================================================
 # taxonomy_source.txt
-#
-# 依 taxonomy method 分流：
-#
-# classify-sklearn
-#   -> classifier/model provenance
-#
-# classify-consensus-vsearch
-#   -> reference reads/taxonomy provenance
-#
-# 不輸出不適用的空白欄位。
 # ============================================================
 
 write_taxonomy_source() {
-
-    # --------------------------------------------------------
-    # Common provenance
-    # --------------------------------------------------------
 
     cat > "${PHYLOSEQ_TAXONOMY_SOURCE}" <<EOF
 taxonomy_mode=${TAXONOMY_MODE}
@@ -713,10 +834,6 @@ taxonomy_job_start=${TAXONOMY_JOB_START}
 taxonomy_job_end=${TAXONOMY_JOB_END}
 EOF
 
-
-    # --------------------------------------------------------
-    # classify-sklearn
-    # --------------------------------------------------------
 
     if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
 
@@ -740,10 +857,6 @@ sklearn_version=${SKLEARN_VERSION}
 EOF
 
 
-    # --------------------------------------------------------
-    # classify-consensus-vsearch
-    # --------------------------------------------------------
-
     elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
 
         cat >> "${PHYLOSEQ_TAXONOMY_SOURCE}" <<EOF
@@ -758,20 +871,12 @@ EOF
 
 # ============================================================
 # analysis_metadata.txt
-#
-# 這份檔案描述整個 phyloseq downstream analysis 狀態。
-#
-# taxonomy_source.txt：
-#   taxonomy provenance
-#
-# analysis_metadata.txt：
-#   downstream analysis provenance
 # ============================================================
 
 write_analysis_metadata() {
 
     # --------------------------------------------------------
-    # General metadata
+    # General
     # --------------------------------------------------------
 
     cat > "${ANALYSIS_METADATA}" <<EOF
@@ -779,15 +884,67 @@ metadata_version=1
 
 phyloseq_exported_at=$(date --iso-8601=seconds)
 phyloseq_export_env=${CONDA_DEFAULT_ENV:-unknown}
+EOF
+
+
+    # ========================================================
+    # Denoise
+    # ========================================================
+
+    cat >> "${ANALYSIS_METADATA}" <<EOF
+
+denoise_method=${DENOISE_METHOD}
+denoise_job_status=${DENOISE_JOB_STATUS}
+denoise_job_name=${DENOISE_JOB_NAME}
+denoise_job_id=${DENOISE_JOB_ID}
+denoise_job_start=${DENOISE_JOB_START}
+denoise_job_end=${DENOISE_JOB_END}
+denoise_input=${DENOISE_INPUT}
+EOF
+
+
+    # --------------------------------------------------------
+    # DADA2 paired
+    # --------------------------------------------------------
+
+    if [ "${DENOISE_METHOD}" = "dada2-paired" ]; then
+
+        cat >> "${ANALYSIS_METADATA}" <<EOF
+
+denoise_trim_left_f=${DENOISE_TRIM_LEFT_F}
+denoise_trim_left_r=${DENOISE_TRIM_LEFT_R}
+denoise_trunc_len_f=${DENOISE_TRUNC_LEN_F}
+denoise_trunc_len_r=${DENOISE_TRUNC_LEN_R}
+denoise_threads=${DENOISE_THREADS}
+EOF
+
+
+    # --------------------------------------------------------
+    # DADA2 single
+    # --------------------------------------------------------
+
+    elif [ "${DENOISE_METHOD}" = "dada2-single" ]; then
+
+        cat >> "${ANALYSIS_METADATA}" <<EOF
+
+denoise_trim_left=${DENOISE_TRIM_LEFT}
+denoise_trunc_len=${DENOISE_TRUNC_LEN}
+denoise_threads=${DENOISE_THREADS}
+EOF
+
+    fi
+
+
+    # ========================================================
+    # Taxonomy
+    # ========================================================
+
+    cat >> "${ANALYSIS_METADATA}" <<EOF
 
 taxonomy_method=${TAXONOMY_METHOD}
 taxonomy_job_status=${TAXONOMY_JOB_STATUS}
 EOF
 
-
-    # --------------------------------------------------------
-    # classify-sklearn
-    # --------------------------------------------------------
 
     if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
 
@@ -811,10 +968,6 @@ taxonomy_sklearn_version=${SKLEARN_VERSION}
 EOF
 
 
-    # --------------------------------------------------------
-    # classify-consensus-vsearch
-    # --------------------------------------------------------
-
     elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
 
         cat >> "${ANALYSIS_METADATA}" <<EOF
@@ -826,9 +979,9 @@ EOF
     fi
 
 
-    # --------------------------------------------------------
-    # Downstream processing
-    # --------------------------------------------------------
+    # ========================================================
+    # Downstream
+    # ========================================================
 
     cat >> "${ANALYSIS_METADATA}" <<EOF
 
@@ -845,6 +998,36 @@ show_provenance() {
 
     echo
     echo "============================================================"
+    echo " Denoise provenance"
+    echo "============================================================"
+
+    echo "[INFO] method              = ${DENOISE_METHOD}"
+    echo "[INFO] denoise job         = ${DENOISE_JOB_NAME:-unknown}"
+    echo "[INFO] denoise status      = ${DENOISE_JOB_STATUS}"
+
+
+    if [ "${DENOISE_METHOD}" = "dada2-paired" ]; then
+
+        echo "[INFO] trim-left F         = ${DENOISE_TRIM_LEFT_F:-unknown}"
+        echo "[INFO] trim-left R         = ${DENOISE_TRIM_LEFT_R:-unknown}"
+
+        echo "[INFO] trunc-len F         = ${DENOISE_TRUNC_LEN_F:-unknown}"
+        echo "[INFO] trunc-len R         = ${DENOISE_TRUNC_LEN_R:-unknown}"
+
+        echo "[INFO] threads             = ${DENOISE_THREADS:-unknown}"
+
+
+    elif [ "${DENOISE_METHOD}" = "dada2-single" ]; then
+
+        echo "[INFO] trim-left           = ${DENOISE_TRIM_LEFT:-unknown}"
+        echo "[INFO] trunc-len           = ${DENOISE_TRUNC_LEN:-unknown}"
+        echo "[INFO] threads             = ${DENOISE_THREADS:-unknown}"
+
+    fi
+
+
+    echo
+    echo "============================================================"
     echo " Taxonomy provenance"
     echo "============================================================"
 
@@ -852,10 +1035,6 @@ show_provenance() {
     echo "[INFO] taxonomy job        = ${TAXONOMY_JOB_NAME:-unknown}"
     echo "[INFO] taxonomy status     = ${TAXONOMY_JOB_STATUS}"
 
-
-    # --------------------------------------------------------
-    # classify-sklearn
-    # --------------------------------------------------------
 
     if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
 
@@ -876,10 +1055,6 @@ show_provenance() {
         echo "[INFO] sklearn version     = ${SKLEARN_VERSION:-unknown}"
 
 
-    # --------------------------------------------------------
-    # classify-consensus-vsearch
-    # --------------------------------------------------------
-
     elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
 
         echo "[INFO] reference reads     = ${REFERENCE_READS:-unknown}"
@@ -898,10 +1073,6 @@ show_provenance() {
 
 main() {
 
-    # --------------------------------------------------------
-    # Environment checks
-    # --------------------------------------------------------
-
     check_cmd \
         "qiime" \
         "請先啟用 QIIME2 環境，例如：conda activate ${QIIME_ENV_NAME}"
@@ -915,52 +1086,37 @@ main() {
         "目前環境需要 Python 才能解析 classifier_manifest.tsv"
 
 
-    # --------------------------------------------------------
-    # Input checks
-    # --------------------------------------------------------
-
     check_file "${TABLE_QZA}"
     check_file "${REPSEQS_QZA}"
 
 
-    # --------------------------------------------------------
-    # Determine taxonomy source
-    # --------------------------------------------------------
-
     prepare_taxonomy_source
-
-
-    # --------------------------------------------------------
-    # Output directory
-    # --------------------------------------------------------
 
     mkdir -p "${OUTDIR}"
 
-
-    # --------------------------------------------------------
-    # Run information
-    # --------------------------------------------------------
 
     echo
     echo "[INFO] PROJECT_DIR          = ${PROJECT_DIR}"
     echo "[INFO] OUTPUT_DIR           = ${OUTDIR}"
     echo "[INFO] CURRENT_ENV          = ${CONDA_DEFAULT_ENV:-unknown}"
     echo "[INFO] TIMEZONE             = ${TIMEZONE}"
+    echo "[INFO] DENOISE_STATUS       = ${LATEST_DENOISE_STATUS}"
     echo "[INFO] TAXONOMY_SOURCE      = ${TAXONOMY_INPUT}"
     echo "[INFO] CLASSIFIER_MANIFEST  = ${CLASSIFIER_MANIFEST}"
 
 
     # --------------------------------------------------------
-    # Taxonomy provenance
+    # Provenance
     # --------------------------------------------------------
 
+    infer_denoise_provenance
     infer_taxonomy_provenance
 
     show_provenance
 
 
     # --------------------------------------------------------
-    # Export QIIME2 artifacts
+    # Export
     # --------------------------------------------------------
 
     export_table_and_biom
@@ -975,10 +1131,6 @@ main() {
     write_taxonomy_source
     write_analysis_metadata
 
-
-    # --------------------------------------------------------
-    # Completed
-    # --------------------------------------------------------
 
     echo
     echo "============================================================"
