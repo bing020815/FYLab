@@ -20,7 +20,11 @@ set -euo pipefail
 #        phyloseq/analysis_metadata.txt
 #
 # 使用：
-#   ./shell_tools/export_table_qza_to_phyloseq.sh .
+#   ./shell_tools/export_table_qza_to_phyloseq.sh
+#
+# 或：
+#   ./shell_tools/export_table_qza_to_phyloseq.sh /path/to/project
+#
 # ============================================================
 
 
@@ -153,6 +157,11 @@ prepare_taxonomy_source() {
     TAXONOMY_SOURCE_FILE=""
     TAXONOMY_INPUT=""
 
+
+    # --------------------------------------------------------
+    # Existing project taxonomy_source.txt
+    # --------------------------------------------------------
+
     if [ -f "${PROJECT_TAXONOMY_SOURCE}" ]; then
 
         TAXONOMY_MODE="$(
@@ -179,7 +188,10 @@ prepare_taxonomy_source() {
     fi
 
 
-    # fallback
+    # --------------------------------------------------------
+    # Fallback
+    # --------------------------------------------------------
+
     if [ -z "${TAXONOMY_INPUT}" ]; then
 
         if [ -f "${TAXONOMY_QZA}" ]; then
@@ -312,8 +324,12 @@ prepare_taxonomy_tsv() {
 # ============================================================
 # Classifier manifest lookup
 #
-# 使用 Python csv 模組解析 TSV。
-# 不再依賴 awk 對 \t / field splitting 的實作差異。
+# 使用 Python csv 解析 TSV。
+#
+# Match priority：
+#   1. classifier_path 完全一致
+#   2. classifier_file + qiime_env_name
+#
 # ============================================================
 
 lookup_classifier_manifest() {
@@ -321,6 +337,7 @@ lookup_classifier_manifest() {
     local classifier_path="$1"
     local classifier_file
     local lookup_output
+    local lookup_status
 
     classifier_file="$(basename "${classifier_path}")"
 
@@ -335,12 +352,15 @@ lookup_classifier_manifest() {
     fi
 
 
+    set +e
+
     lookup_output="$(
         python - \
             "${CLASSIFIER_MANIFEST}" \
             "${classifier_path}" \
             "${classifier_file}" \
             "${CONDA_DEFAULT_ENV:-}" <<'PY'
+
 import csv
 import sys
 
@@ -368,16 +388,17 @@ with open(
     for row in reader:
 
         cleaned = {
-            (k or "").strip(): (v or "").strip()
-            for k, v in row.items()
+            (key or "").strip(): (value or "").strip()
+            for key, value in row.items()
         }
 
         rows.append(cleaned)
 
 
-# ------------------------------------------------------------
-# 第一優先：classifier_path 完全一致
-# ------------------------------------------------------------
+# ============================================================
+# Priority 1:
+# classifier_path exact match
+# ============================================================
 
 match = None
 
@@ -388,9 +409,10 @@ for row in rows:
         break
 
 
-# ------------------------------------------------------------
-# 第二優先：classifier_file + qiime_env_name
-# ------------------------------------------------------------
+# ============================================================
+# Priority 2:
+# classifier_file + qiime_env_name
+# ============================================================
 
 if match is None:
 
@@ -403,8 +425,11 @@ if match is None:
         )
     ]
 
+
     if len(candidates) == 1:
+
         match = candidates[0]
+
 
     elif len(candidates) > 1:
 
@@ -443,11 +468,21 @@ keys = [
 ]
 
 
-# 一欄一行，避免 shell tab parsing 問題
+# 一欄一行輸出，避免 shell tab parsing 問題
 for key in keys:
     print(match.get(key, ""))
+
 PY
-    )" || return $?
+    )"
+
+    lookup_status=$?
+
+    set -e
+
+
+    if [ "${lookup_status}" -ne 0 ]; then
+        return "${lookup_status}"
+    fi
 
 
     # --------------------------------------------------------
@@ -515,6 +550,10 @@ infer_taxonomy_provenance() {
     SKLEARN_VERSION=""
     TRAINING_TYPE=""
 
+
+    # --------------------------------------------------------
+    # Read latest taxonomy status
+    # --------------------------------------------------------
 
     if [ ! -f "${LATEST_TAXONOMY_STATUS}" ]; then
 
@@ -600,6 +639,7 @@ infer_taxonomy_provenance() {
 
                 echo "[WARN] classifier manifest 找不到對應 model："
                 echo "[WARN] ${CLASSIFIER_PATH}"
+
             fi
         fi
 
@@ -627,18 +667,37 @@ infer_taxonomy_provenance() {
         )"
 
 
+    # ========================================================
+    # Unknown
+    # ========================================================
+
     else
 
         echo "[WARN] 無法辨識 taxonomy command 類型"
+
     fi
 }
 
 
 # ============================================================
 # taxonomy_source.txt
+#
+# 依 taxonomy method 分流：
+#
+# classify-sklearn
+#   -> classifier/model provenance
+#
+# classify-consensus-vsearch
+#   -> reference reads/taxonomy provenance
+#
+# 不輸出不適用的空白欄位。
 # ============================================================
 
 write_taxonomy_source() {
+
+    # --------------------------------------------------------
+    # Common provenance
+    # --------------------------------------------------------
 
     cat > "${PHYLOSEQ_TAXONOMY_SOURCE}" <<EOF
 taxonomy_mode=${TAXONOMY_MODE}
@@ -652,6 +711,16 @@ taxonomy_job_name=${TAXONOMY_JOB_NAME}
 taxonomy_job_id=${TAXONOMY_JOB_ID}
 taxonomy_job_start=${TAXONOMY_JOB_START}
 taxonomy_job_end=${TAXONOMY_JOB_END}
+EOF
+
+
+    # --------------------------------------------------------
+    # classify-sklearn
+    # --------------------------------------------------------
+
+    if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
+
+        cat >> "${PHYLOSEQ_TAXONOMY_SOURCE}" <<EOF
 
 reference_db=${DB_FAMILY}
 reference_db_key=${DB_KEY}
@@ -664,22 +733,46 @@ classifier_path=${CLASSIFIER_PATH}
 classifier_sha256=${CLASSIFIER_SHA256}
 classifier_training_type=${TRAINING_TYPE}
 
-reference_reads=${REFERENCE_READS}
-reference_taxonomy=${REFERENCE_TAXONOMY}
-
 qiime_release=${QIIME_RELEASE}
 qiime_version=${QIIME_VERSION}
 qiime_env_name=${QIIME_ENV}
 sklearn_version=${SKLEARN_VERSION}
 EOF
+
+
+    # --------------------------------------------------------
+    # classify-consensus-vsearch
+    # --------------------------------------------------------
+
+    elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
+
+        cat >> "${PHYLOSEQ_TAXONOMY_SOURCE}" <<EOF
+
+reference_reads=${REFERENCE_READS}
+reference_taxonomy=${REFERENCE_TAXONOMY}
+EOF
+
+    fi
 }
 
 
 # ============================================================
 # analysis_metadata.txt
+#
+# 這份檔案描述整個 phyloseq downstream analysis 狀態。
+#
+# taxonomy_source.txt：
+#   taxonomy provenance
+#
+# analysis_metadata.txt：
+#   downstream analysis provenance
 # ============================================================
 
 write_analysis_metadata() {
+
+    # --------------------------------------------------------
+    # General metadata
+    # --------------------------------------------------------
 
     cat > "${ANALYSIS_METADATA}" <<EOF
 metadata_version=1
@@ -689,6 +782,16 @@ phyloseq_export_env=${CONDA_DEFAULT_ENV:-unknown}
 
 taxonomy_method=${TAXONOMY_METHOD}
 taxonomy_job_status=${TAXONOMY_JOB_STATUS}
+EOF
+
+
+    # --------------------------------------------------------
+    # classify-sklearn
+    # --------------------------------------------------------
+
+    if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
+
+        cat >> "${ANALYSIS_METADATA}" <<EOF
 
 reference_db=${DB_FAMILY}
 reference_db_key=${DB_KEY}
@@ -705,9 +808,29 @@ taxonomy_qiime_release=${QIIME_RELEASE}
 taxonomy_qiime_version=${QIIME_VERSION}
 taxonomy_qiime_env=${QIIME_ENV}
 taxonomy_sklearn_version=${SKLEARN_VERSION}
+EOF
+
+
+    # --------------------------------------------------------
+    # classify-consensus-vsearch
+    # --------------------------------------------------------
+
+    elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
+
+        cat >> "${ANALYSIS_METADATA}" <<EOF
 
 reference_reads=${REFERENCE_READS}
 reference_taxonomy=${REFERENCE_TAXONOMY}
+EOF
+
+    fi
+
+
+    # --------------------------------------------------------
+    # Downstream processing
+    # --------------------------------------------------------
+
+    cat >> "${ANALYSIS_METADATA}" <<EOF
 
 dehost_performed=false
 EOF
@@ -730,6 +853,10 @@ show_provenance() {
     echo "[INFO] taxonomy status     = ${TAXONOMY_JOB_STATUS}"
 
 
+    # --------------------------------------------------------
+    # classify-sklearn
+    # --------------------------------------------------------
+
     if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
 
         echo "[INFO] classifier          = ${CLASSIFIER_FILE:-unknown}"
@@ -749,10 +876,15 @@ show_provenance() {
         echo "[INFO] sklearn version     = ${SKLEARN_VERSION:-unknown}"
 
 
+    # --------------------------------------------------------
+    # classify-consensus-vsearch
+    # --------------------------------------------------------
+
     elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
 
         echo "[INFO] reference reads     = ${REFERENCE_READS:-unknown}"
         echo "[INFO] reference taxonomy  = ${REFERENCE_TAXONOMY:-unknown}"
+
     fi
 
 
@@ -765,6 +897,10 @@ show_provenance() {
 # ============================================================
 
 main() {
+
+    # --------------------------------------------------------
+    # Environment checks
+    # --------------------------------------------------------
 
     check_cmd \
         "qiime" \
@@ -779,14 +915,31 @@ main() {
         "目前環境需要 Python 才能解析 classifier_manifest.tsv"
 
 
+    # --------------------------------------------------------
+    # Input checks
+    # --------------------------------------------------------
+
     check_file "${TABLE_QZA}"
     check_file "${REPSEQS_QZA}"
 
 
+    # --------------------------------------------------------
+    # Determine taxonomy source
+    # --------------------------------------------------------
+
     prepare_taxonomy_source
+
+
+    # --------------------------------------------------------
+    # Output directory
+    # --------------------------------------------------------
 
     mkdir -p "${OUTDIR}"
 
+
+    # --------------------------------------------------------
+    # Run information
+    # --------------------------------------------------------
 
     echo
     echo "[INFO] PROJECT_DIR          = ${PROJECT_DIR}"
@@ -797,19 +950,35 @@ main() {
     echo "[INFO] CLASSIFIER_MANIFEST  = ${CLASSIFIER_MANIFEST}"
 
 
+    # --------------------------------------------------------
+    # Taxonomy provenance
+    # --------------------------------------------------------
+
     infer_taxonomy_provenance
 
     show_provenance
 
+
+    # --------------------------------------------------------
+    # Export QIIME2 artifacts
+    # --------------------------------------------------------
 
     export_table_and_biom
     export_repseqs
     prepare_taxonomy_tsv
 
 
+    # --------------------------------------------------------
+    # Metadata
+    # --------------------------------------------------------
+
     write_taxonomy_source
     write_analysis_metadata
 
+
+    # --------------------------------------------------------
+    # Completed
+    # --------------------------------------------------------
 
     echo
     echo "============================================================"
