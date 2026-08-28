@@ -10,10 +10,12 @@ set -euo pipefail
 #   3. taxonomy.qza / taxonomy.tsv -> taxonomy.tsv
 #   4. 從 logs/latest_taxonomy.status 反查 taxonomy 執行方式
 #   5. 若為 classify-sklearn：
-#        - 找出實際 classifier
+#        - 取得實際 classifier path
 #        - 計算 SHA256
 #        - 查詢全域 classifier_manifest.tsv
-#   6. 建立：
+#   6. 若為 classify-consensus-vsearch：
+#        - 記錄 reference reads / taxonomy
+#   7. 建立：
 #        phyloseq/taxonomy_source.txt
 #        phyloseq/analysis_metadata.txt
 #
@@ -130,8 +132,10 @@ extract_cmd_argument() {
             for (i = 1; i <= NF; i++) {
                 if ($i == target && i < NF) {
                     value = $(i + 1)
+
                     gsub(/^["'\''"]/, "", value)
                     gsub(/["'\''"]$/, "", value)
+
                     print value
                     exit
                 }
@@ -151,6 +155,11 @@ prepare_taxonomy_source() {
     TAXONOMY_SOURCE_TYPE=""
     TAXONOMY_SOURCE_FILE=""
     TAXONOMY_INPUT=""
+
+
+    # --------------------------------------------------------
+    # Existing project taxonomy_source.txt
+    # --------------------------------------------------------
 
     if [ -f "${PROJECT_TAXONOMY_SOURCE}" ]; then
 
@@ -177,6 +186,10 @@ prepare_taxonomy_source() {
         fi
     fi
 
+
+    # --------------------------------------------------------
+    # Fallback
+    # --------------------------------------------------------
 
     if [ -z "${TAXONOMY_INPUT}" ]; then
 
@@ -226,6 +239,7 @@ export_table_and_biom() {
         --output-path "${OUTDIR}"
 
     check_file "${OUTDIR}/feature-table.biom"
+
 
     echo "[INFO] feature-table.biom -> otu_table.tsv"
 
@@ -307,17 +321,16 @@ prepare_taxonomy_tsv() {
 
 
 # ============================================================
-# classifier manifest lookup
+# classifier_manifest lookup
 # ============================================================
 
 lookup_classifier_manifest() {
 
     local classifier_path="$1"
     local classifier_file
+    local result
 
     classifier_file="$(basename "${classifier_path}")"
-
-    CLASSIFIER_MANIFEST_ROW=""
 
     if [ ! -f "${CLASSIFIER_MANIFEST}" ]; then
         echo "[WARN] 找不到 classifier manifest：${CLASSIFIER_MANIFEST}"
@@ -327,7 +340,7 @@ lookup_classifier_manifest() {
     fi
 
 
-    CLASSIFIER_MANIFEST_ROW="$(
+    result="$(
         awk -F '\t' \
             -v path="${classifier_path}" \
             -v file="${classifier_file}" \
@@ -356,51 +369,58 @@ lookup_classifier_manifest() {
         }
 
         END {
+
+            row = ""
+
             if (exact != "") {
-                print exact
+                row = exact
             }
             else if (fallback != "") {
-                print fallback
+                row = fallback
             }
+
+            if (row == "") {
+                exit
+            }
+
+            n = split(row, r, "\t")
+
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", \
+                r[idx["db_key"]], \
+                r[idx["db_family"]], \
+                r[idx["db_variant"]], \
+                r[idx["db_version"]], \
+                r[idx["region"]], \
+                r[idx["qiime_release"]], \
+                r[idx["qiime_version"]], \
+                r[idx["qiime_env_name"]], \
+                r[idx["sklearn_version"]], \
+                r[idx["training_type"]]
         }
         ' "${CLASSIFIER_MANIFEST}"
     )"
 
-    [ -n "${CLASSIFIER_MANIFEST_ROW}" ]
-}
 
-
-get_manifest_value() {
-
-    local key="$1"
-    local header
-
-    if [ -z "${CLASSIFIER_MANIFEST_ROW:-}" ]; then
-        return
+    if [ -z "${result}" ]; then
+        return 1
     fi
 
-    header="$(
-        head -n 1 "${CLASSIFIER_MANIFEST}" \
-            | tr -d '\r'
-    )"
 
-    awk -F '\t' \
-        -v header="${header}" \
-        -v row="${CLASSIFIER_MANIFEST_ROW}" \
-        -v key="${key}" '
+    IFS=$'\t' read -r \
+        DB_KEY \
+        DB_FAMILY \
+        DB_VARIANT \
+        DB_VERSION \
+        REGION \
+        QIIME_RELEASE \
+        QIIME_VERSION \
+        QIIME_ENV \
+        SKLEARN_VERSION \
+        TRAINING_TYPE \
+        <<< "${result}"
 
-    BEGIN {
-        n = split(header, h, "\t")
-        split(row, r, "\t")
 
-        for (i = 1; i <= n; i++) {
-            if (h[i] == key) {
-                print r[i]
-                exit
-            }
-        }
-    }
-    '
+    return 0
 }
 
 
@@ -438,6 +458,10 @@ infer_taxonomy_provenance() {
     SKLEARN_VERSION=""
     TRAINING_TYPE=""
 
+
+    # --------------------------------------------------------
+    # taxonomy tmux status
+    # --------------------------------------------------------
 
     if [ ! -f "${LATEST_TAXONOMY_STATUS}" ]; then
         echo "[WARN] 找不到 ${LATEST_TAXONOMY_STATUS}"
@@ -488,13 +512,14 @@ infer_taxonomy_provenance() {
     fi
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # classify-sklearn
-    # --------------------------------------------------------
+    # ========================================================
 
     if [[ "${TAXONOMY_CMD}" == *"classify-sklearn"* ]]; then
 
         TAXONOMY_METHOD="classify-sklearn"
+
 
         CLASSIFIER_PATH="$(
             extract_cmd_argument \
@@ -514,17 +539,7 @@ infer_taxonomy_provenance() {
 
             if lookup_classifier_manifest "${CLASSIFIER_PATH}"; then
 
-                DB_KEY="$(get_manifest_value db_key)"
-                DB_FAMILY="$(get_manifest_value db_family)"
-                DB_VARIANT="$(get_manifest_value db_variant)"
-                DB_VERSION="$(get_manifest_value db_version)"
-                REGION="$(get_manifest_value region)"
-
-                QIIME_RELEASE="$(get_manifest_value qiime_release)"
-                QIIME_VERSION="$(get_manifest_value qiime_version)"
-                QIIME_ENV="$(get_manifest_value qiime_env_name)"
-                SKLEARN_VERSION="$(get_manifest_value sklearn_version)"
-                TRAINING_TYPE="$(get_manifest_value training_type)"
+                echo "[INFO] classifier manifest match = found"
 
             else
 
@@ -534,19 +549,21 @@ infer_taxonomy_provenance() {
         fi
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # classify-consensus-vsearch
-    # --------------------------------------------------------
+    # ========================================================
 
     elif [[ "${TAXONOMY_CMD}" == *"classify-consensus-vsearch"* ]]; then
 
         TAXONOMY_METHOD="classify-consensus-vsearch"
+
 
         REFERENCE_READS="$(
             extract_cmd_argument \
                 "${TAXONOMY_CMD}" \
                 "--i-reference-reads"
         )"
+
 
         REFERENCE_TAXONOMY="$(
             extract_cmd_argument \
@@ -722,12 +739,14 @@ main() {
 
 
     infer_taxonomy_provenance
+
     show_provenance
 
 
     export_table_and_biom
     export_repseqs
     prepare_taxonomy_tsv
+
 
     write_taxonomy_source
     write_analysis_metadata
