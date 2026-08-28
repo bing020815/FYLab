@@ -9,11 +9,11 @@ set -euo pipefail
 #   2. rep-seqs.qza -> dna-sequences.fasta
 #   3. taxonomy.qza / taxonomy.tsv -> taxonomy.tsv
 #   4. 從 logs/latest_taxonomy.status 反查 taxonomy 執行方式
-#   5. 若為 classify-sklearn：
-#        - 取得實際 classifier path
+#   5. classify-sklearn：
+#        - 取得實際 classifier
 #        - 計算 SHA256
-#        - 查詢全域 classifier_manifest.tsv
-#   6. 若為 classify-consensus-vsearch：
+#        - 從全域 classifier_manifest.tsv 查 reference DB Metadata
+#   6. classify-consensus-vsearch：
 #        - 記錄 reference reads / taxonomy
 #   7. 建立：
 #        phyloseq/taxonomy_source.txt
@@ -21,7 +21,6 @@ set -euo pipefail
 #
 # 使用：
 #   ./shell_tools/export_table_qza_to_phyloseq.sh .
-#
 # ============================================================
 
 
@@ -132,10 +131,8 @@ extract_cmd_argument() {
             for (i = 1; i <= NF; i++) {
                 if ($i == target && i < NF) {
                     value = $(i + 1)
-
                     gsub(/^["'\''"]/, "", value)
                     gsub(/["'\''"]$/, "", value)
-
                     print value
                     exit
                 }
@@ -155,11 +152,6 @@ prepare_taxonomy_source() {
     TAXONOMY_SOURCE_TYPE=""
     TAXONOMY_SOURCE_FILE=""
     TAXONOMY_INPUT=""
-
-
-    # --------------------------------------------------------
-    # Existing project taxonomy_source.txt
-    # --------------------------------------------------------
 
     if [ -f "${PROJECT_TAXONOMY_SOURCE}" ]; then
 
@@ -187,10 +179,7 @@ prepare_taxonomy_source() {
     fi
 
 
-    # --------------------------------------------------------
-    # Fallback
-    # --------------------------------------------------------
-
+    # fallback
     if [ -z "${TAXONOMY_INPUT}" ]; then
 
         if [ -f "${TAXONOMY_QZA}" ]; then
@@ -321,103 +310,171 @@ prepare_taxonomy_tsv() {
 
 
 # ============================================================
-# classifier_manifest lookup
+# Classifier manifest lookup
+#
+# 使用 Python csv 模組解析 TSV。
+# 不再依賴 awk 對 \t / field splitting 的實作差異。
 # ============================================================
 
 lookup_classifier_manifest() {
 
     local classifier_path="$1"
     local classifier_file
-    local result
+    local lookup_output
 
     classifier_file="$(basename "${classifier_path}")"
 
+
     if [ ! -f "${CLASSIFIER_MANIFEST}" ]; then
+
         echo "[WARN] 找不到 classifier manifest：${CLASSIFIER_MANIFEST}"
         echo "[WARN] classifier path / filename / SHA256 仍會保留"
         echo "[WARN] reference DB Metadata 將不完整"
+
         return 1
     fi
 
 
-    result="$(
-        awk -F '\t' \
-            -v path="${classifier_path}" \
-            -v file="${classifier_file}" \
-            -v env="${CONDA_DEFAULT_ENV:-}" '
+    lookup_output="$(
+        python - \
+            "${CLASSIFIER_MANIFEST}" \
+            "${classifier_path}" \
+            "${classifier_file}" \
+            "${CONDA_DEFAULT_ENV:-}" <<'PY'
+import csv
+import sys
 
-        NR == 1 {
-            for (i = 1; i <= NF; i++) {
-                gsub(/\r/, "", $i)
-                idx[$i] = i
-            }
-            next
+
+manifest_path = sys.argv[1]
+classifier_path = sys.argv[2]
+classifier_file = sys.argv[3]
+current_env = sys.argv[4]
+
+
+with open(
+    manifest_path,
+    "r",
+    encoding="utf-8-sig",
+    newline="",
+) as fh:
+
+    reader = csv.DictReader(
+        fh,
+        delimiter="\t",
+    )
+
+    rows = []
+
+    for row in reader:
+
+        cleaned = {
+            (k or "").strip(): (v or "").strip()
+            for k, v in row.items()
         }
 
-        {
-            for (i = 1; i <= NF; i++) {
-                gsub(/\r/, "", $i)
-            }
-
-            if (idx["classifier_path"] && $idx["classifier_path"] == path) {
-                exact = $0
-            }
-
-            if (idx["classifier_file"] && idx["qiime_env_name"] && $idx["classifier_file"] == file && $idx["qiime_env_name"] == env) {
-                fallback = $0
-            }
-        }
-
-        END {
-
-            row = ""
-
-            if (exact != "") {
-                row = exact
-            }
-            else if (fallback != "") {
-                row = fallback
-            }
-
-            if (row == "") {
-                exit
-            }
-
-            n = split(row, r, "\t")
-
-            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", \
-                r[idx["db_key"]], \
-                r[idx["db_family"]], \
-                r[idx["db_variant"]], \
-                r[idx["db_version"]], \
-                r[idx["region"]], \
-                r[idx["qiime_release"]], \
-                r[idx["qiime_version"]], \
-                r[idx["qiime_env_name"]], \
-                r[idx["sklearn_version"]], \
-                r[idx["training_type"]]
-        }
-        ' "${CLASSIFIER_MANIFEST}"
-    )"
+        rows.append(cleaned)
 
 
-    if [ -z "${result}" ]; then
+# ------------------------------------------------------------
+# 第一優先：classifier_path 完全一致
+# ------------------------------------------------------------
+
+match = None
+
+for row in rows:
+
+    if row.get("classifier_path") == classifier_path:
+        match = row
+        break
+
+
+# ------------------------------------------------------------
+# 第二優先：classifier_file + qiime_env_name
+# ------------------------------------------------------------
+
+if match is None:
+
+    candidates = [
+        row
+        for row in rows
+        if (
+            row.get("classifier_file") == classifier_file
+            and row.get("qiime_env_name") == current_env
+        )
+    ]
+
+    if len(candidates) == 1:
+        match = candidates[0]
+
+    elif len(candidates) > 1:
+
+        print(
+            "[ERROR] classifier manifest 找到多筆 fallback matches",
+            file=sys.stderr,
+        )
+
+        for row in candidates:
+
+            print(
+                "[ERROR] "
+                f"{row.get('classifier_file')} | "
+                f"{row.get('classifier_path')}",
+                file=sys.stderr,
+            )
+
+        sys.exit(2)
+
+
+if match is None:
+    sys.exit(1)
+
+
+keys = [
+    "db_key",
+    "db_family",
+    "db_variant",
+    "db_version",
+    "region",
+    "qiime_release",
+    "qiime_version",
+    "qiime_env_name",
+    "sklearn_version",
+    "training_type",
+]
+
+
+# 一欄一行，避免 shell tab parsing 問題
+for key in keys:
+    print(match.get(key, ""))
+PY
+    )" || return $?
+
+
+    # --------------------------------------------------------
+    # 一行對一個變數
+    # --------------------------------------------------------
+
+    mapfile -t MANIFEST_VALUES <<< "${lookup_output}"
+
+
+    if [ "${#MANIFEST_VALUES[@]}" -lt 10 ]; then
+
+        echo "[WARN] classifier manifest 欄位數不足"
         return 1
     fi
 
 
-    IFS=$'\t' read -r \
-        DB_KEY \
-        DB_FAMILY \
-        DB_VARIANT \
-        DB_VERSION \
-        REGION \
-        QIIME_RELEASE \
-        QIIME_VERSION \
-        QIIME_ENV \
-        SKLEARN_VERSION \
-        TRAINING_TYPE \
-        <<< "${result}"
+    DB_KEY="${MANIFEST_VALUES[0]}"
+    DB_FAMILY="${MANIFEST_VALUES[1]}"
+    DB_VARIANT="${MANIFEST_VALUES[2]}"
+    DB_VERSION="${MANIFEST_VALUES[3]}"
+    REGION="${MANIFEST_VALUES[4]}"
+
+    QIIME_RELEASE="${MANIFEST_VALUES[5]}"
+    QIIME_VERSION="${MANIFEST_VALUES[6]}"
+    QIIME_ENV="${MANIFEST_VALUES[7]}"
+    SKLEARN_VERSION="${MANIFEST_VALUES[8]}"
+    TRAINING_TYPE="${MANIFEST_VALUES[9]}"
 
 
     return 0
@@ -459,13 +516,11 @@ infer_taxonomy_provenance() {
     TRAINING_TYPE=""
 
 
-    # --------------------------------------------------------
-    # taxonomy tmux status
-    # --------------------------------------------------------
-
     if [ ! -f "${LATEST_TAXONOMY_STATUS}" ]; then
+
         echo "[WARN] 找不到 ${LATEST_TAXONOMY_STATUS}"
         echo "[WARN] taxonomy provenance 將不完整"
+
         return
     fi
 
@@ -718,6 +773,10 @@ main() {
     check_cmd \
         "biom" \
         "請確認目前 QIIME2 環境包含 biom"
+
+    check_cmd \
+        "python" \
+        "目前環境需要 Python 才能解析 classifier_manifest.tsv"
 
 
     check_file "${TABLE_QZA}"
