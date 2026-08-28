@@ -158,6 +158,10 @@ conda activate pacbio16s
 
 ## Step2. 確認所有 `.fastq.gz` 放入 `raw_fastq/`：
 ```bash
+mkdir -p raw_fastq
+mv *.fastq.gz raw_fastq/
+```
+```bash
 ls raw_fastq/*.fastq.gz
 ```
 ```bash
