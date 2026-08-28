@@ -49,9 +49,7 @@ LATEST_TAXONOMY_STATUS="${LOG_DIR}/latest_taxonomy.status"
 # Global classifier registry
 # ------------------------------------------------------------
 
-CLASSIFIER_MANIFEST="${
-    CLASSIFIER_MANIFEST:-/home/adprc/classifier/classifier_manifest.tsv
-}"
+CLASSIFIER_MANIFEST="${CLASSIFIER_MANIFEST:-/home/adprc/classifier/classifier_manifest.tsv}"
 
 # ------------------------------------------------------------
 # Environment
