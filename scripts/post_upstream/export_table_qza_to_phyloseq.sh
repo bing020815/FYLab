@@ -6,27 +6,39 @@ PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 
 TABLE_QZA="${PROJECT_DIR}/table.qza"
 REPSEQS_QZA="${PROJECT_DIR}/rep-seqs.qza"
-TAXONOMY_SOURCE_TXT="${PROJECT_DIR}/taxonomy_source.txt"
+
+TAXONOMY_QZA="${PROJECT_DIR}/taxonomy.qza"
+TAXONOMY_TSV="${PROJECT_DIR}/taxonomy.tsv"
+PROJECT_TAXONOMY_SOURCE="${PROJECT_DIR}/taxonomy_source.txt"
 
 OUTDIR_NAME="${OUTDIR_NAME:-phyloseq}"
 OUTDIR="${PROJECT_DIR}/${OUTDIR_NAME}"
 
+LOG_DIR="${PROJECT_DIR}/logs"
+LATEST_TAXONOMY_STATUS="${LOG_DIR}/latest_taxonomy.status"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLASSIFIER_MANIFEST="${CLASSIFIER_MANIFEST:-${SCRIPT_DIR}/classifier_manifest.tsv}"
+
 QIIME_ENV_NAME="${QIIME_ENV_NAME:-qiime2-2023.2}"
+
+PHYLOSEQ_TAXONOMY_SOURCE="${OUTDIR}/taxonomy_source.txt"
+ANALYSIS_METADATA="${OUTDIR}/analysis_metadata.txt"
+
+
+# ============================================================
+# Helpers
+# ============================================================
 
 read_kv_value() {
     local file="$1"
     local key="$2"
-    grep "^${key}=" "${file}" 2>/dev/null | head -n 1 | cut -d'=' -f2-
+
+    grep "^${key}=" "${file}" 2>/dev/null \
+        | head -n 1 \
+        | cut -d'=' -f2-
 }
 
-resolve_path() {
-    local path="$1"
-    if [[ "${path}" = /* ]]; then
-        printf '%s\n' "${path}"
-    else
-        printf '%s\n' "${PROJECT_DIR}/${path}"
-    fi
-}
 
 check_cmd() {
     local cmd="$1"
@@ -39,170 +51,671 @@ check_cmd() {
     fi
 }
 
+
 check_file() {
     local file="$1"
+
     if [ ! -f "${file}" ]; then
         echo "[ERROR] 找不到輸入檔案：${file}"
         exit 1
     fi
 }
 
+
+resolve_path() {
+    local path="$1"
+
+    if [[ "${path}" = /* ]]; then
+        printf '%s\n' "${path}"
+    else
+        printf '%s\n' "${PROJECT_DIR}/${path}"
+    fi
+}
+
+
+sha256_file() {
+    local file="$1"
+
+    if [ ! -f "${file}" ]; then
+        echo "unavailable"
+        return
+    fi
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "${file}" | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "${file}" | awk '{print $1}'
+    else
+        echo "unavailable"
+    fi
+}
+
+
+extract_cmd_argument() {
+    local cmd="$1"
+    local arg="$2"
+
+    printf '%s\n' "${cmd}" \
+        | awk -v target="${arg}" '
+        {
+            for (i = 1; i <= NF; i++) {
+                if ($i == target && i < NF) {
+                    value = $(i + 1)
+
+                    gsub(/^["'\''"]/, "", value)
+                    gsub(/["'\''"]$/, "", value)
+
+                    print value
+                    exit
+                }
+            }
+        }
+        '
+}
+
+
+# ============================================================
+# Determine taxonomy input
+# ============================================================
+
 prepare_taxonomy_source() {
+
     TAXONOMY_MODE="auto"
-    TAXONOMY_SOURCE_TYPE="auto"
+    TAXONOMY_SOURCE_TYPE=""
     TAXONOMY_SOURCE_FILE=""
     TAXONOMY_INPUT=""
 
-    if [ -f "${TAXONOMY_SOURCE_TXT}" ]; then
-        TAXONOMY_MODE="$(read_kv_value "${TAXONOMY_SOURCE_TXT}" "taxonomy_mode")"
-        TAXONOMY_SOURCE_TYPE="$(read_kv_value "${TAXONOMY_SOURCE_TXT}" "taxonomy_source_type")"
-        TAXONOMY_SOURCE_FILE="$(read_kv_value "${TAXONOMY_SOURCE_TXT}" "taxonomy_source_file")"
+    if [ -f "${PROJECT_TAXONOMY_SOURCE}" ]; then
 
-        if [ -z "${TAXONOMY_SOURCE_FILE}" ]; then
-            echo "[ERROR] taxonomy_source.txt 存在，但缺少 taxonomy_source_file"
-            exit 1
+        TAXONOMY_MODE="$(
+            read_kv_value \
+                "${PROJECT_TAXONOMY_SOURCE}" \
+                "taxonomy_mode"
+        )"
+
+        TAXONOMY_SOURCE_TYPE="$(
+            read_kv_value \
+                "${PROJECT_TAXONOMY_SOURCE}" \
+                "taxonomy_source_type"
+        )"
+
+        TAXONOMY_SOURCE_FILE="$(
+            read_kv_value \
+                "${PROJECT_TAXONOMY_SOURCE}" \
+                "taxonomy_source_file"
+        )"
+
+        if [ -n "${TAXONOMY_SOURCE_FILE}" ]; then
+            TAXONOMY_INPUT="$(resolve_path "${TAXONOMY_SOURCE_FILE}")"
         fi
+    fi
 
-        TAXONOMY_INPUT="$(resolve_path "${TAXONOMY_SOURCE_FILE}")"
-    else
-        echo "[INFO] 找不到 taxonomy_source.txt，改用一般模式自動判斷 taxonomy 來源"
 
-        if [ -f "${PROJECT_DIR}/taxonomy.qza" ]; then
+    # --------------------------------------------------------
+    # fallback
+    # --------------------------------------------------------
+
+    if [ -z "${TAXONOMY_INPUT}" ]; then
+
+        if [ -f "${TAXONOMY_QZA}" ]; then
+
             TAXONOMY_MODE="auto"
             TAXONOMY_SOURCE_TYPE="local_qza"
             TAXONOMY_SOURCE_FILE="taxonomy.qza"
-            TAXONOMY_INPUT="${PROJECT_DIR}/taxonomy.qza"
-        elif [ -f "${PROJECT_DIR}/taxonomy.tsv" ]; then
+            TAXONOMY_INPUT="${TAXONOMY_QZA}"
+
+        elif [ -f "${TAXONOMY_TSV}" ]; then
+
             TAXONOMY_MODE="auto"
             TAXONOMY_SOURCE_TYPE="local_tsv"
             TAXONOMY_SOURCE_FILE="taxonomy.tsv"
-            TAXONOMY_INPUT="${PROJECT_DIR}/taxonomy.tsv"
+            TAXONOMY_INPUT="${TAXONOMY_TSV}"
+
         else
-            echo "[ERROR] 找不到 taxonomy_source.txt，且專案根目錄也沒有 taxonomy.qza 或 taxonomy.tsv"
+
+            echo "[ERROR] 找不到 taxonomy 來源"
+            echo "[ERROR] 請確認專案根目錄存在："
+            echo "  - taxonomy.qza"
+            echo "  或"
+            echo "  - taxonomy.tsv"
             exit 1
         fi
     fi
 
+
     if [ ! -f "${TAXONOMY_INPUT}" ]; then
         echo "[ERROR] 找不到 taxonomy 來源檔案：${TAXONOMY_INPUT}"
-        if [ "${TAXONOMY_MODE}" = "fylab" ]; then
-            echo "[ERROR] FYLab 模式下，請先完成 classifier，產生 ${TAXONOMY_SOURCE_FILE}"
-        fi
         exit 1
     fi
 }
+
+
+# ============================================================
+# Export table.qza
+# ============================================================
 
 export_table_and_biom() {
+
     echo "[INFO] 匯出 table.qza"
+
     qiime tools export \
-      --input-path "${TABLE_QZA}" \
-      --output-path "${OUTDIR}"
+        --input-path "${TABLE_QZA}" \
+        --output-path "${OUTDIR}"
 
-    if [ ! -f "${OUTDIR}/feature-table.biom" ]; then
-        echo "[ERROR] 找不到輸出的 biom 檔案：${OUTDIR}/feature-table.biom"
-        exit 1
-    fi
+    check_file "${OUTDIR}/feature-table.biom"
 
-    echo "[INFO] 將 biom 轉成 otu_table.tsv"
+
+    echo "[INFO] feature-table.biom -> otu_table.tsv"
+
     biom convert \
-      -i "${OUTDIR}/feature-table.biom" \
-      -o "${OUTDIR}/otu_table.tsv" \
-      --to-tsv
+        -i "${OUTDIR}/feature-table.biom" \
+        -o "${OUTDIR}/otu_table.tsv" \
+        --to-tsv
 
-    if [ ! -f "${OUTDIR}/otu_table.tsv" ]; then
-        echo "[ERROR] 找不到輸出的 tsv 檔案：${OUTDIR}/otu_table.tsv"
-        exit 1
-    fi
+    check_file "${OUTDIR}/otu_table.tsv"
 }
+
+
+# ============================================================
+# Export rep-seqs.qza
+# ============================================================
 
 export_repseqs() {
-    echo "[INFO] 匯出 rep-seqs.qza"
-    qiime tools export \
-      --input-path "${REPSEQS_QZA}" \
-      --output-path "${OUTDIR}"
 
-    if [ ! -f "${OUTDIR}/dna-sequences.fasta" ]; then
-        echo "[ERROR] 找不到輸出的 dna-sequences.fasta：${OUTDIR}/dna-sequences.fasta"
-        exit 1
-    fi
+    echo "[INFO] 匯出 rep-seqs.qza"
+
+    qiime tools export \
+        --input-path "${REPSEQS_QZA}" \
+        --output-path "${OUTDIR}"
+
+    check_file "${OUTDIR}/dna-sequences.fasta"
 }
 
+
+# ============================================================
+# Prepare taxonomy.tsv
+# ============================================================
+
 prepare_taxonomy_tsv() {
+
     case "${TAXONOMY_INPUT}" in
+
         *.qza)
-            echo "[INFO] taxonomy 來源為 qza，先匯出成 taxonomy.tsv"
-            local tax_export_dir="${OUTDIR}/taxonomy_export_tmp"
-            rm -rf "${tax_export_dir}"
-            mkdir -p "${tax_export_dir}"
+
+            echo "[INFO] taxonomy 來源為 QZA"
+
+            local tmp_dir="${OUTDIR}/taxonomy_export_tmp"
+
+            rm -rf "${tmp_dir}"
+            mkdir -p "${tmp_dir}"
 
             qiime tools export \
-              --input-path "${TAXONOMY_INPUT}" \
-              --output-path "${tax_export_dir}"
+                --input-path "${TAXONOMY_INPUT}" \
+                --output-path "${tmp_dir}"
 
-            if [ ! -f "${tax_export_dir}/taxonomy.tsv" ]; then
-                echo "[ERROR] 從 ${TAXONOMY_INPUT} 匯出後找不到 taxonomy.tsv"
-                exit 1
-            fi
+            check_file "${tmp_dir}/taxonomy.tsv"
 
-            cp "${tax_export_dir}/taxonomy.tsv" "${OUTDIR}/taxonomy.tsv"
-            rm -rf "${tax_export_dir}"
+            cp \
+                "${tmp_dir}/taxonomy.tsv" \
+                "${OUTDIR}/taxonomy.tsv"
+
+            rm -rf "${tmp_dir}"
             ;;
+
+
         *.tsv)
-            echo "[INFO] taxonomy 來源為 tsv，直接複製"
-            cp "${TAXONOMY_INPUT}" "${OUTDIR}/taxonomy.tsv"
+
+            echo "[INFO] taxonomy 來源為 TSV"
+
+            cp \
+                "${TAXONOMY_INPUT}" \
+                "${OUTDIR}/taxonomy.tsv"
             ;;
+
+
         *)
-            echo "[ERROR] 不支援的 taxonomy 來源格式：${TAXONOMY_INPUT}"
-            echo "[ERROR] 目前僅支援 .qza 或 .tsv"
+
+            echo "[ERROR] 不支援的 taxonomy 格式：${TAXONOMY_INPUT}"
             exit 1
             ;;
     esac
 
-    if [ ! -f "${OUTDIR}/taxonomy.tsv" ]; then
-        echo "[ERROR] 找不到輸出的 taxonomy.tsv：${OUTDIR}/taxonomy.tsv"
-        exit 1
+    check_file "${OUTDIR}/taxonomy.tsv"
+}
+
+
+# ============================================================
+# Classifier manifest lookup
+# ============================================================
+
+lookup_classifier_manifest() {
+
+    local classifier_path="$1"
+    local classifier_file
+
+    classifier_file="$(basename "${classifier_path}")"
+
+    if [ ! -f "${CLASSIFIER_MANIFEST}" ]; then
+        return 1
+    fi
+
+
+    CLASSIFIER_MANIFEST_ROW="$(
+        awk -F '\t' \
+            -v path="${classifier_path}" \
+            -v file="${classifier_file}" \
+            -v env="${CONDA_DEFAULT_ENV:-}" '
+
+        NR == 1 {
+
+            for (i = 1; i <= NF; i++) {
+                gsub(/\r/, "", $i)
+                idx[$i] = i
+            }
+
+            next
+        }
+
+        {
+
+            for (i = 1; i <= NF; i++) {
+                gsub(/\r/, "", $i)
+            }
+
+            # 優先：完整 path 完全相同
+
+            if (
+                idx["classifier_path"] &&
+                $idx["classifier_path"] == path
+            ) {
+                print
+                found = 1
+                exit
+            }
+
+
+            # fallback：
+            # filename + qiime env
+
+            if (
+                idx["classifier_file"] &&
+                idx["qiime_env_name"] &&
+                $idx["classifier_file"] == file &&
+                $idx["qiime_env_name"] == env
+            ) {
+                fallback = $0
+            }
+        }
+
+        END {
+
+            if (!found && fallback != "") {
+                print fallback
+            }
+        }
+
+        ' "${CLASSIFIER_MANIFEST}"
+    )"
+
+
+    [ -n "${CLASSIFIER_MANIFEST_ROW}" ]
+}
+
+
+get_manifest_value() {
+
+    local key="$1"
+    local header
+
+    header="$(
+        head -n 1 "${CLASSIFIER_MANIFEST}" \
+        | tr -d '\r'
+    )"
+
+    awk -F '\t' \
+        -v header="${header}" \
+        -v row="${CLASSIFIER_MANIFEST_ROW}" \
+        -v key="${key}" '
+
+    BEGIN {
+
+        n = split(header, h, "\t")
+        split(row, r, "\t")
+
+        for (i = 1; i <= n; i++) {
+
+            if (h[i] == key) {
+                print r[i]
+                exit
+            }
+        }
+    }
+    '
+}
+
+
+# ============================================================
+# Infer taxonomy provenance from tmux status
+# ============================================================
+
+infer_taxonomy_provenance() {
+
+    TAXONOMY_JOB_STATUS="unknown"
+    TAXONOMY_JOB_NAME=""
+    TAXONOMY_JOB_ID=""
+    TAXONOMY_JOB_START=""
+    TAXONOMY_JOB_END=""
+
+    TAXONOMY_METHOD="unknown"
+    TAXONOMY_CMD=""
+
+    CLASSIFIER_PATH=""
+    CLASSIFIER_FILE=""
+    CLASSIFIER_SHA256=""
+
+    REFERENCE_READS=""
+    REFERENCE_TAXONOMY=""
+
+    DB_KEY=""
+    DB_FAMILY=""
+    DB_VARIANT=""
+    DB_VERSION=""
+    REGION=""
+
+    QIIME_RELEASE=""
+    QIIME_VERSION=""
+    QIIME_ENV=""
+    SKLEARN_VERSION=""
+    TRAINING_TYPE=""
+
+
+    if [ ! -f "${LATEST_TAXONOMY_STATUS}" ]; then
+
+        echo "[WARN] 找不到 ${LATEST_TAXONOMY_STATUS}"
+        echo "[WARN] taxonomy provenance 將不完整"
+
+        return
+    fi
+
+
+    TAXONOMY_JOB_STATUS="$(
+        read_kv_value \
+            "${LATEST_TAXONOMY_STATUS}" \
+            "status"
+    )"
+
+    TAXONOMY_JOB_NAME="$(
+        read_kv_value \
+            "${LATEST_TAXONOMY_STATUS}" \
+            "job_name"
+    )"
+
+    TAXONOMY_JOB_ID="$(
+        read_kv_value \
+            "${LATEST_TAXONOMY_STATUS}" \
+            "job_id"
+    )"
+
+    TAXONOMY_JOB_START="$(
+        read_kv_value \
+            "${LATEST_TAXONOMY_STATUS}" \
+            "start_time"
+    )"
+
+    TAXONOMY_JOB_END="$(
+        read_kv_value \
+            "${LATEST_TAXONOMY_STATUS}" \
+            "end_time"
+    )"
+
+    TAXONOMY_CMD="$(
+        read_kv_value \
+            "${LATEST_TAXONOMY_STATUS}" \
+            "cmd_full"
+    )"
+
+
+    # --------------------------------------------------------
+    # classify-sklearn
+    # --------------------------------------------------------
+
+    if [[ "${TAXONOMY_CMD}" == *"classify-sklearn"* ]]; then
+
+        TAXONOMY_METHOD="classify-sklearn"
+
+        CLASSIFIER_PATH="$(
+            extract_cmd_argument \
+                "${TAXONOMY_CMD}" \
+                "--i-classifier"
+        )"
+
+        if [ -n "${CLASSIFIER_PATH}" ]; then
+
+            CLASSIFIER_FILE="$(basename "${CLASSIFIER_PATH}")"
+
+            CLASSIFIER_SHA256="$(
+                sha256_file "${CLASSIFIER_PATH}"
+            )"
+
+
+            if lookup_classifier_manifest "${CLASSIFIER_PATH}"; then
+
+                DB_KEY="$(get_manifest_value db_key)"
+                DB_FAMILY="$(get_manifest_value db_family)"
+                DB_VARIANT="$(get_manifest_value db_variant)"
+                DB_VERSION="$(get_manifest_value db_version)"
+                REGION="$(get_manifest_value region)"
+
+                QIIME_RELEASE="$(get_manifest_value qiime_release)"
+                QIIME_VERSION="$(get_manifest_value qiime_version)"
+                QIIME_ENV="$(get_manifest_value qiime_env_name)"
+                SKLEARN_VERSION="$(get_manifest_value sklearn_version)"
+                TRAINING_TYPE="$(get_manifest_value training_type)"
+
+            else
+
+                echo "[WARN] classifier_manifest.tsv 找不到："
+                echo "[WARN] ${CLASSIFIER_PATH}"
+            fi
+        fi
+
+
+    # --------------------------------------------------------
+    # classify-consensus-vsearch
+    # --------------------------------------------------------
+
+    elif [[ "${TAXONOMY_CMD}" == *"classify-consensus-vsearch"* ]]; then
+
+        TAXONOMY_METHOD="classify-consensus-vsearch"
+
+        REFERENCE_READS="$(
+            extract_cmd_argument \
+                "${TAXONOMY_CMD}" \
+                "--i-reference-reads"
+        )"
+
+        REFERENCE_TAXONOMY="$(
+            extract_cmd_argument \
+                "${TAXONOMY_CMD}" \
+                "--i-reference-taxonomy"
+        )"
+
+
+    else
+
+        echo "[WARN] 無法辨識 taxonomy command"
     fi
 }
 
-write_taxonomy_source_record() {
-    cat > "${OUTDIR}/taxonomy_source.txt" <<EOF
+
+# ============================================================
+# Write taxonomy-specific metadata
+# ============================================================
+
+write_taxonomy_source() {
+
+    cat > "${PHYLOSEQ_TAXONOMY_SOURCE}" <<EOF
 taxonomy_mode=${TAXONOMY_MODE}
 taxonomy_source_type=${TAXONOMY_SOURCE_TYPE}
 taxonomy_source_file=${TAXONOMY_SOURCE_FILE}
+
+taxonomy_method=${TAXONOMY_METHOD}
+
+taxonomy_job_status=${TAXONOMY_JOB_STATUS}
+taxonomy_job_name=${TAXONOMY_JOB_NAME}
+taxonomy_job_id=${TAXONOMY_JOB_ID}
+taxonomy_job_start=${TAXONOMY_JOB_START}
+taxonomy_job_end=${TAXONOMY_JOB_END}
+
+reference_db=${DB_FAMILY}
+reference_db_key=${DB_KEY}
+reference_db_variant=${DB_VARIANT}
+reference_db_version=${DB_VERSION}
+
+classifier_region=${REGION}
+classifier_file=${CLASSIFIER_FILE}
+classifier_path=${CLASSIFIER_PATH}
+classifier_sha256=${CLASSIFIER_SHA256}
+classifier_training_type=${TRAINING_TYPE}
+
+reference_reads=${REFERENCE_READS}
+reference_taxonomy=${REFERENCE_TAXONOMY}
+
+qiime_release=${QIIME_RELEASE}
+qiime_version=${QIIME_VERSION}
+qiime_env_name=${QIIME_ENV}
+sklearn_version=${SKLEARN_VERSION}
 EOF
 }
 
+
+# ============================================================
+# Write project-level analysis metadata
+# ============================================================
+
+write_analysis_metadata() {
+
+    cat > "${ANALYSIS_METADATA}" <<EOF
+metadata_version=1
+
+phyloseq_exported_at=$(date --iso-8601=seconds)
+phyloseq_export_env=${CONDA_DEFAULT_ENV:-unknown}
+
+taxonomy_method=${TAXONOMY_METHOD}
+taxonomy_job_status=${TAXONOMY_JOB_STATUS}
+
+reference_db=${DB_FAMILY}
+reference_db_key=${DB_KEY}
+reference_db_variant=${DB_VARIANT}
+reference_db_version=${DB_VERSION}
+
+classifier_region=${REGION}
+classifier_file=${CLASSIFIER_FILE}
+classifier_sha256=${CLASSIFIER_SHA256}
+classifier_training_type=${TRAINING_TYPE}
+
+taxonomy_qiime_release=${QIIME_RELEASE}
+taxonomy_qiime_version=${QIIME_VERSION}
+taxonomy_qiime_env=${QIIME_ENV}
+taxonomy_sklearn_version=${SKLEARN_VERSION}
+
+reference_reads=${REFERENCE_READS}
+reference_taxonomy=${REFERENCE_TAXONOMY}
+
+dehost_performed=false
+EOF
+}
+
+
+# ============================================================
+# Display provenance
+# ============================================================
+
+show_provenance() {
+
+    echo
+    echo "============================================================"
+    echo " Taxonomy provenance"
+    echo "============================================================"
+
+    echo "[INFO] method              = ${TAXONOMY_METHOD}"
+    echo "[INFO] taxonomy job        = ${TAXONOMY_JOB_NAME:-unknown}"
+    echo "[INFO] taxonomy status     = ${TAXONOMY_JOB_STATUS}"
+
+
+    if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
+
+        echo "[INFO] reference DB        = ${DB_KEY:-unknown}"
+        echo "[INFO] DB version          = ${DB_VERSION:-unknown}"
+        echo "[INFO] region              = ${REGION:-unknown}"
+        echo "[INFO] classifier          = ${CLASSIFIER_FILE:-unknown}"
+        echo "[INFO] qiime env           = ${QIIME_ENV:-unknown}"
+
+    elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
+
+        echo "[INFO] reference reads     = ${REFERENCE_READS:-unknown}"
+        echo "[INFO] reference taxonomy  = ${REFERENCE_TAXONOMY:-unknown}"
+    fi
+
+    echo "============================================================"
+}
+
+
+# ============================================================
+# Main
+# ============================================================
+
 main() {
-    check_cmd "qiime" "請先啟用 QIIME2 環境，例如：conda activate ${QIIME_ENV_NAME}"
-    check_cmd "biom" "請先確認目前已啟用正確環境，例如：conda activate ${QIIME_ENV_NAME}"
+
+    check_cmd \
+        "qiime" \
+        "請先啟用 QIIME2 環境，例如：conda activate ${QIIME_ENV_NAME}"
+
+    check_cmd \
+        "biom" \
+        "請確認目前 QIIME2 環境包含 biom"
+
 
     check_file "${TABLE_QZA}"
     check_file "${REPSEQS_QZA}"
+
 
     prepare_taxonomy_source
 
     mkdir -p "${OUTDIR}"
 
-    echo "[INFO] PROJECT_DIR           = ${PROJECT_DIR}"
-    echo "[INFO] 輸出資料夾            = ${OUTDIR}"
-    echo "[INFO] 目前環境              = ${CONDA_DEFAULT_ENV:-unknown}"
-    echo "[INFO] TAXONOMY_MODE         = ${TAXONOMY_MODE}"
-    echo "[INFO] TAXONOMY_SOURCE_TYPE  = ${TAXONOMY_SOURCE_TYPE}"
-    echo "[INFO] TAXONOMY_SOURCE_FILE  = ${TAXONOMY_SOURCE_FILE}"
-    echo "[INFO] TAXONOMY_INPUT        = ${TAXONOMY_INPUT}"
+
+    echo
+    echo "[INFO] PROJECT_DIR          = ${PROJECT_DIR}"
+    echo "[INFO] OUTPUT_DIR           = ${OUTDIR}"
+    echo "[INFO] CURRENT_ENV          = ${CONDA_DEFAULT_ENV:-unknown}"
+    echo "[INFO] TAXONOMY_SOURCE      = ${TAXONOMY_INPUT}"
+
+
+    infer_taxonomy_provenance
+    show_provenance
+
 
     export_table_and_biom
     export_repseqs
     prepare_taxonomy_tsv
-    write_taxonomy_source_record
+
+    write_taxonomy_source
+    write_analysis_metadata
+
 
     echo
-    echo "[INFO] 已完成"
-    echo "[INFO] biom 檔案      = ${OUTDIR}/feature-table.biom"
-    echo "[INFO] otu_table.tsv  = ${OUTDIR}/otu_table.tsv"
-    echo "[INFO] rep-seqs fasta = ${OUTDIR}/dna-sequences.fasta"
-    echo "[INFO] taxonomy.tsv   = ${OUTDIR}/taxonomy.tsv"
-    echo "[INFO] source 記錄    = ${OUTDIR}/taxonomy_source.txt"
+    echo "============================================================"
+    echo " Export completed"
+    echo "============================================================"
+
+    echo "[INFO] biom               = ${OUTDIR}/feature-table.biom"
+    echo "[INFO] otu_table.tsv      = ${OUTDIR}/otu_table.tsv"
+    echo "[INFO] dna-sequences      = ${OUTDIR}/dna-sequences.fasta"
+    echo "[INFO] taxonomy.tsv       = ${OUTDIR}/taxonomy.tsv"
+    echo "[INFO] taxonomy metadata  = ${PHYLOSEQ_TAXONOMY_SOURCE}"
+    echo "[INFO] analysis metadata  = ${ANALYSIS_METADATA}"
 }
+
 
 main "$@"
