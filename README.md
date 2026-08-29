@@ -906,7 +906,9 @@ cd ..
 * 使用 [KTU2](https://github.com/poyuliu/KTU2) 配合 `ktusp` 方法，進行分類
 * 預設使用原始 `otu_table.tsv`, `taxonomy.tsv`, `dna-sequences.fasta` 進行轉換
 * 若要使用 `dehost_otu_table.tsv`, `dehost_taxonomy.tsv`, `dna-sequences.fasta` 進行轉換
-  * 在指令上加上 `--dehost` 
+  * 在指令上加上 `--dehost`
+* 使用`16S full-length`則因為 `ktusp` 發法預設切割參數太小，會產生過小的 subtree 造成無法進行演算，需修改切割參數
+  * 在指令上加上 `--split-tree-init 5 --split-lwrlim 4000 --split-reassemble 1000`
 * Citation:
   ```
   Liu, P.-Y., Yang, S.-H., & Yang, S.-Y. (2022). KTU: K-mer Taxonomic Units improve the biological relevance of amplicon sequence variant microbiota data. Methods in Ecology and Evolution, 13, 560– 568. https://doi.org/10.1111/2041-210X.13758
