@@ -486,40 +486,7 @@ CMD="qiime feature-classifier classify-sklearn \
 
 </details><br>
 
-<details>
-<summary><strong>SILVA 144 16S [20260831 修正]</strong></summary>
-* [20260806 release 新的大改版版本](https://www.arb-silva.de/documentation/release-144)
-* 原核 SSU 分類系統大幅翻新
-  + 以 LPSN（List of Prokaryotic names with Standing in Nomenclature） 作為分類資訊的主要來源，納入 LPSN 的同物異名觀點，必要時以 SILVA 親緣樹拓撲覆蓋；並參考 GTDB 分類
-  + 依 ICNP 建立一致的七階層分類系統（屬至域）
-  + 新增「--other」後綴：標記不包含該分類群命名模式序列（type sequence）、但被認為屬於該分類群的 clade
-* SSU Ref NR 99 資料集資料量增加 395,133
-  + 總數量 9,183,096 筆
 
-  
-### Step1 切換指定支援 SILVA 144 Database Qiime2版本
-* 官方目前只有釋出支援 qiime2-2026.7 版本
-* Qiime2 支持只使用full-length
-```bash
-conda activate qiime2-2026.7
-```
-
-### Naive Bayes 模型分類 (full-length)
-```bash
-CURRENT_ENV="${CONDA_DEFAULT_ENV}"
-
-JOB_TYPE=taxonomy \
-PROJECT_DIR=. \
-JOB_NAME=gg_nb_full \
-CMD="qiime feature-classifier classify-sklearn \
-  --i-classifier /home/adprc/classifier/SILVA/pretrained/official/SILVA_144_SSURef_NR99_uniform_classifier_full-length.qza \
-  --i-reads rep-seqs.qza \
-  --o-classification taxonomy.qza \
-  --p-n-jobs 2" \
-./shell_tools/run_in_tmux.sh
-```
-
-</details><br>
 
 模型分類進度查詢
 ```
