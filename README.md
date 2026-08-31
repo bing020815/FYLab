@@ -487,7 +487,7 @@ CMD="qiime feature-classifier classify-sklearn \
 </details><br>
 
 <details>
-<summary><strong>SILVA 144 16S [20260419 修正]</strong></summary>
+<summary><strong>SILVA 144 16S [20260831 修正]</strong></summary>
 * [20260806 release 新的大改版版本](https://www.arb-silva.de/documentation/release-144)
 * 原核 SSU 分類系統大幅翻新
   + 以 LPSN（List of Prokaryotic names with Standing in Nomenclature） 作為分類資訊的主要來源，納入 LPSN 的同物異名觀點，必要時以 SILVA 親緣樹拓撲覆蓋；並參考 GTDB 分類
