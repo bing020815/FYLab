@@ -336,7 +336,7 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
-JOB_NAME=gg_nb_full \
+JOB_NAME=gg2_2024_09_nb_full \
 CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/gg2/trained/${CURRENT_ENV}/gg2.2024.09.backbone.full-length.nb.qza \
   --i-reads rep-seqs.qza \
@@ -349,7 +349,7 @@ CMD="qiime feature-classifier classify-sklearn \
 ```bash
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
-JOB_NAME=gg2_2024_09_nb_v4 \
+JOB_NAME=gg2_2024_09_vsearch_full \
 CMD="qiime qiime feature-classifier classify-consensus-vsearch \
   --i-reads rep-seqs.qza \
   --i-classifier /home/adprc/classifier/gg2/source/gg2_2024_09_RefSeq.qza \
@@ -421,7 +421,7 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
-JOB_NAME=gg_nb_full \
+JOB_NAME=silva138_nb_full \
 CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_138_99_NB_classifier_full-length.qza \
   --i-reads rep-seqs.qza \
