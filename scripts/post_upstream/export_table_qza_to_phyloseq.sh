@@ -386,10 +386,17 @@ reset_denoise_provenance() {
     DENOISE_MAX_LEN=""
     DENOISE_MAX_EE=""
     DENOISE_MAX_MISMATCH=""
+    DENOISE_INDELS=""
+    DENOISE_TRUNC_Q=""
     DENOISE_POOLING_METHOD=""
     DENOISE_CHIMERA_METHOD=""
+    DENOISE_MIN_FOLD_PARENT_OVER_ABUNDANCE=""
+    DENOISE_ALLOW_ONE_OFF=""
 
     DENOISE_THREADS=""
+    DENOISE_N_READS_LEARN=""
+    DENOISE_HASHED_FEATURE_IDS=""
+    DENOISE_RETAIN_ALL_SAMPLES=""
 
     DENOISE_QIIME_VERSION=""
     DENOISE_PLUGIN_VERSION=""
@@ -412,98 +419,115 @@ infer_denoise_from_qza() {
 
     parser_output="$(
         python - "${qza_path}" <<'PY'
-import io
+import re
 import sys
 import zipfile
-
-try:
-    import yaml
-except Exception as exc:
-    print(f"[ERROR] 無法 import PyYAML: {exc}", file=sys.stderr)
-    sys.exit(3)
-
 
 qza_path = sys.argv[1]
 
 TARGET_ACTIONS = {
-    "denoise-paired",
-    "denoise_paired",
-    "denoise-single",
-    "denoise_single",
-    "denoise-ccs",
-    "denoise_ccs",
+    "denoise_paired": "dada2-paired",
+    "denoise-paired": "dada2-paired",
+    "denoise_single": "dada2-single",
+    "denoise-single": "dada2-single",
+    "denoise_ccs": "dada2-ccs",
+    "denoise-ccs": "dada2-ccs",
 }
 
 
-def clean_scalar(value):
+def clean(value):
     if value is None:
         return ""
-    if isinstance(value, bool):
-        return str(value).lower()
-    if isinstance(value, (str, int, float)):
-        return str(value)
-    return str(value)
+    value = str(value).strip()
+    # Keep QIIME2 literal "none" as provenance information.
+    return value.replace("\t", " ").replace("\r", " ").replace("\n", " ")
 
 
-def normalize_mapping_list(obj):
+def extract_action_block(text):
+    m = re.search(
+        r"(?ms)^action:\s*\n(?P<body>.*?)(?=^[A-Za-z][A-Za-z0-9_-]*:\s*(?:\n|$)|\Z)",
+        text,
+    )
+    return m.group("body") if m else ""
+
+
+def extract_simple_field(block, key):
+    m = re.search(
+        rf"(?m)^\s{{4}}{re.escape(key)}:\s*(.*?)\s*$",
+        block,
+    )
+    return clean(m.group(1)) if m else ""
+
+
+def extract_plugin(block):
+    raw = extract_simple_field(block, "plugin")
+    if not raw:
+        return ""
+
+    # QIIME2 2024.x:
+    # plugin: !ref 'environment:plugins:dada2'
+    m = re.search(r"environment:plugins:([^'\"]+)", raw)
+    if m:
+        return clean(m.group(1))
+
+    raw = re.sub(r"^!ref\s*", "", raw).strip("'\" ")
+    return clean(raw)
+
+
+def extract_mapping_list(block, section):
     """
-    QIIME2 action.yaml 常把 inputs / parameters 寫成：
-      - key: value
-      - key2: value2
-    也兼容 dict。
+    Parse QIIME2 provenance list mappings, e.g.
+      parameters:
+      -   front: none
+      -   max_ee: 2
     """
+    m = re.search(
+        rf"(?ms)^\s{{4}}{re.escape(section)}:\s*\n"
+        rf"(?P<body>.*?)(?=^\s{{4}}[A-Za-z][A-Za-z0-9_-]*:\s*(?:\n|$)|\Z)",
+        block,
+    )
+    if not m:
+        return {}
+
     out = {}
+    body = m.group("body")
 
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            out[str(k)] = v
-        return out
-
-    if isinstance(obj, list):
-        for item in obj:
-            if isinstance(item, dict):
-                for k, v in item.items():
-                    out[str(k)] = v
+    for line in body.splitlines():
+        mm = re.match(r"^\s*-\s+([A-Za-z0-9_-]+):\s*(.*?)\s*$", line)
+        if mm:
+            out[mm.group(1)] = clean(mm.group(2))
 
     return out
 
 
-def dig(mapping, *path):
-    cur = mapping
-    for key in path:
-        if not isinstance(cur, dict):
-            return None
-        cur = cur.get(key)
-    return cur
-
-
-def recursive_find_version(obj, names):
+def extract_environment_version(text, package):
     """
-    在 environment 等巢狀結構中找版本。
-    names 為候選 key。
+    QIIME2 provenance environment section can contain package versions in
+    different YAML layouts. Search textually so !ref/!cite custom YAML tags
+    do not break parsing.
     """
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            if str(k) in names:
-                if isinstance(v, dict):
-                    for vk in ("version", "Version"):
-                        if vk in v:
-                            return clean_scalar(v[vk])
-                elif isinstance(v, (str, int, float)):
-                    return clean_scalar(v)
-
-        for v in obj.values():
-            found = recursive_find_version(v, names)
-            if found:
-                return found
-
-    elif isinstance(obj, list):
-        for v in obj:
-            found = recursive_find_version(v, names)
-            if found:
-                return found
-
+    patterns = [
+        rf"(?m)^\s*{re.escape(package)}:\s*([0-9][^\s#]*)\s*$",
+        rf"(?m)^\s*-\s*{re.escape(package)}:\s*([0-9][^\s#]*)\s*$",
+        rf"(?ms)^\s*{re.escape(package)}:\s*\n(?:\s+.*\n)*?\s+version:\s*([^\s#]+)",
+    ]
+    for pattern in patterns:
+        m = re.search(pattern, text)
+        if m:
+            return clean(m.group(1))
     return ""
+
+
+def extract_execution_uuid(text):
+    m = re.search(
+        r"(?ms)^execution:\s*\n(?P<body>.*?)(?=^[A-Za-z][A-Za-z0-9_-]*:\s*(?:\n|$)|\Z)",
+        text,
+    )
+    if not m:
+        return ""
+    body = m.group("body")
+    mm = re.search(r"(?m)^\s+uuid:\s*(.*?)\s*$", body)
+    return clean(mm.group(1)) if mm else ""
 
 
 candidates = []
@@ -511,30 +535,24 @@ candidates = []
 try:
     with zipfile.ZipFile(qza_path, "r") as zf:
 
-        action_paths = [
-            name
-            for name in zf.namelist()
+        action_paths = sorted(
+            name for name in zf.namelist()
             if name.endswith("/action/action.yaml")
             and "/provenance/" in name
-        ]
+        )
 
         for action_path in action_paths:
-
             try:
-                raw = zf.read(action_path)
-                doc = yaml.safe_load(raw)
+                text = zf.read(action_path).decode("utf-8")
             except Exception:
                 continue
 
-            if not isinstance(doc, dict):
+            block = extract_action_block(text)
+            if not block:
                 continue
 
-            action = doc.get("action", {})
-            if not isinstance(action, dict):
-                continue
-
-            plugin = clean_scalar(action.get("plugin")).strip()
-            action_name = clean_scalar(action.get("action")).strip()
+            plugin = extract_plugin(block)
+            action_name = extract_simple_field(block, "action")
 
             if plugin != "dada2":
                 continue
@@ -542,45 +560,25 @@ try:
             if action_name not in TARGET_ACTIONS:
                 continue
 
-            inputs = normalize_mapping_list(action.get("inputs"))
-            params = normalize_mapping_list(action.get("parameters"))
+            params = extract_mapping_list(block, "parameters")
+            inputs = extract_mapping_list(block, "inputs")
 
-            execution = doc.get("execution", {})
-            environment = doc.get("environment", {})
-
-            # 兼容 "-" 與 "_" 兩種 action 命名。
-            normalized_action = action_name.replace("_", "-")
-
-            # provenance/action/action.yaml 是目前 artifact 本身的 action；
-            # provenance/artifacts/<uuid>/action/action.yaml 是 ancestry。
-            # DADA2 通常會在 ancestry 中。這裡都收集，再選最合理的一筆。
-            artifact_depth = action_path.count("/artifacts/")
-
-            candidates.append(
-                {
-                    "path": action_path,
-                    "depth": artifact_depth,
-                    "method": f"dada2-{normalized_action.removeprefix('denoise-')}",
-                    "action_name": normalized_action,
-                    "inputs": inputs,
-                    "params": params,
-                    "action_uuid": clean_scalar(
-                        execution.get("uuid") if isinstance(execution, dict) else ""
-                    ),
-                    "qiime_version": recursive_find_version(
-                        environment, {"qiime2", "QIIME2"}
-                    ),
-                    "plugin_version": recursive_find_version(
-                        environment, {"q2-dada2", "dada2"}
-                    ),
-                    "python_version": recursive_find_version(
-                        environment, {"python", "Python"}
-                    ),
-                }
-            )
+            # Same DADA2 execution may appear once per output artifact.
+            # UUID + action + params are used later for de-duplication.
+            candidates.append({
+                "path": action_path,
+                "method": TARGET_ACTIONS[action_name],
+                "action_name": action_name,
+                "params": params,
+                "inputs": inputs,
+                "uuid": extract_execution_uuid(text),
+                "qiime_version": extract_environment_version(text, "qiime2"),
+                "plugin_version": extract_environment_version(text, "q2-dada2"),
+                "python_version": extract_environment_version(text, "python"),
+            })
 
 except zipfile.BadZipFile:
-    print("[ERROR] QZA 不是有效的 ZIP artifact", file=sys.stderr)
+    print("[ERROR] rep-seqs.qza 不是有效的 QIIME2/ZIP artifact", file=sys.stderr)
     sys.exit(4)
 
 
@@ -588,83 +586,98 @@ if not candidates:
     sys.exit(1)
 
 
-# 正常情況只有一個 DADA2 denoise action。
-# 若有多個，優先取 ancestry depth 最淺者；
-# 若仍有多筆則採 action path 排序第一筆，並在 stderr 警告。
-candidates.sort(key=lambda x: (x["depth"], x["path"]))
+# Deduplicate the same DADA2 execution recorded for multiple outputs
+# (e.g. table and representative_sequences).
+unique = []
+seen = set()
 
-if len(candidates) > 1:
-    unique = {(c["action_name"], c["action_uuid"], c["path"]) for c in candidates}
-    if len(unique) > 1:
+for c in candidates:
+    params_key = tuple(sorted(c["params"].items()))
+    identity = (
+        c["uuid"],
+        c["action_name"],
+        params_key,
+    )
+    if identity in seen:
+        continue
+    seen.add(identity)
+    unique.append(c)
+
+
+if len(unique) > 1:
+    print(
+        "[WARN] QZA provenance 中找到多個不同的 DADA2 denoise execution；"
+        "將使用排序後第一筆。",
+        file=sys.stderr,
+    )
+    for c in unique:
         print(
-            "[WARN] QZA provenance 中找到多筆 DADA2 denoise action；"
-            "將使用排序後第一筆。",
+            f"[WARN] {c['action_name']} | uuid={c['uuid']} | {c['path']}",
             file=sys.stderr,
         )
-        for c in candidates:
-            print(
-                f"[WARN] {c['action_name']} | uuid={c['action_uuid']} | {c['path']}",
-                file=sys.stderr,
-            )
-
-c = candidates[0]
-params = c["params"]
-inputs = c["inputs"]
 
 
-def first(*names):
+c = unique[0]
+p = c["params"]
+i = c["inputs"]
+
+
+def first(mapping, *names):
     for name in names:
-        if name in params and params[name] is not None:
-            return clean_scalar(params[name])
-    return ""
-
-
-def first_input(*names):
-    for name in names:
-        if name in inputs and inputs[name] is not None:
-            return clean_scalar(inputs[name])
+        if name in mapping:
+            return clean(mapping[name])
     return ""
 
 
 values = {
     "denoise_provenance_source": "qiime2_artifact",
     "denoise_method": c["method"],
-    "denoise_input": first_input(
-        "demultiplexed_seqs",
-        "demultiplexed-seqs",
+    "denoise_input": first(i, "demultiplexed_seqs", "demultiplexed-seqs"),
+
+    "denoise_trim_left": first(p, "trim_left", "trim-left"),
+    "denoise_trunc_len": first(p, "trunc_len", "trunc-len"),
+
+    "denoise_trim_left_f": first(p, "trim_left_f", "trim-left-f"),
+    "denoise_trim_left_r": first(p, "trim_left_r", "trim-left-r"),
+    "denoise_trunc_len_f": first(p, "trunc_len_f", "trunc-len-f"),
+    "denoise_trunc_len_r": first(p, "trunc_len_r", "trunc-len-r"),
+
+    "denoise_front": first(p, "front"),
+    "denoise_adapter": first(p, "adapter"),
+    "denoise_min_len": first(p, "min_len", "min-len"),
+    "denoise_max_len": first(p, "max_len", "max-len"),
+    "denoise_max_ee": first(p, "max_ee", "max-ee"),
+    "denoise_max_mismatch": first(p, "max_mismatch", "max-mismatch"),
+    "denoise_indels": first(p, "indels"),
+    "denoise_trunc_q": first(p, "trunc_q", "trunc-q"),
+
+    "denoise_pooling_method": first(p, "pooling_method", "pooling-method"),
+    "denoise_chimera_method": first(p, "chimera_method", "chimera-method"),
+    "denoise_min_fold_parent_over_abundance": first(
+        p,
+        "min_fold_parent_over_abundance",
+        "min-fold-parent-over-abundance",
     ),
+    "denoise_allow_one_off": first(p, "allow_one_off", "allow-one-off"),
 
-    "denoise_trim_left": first("trim_left", "trim-left"),
-    "denoise_trunc_len": first("trunc_len", "trunc-len"),
-
-    "denoise_trim_left_f": first("trim_left_f", "trim-left-f"),
-    "denoise_trim_left_r": first("trim_left_r", "trim-left-r"),
-    "denoise_trunc_len_f": first("trunc_len_f", "trunc-len-f"),
-    "denoise_trunc_len_r": first("trunc_len_r", "trunc-len-r"),
-
-    "denoise_front": first("front"),
-    "denoise_adapter": first("adapter"),
-    "denoise_min_len": first("min_len", "min-len"),
-    "denoise_max_len": first("max_len", "max-len"),
-    "denoise_max_ee": first("max_ee", "max-ee"),
-    "denoise_max_mismatch": first("max_mismatch", "max-mismatch"),
-
-    "denoise_pooling_method": first("pooling_method", "pooling-method"),
-    "denoise_chimera_method": first("chimera_method", "chimera-method"),
-
-    "denoise_threads": first("n_threads", "n-threads"),
+    "denoise_threads": first(p, "n_threads", "n-threads"),
+    "denoise_n_reads_learn": first(p, "n_reads_learn", "n-reads-learn"),
+    "denoise_hashed_feature_ids": first(
+        p, "hashed_feature_ids", "hashed-feature-ids"
+    ),
+    "denoise_retain_all_samples": first(
+        p, "retain_all_samples", "retain-all-samples"
+    ),
 
     "denoise_qiime_version": c["qiime_version"],
     "denoise_plugin_version": c["plugin_version"],
     "denoise_python_version": c["python_version"],
-    "denoise_action_uuid": c["action_uuid"],
+    "denoise_action_uuid": c["uuid"],
 }
 
 
 for key, value in values.items():
-    value = clean_scalar(value)
-    value = value.replace("\t", " ").replace("\r", " ").replace("\n", " ")
-    print(f"{key}\t{value}")
+    print(f"{key}\t{clean(value)}")
 
 PY
     )"
@@ -699,11 +712,20 @@ PY
             denoise_max_len) DENOISE_MAX_LEN="${value}" ;;
             denoise_max_ee) DENOISE_MAX_EE="${value}" ;;
             denoise_max_mismatch) DENOISE_MAX_MISMATCH="${value}" ;;
+            denoise_indels) DENOISE_INDELS="${value}" ;;
+            denoise_trunc_q) DENOISE_TRUNC_Q="${value}" ;;
 
             denoise_pooling_method) DENOISE_POOLING_METHOD="${value}" ;;
             denoise_chimera_method) DENOISE_CHIMERA_METHOD="${value}" ;;
+            denoise_min_fold_parent_over_abundance)
+                DENOISE_MIN_FOLD_PARENT_OVER_ABUNDANCE="${value}"
+                ;;
+            denoise_allow_one_off) DENOISE_ALLOW_ONE_OFF="${value}" ;;
 
             denoise_threads) DENOISE_THREADS="${value}" ;;
+            denoise_n_reads_learn) DENOISE_N_READS_LEARN="${value}" ;;
+            denoise_hashed_feature_ids) DENOISE_HASHED_FEATURE_IDS="${value}" ;;
+            denoise_retain_all_samples) DENOISE_RETAIN_ALL_SAMPLES="${value}" ;;
 
             denoise_qiime_version) DENOISE_QIIME_VERSION="${value}" ;;
             denoise_plugin_version) DENOISE_PLUGIN_VERSION="${value}" ;;
@@ -714,12 +736,7 @@ PY
     done <<< "${parser_output}"
 
 
-    if [ "${DENOISE_PROVENANCE_SOURCE}" != "qiime2_artifact" ]; then
-        return 1
-    fi
-
-
-    return 0
+    [ "${DENOISE_PROVENANCE_SOURCE}" = "qiime2_artifact" ]
 }
 
 
@@ -1381,9 +1398,16 @@ denoise_min_len=${DENOISE_MIN_LEN}
 denoise_max_len=${DENOISE_MAX_LEN}
 denoise_max_ee=${DENOISE_MAX_EE}
 denoise_max_mismatch=${DENOISE_MAX_MISMATCH}
+denoise_indels=${DENOISE_INDELS}
+denoise_trunc_q=${DENOISE_TRUNC_Q}
 denoise_pooling_method=${DENOISE_POOLING_METHOD}
 denoise_chimera_method=${DENOISE_CHIMERA_METHOD}
+denoise_min_fold_parent_over_abundance=${DENOISE_MIN_FOLD_PARENT_OVER_ABUNDANCE}
+denoise_allow_one_off=${DENOISE_ALLOW_ONE_OFF}
 denoise_threads=${DENOISE_THREADS}
+denoise_n_reads_learn=${DENOISE_N_READS_LEARN}
+denoise_hashed_feature_ids=${DENOISE_HASHED_FEATURE_IDS}
+denoise_retain_all_samples=${DENOISE_RETAIN_ALL_SAMPLES}
 EOF
 
 
@@ -1514,9 +1538,17 @@ show_provenance() {
         echo "[INFO] min-len                   = ${DENOISE_MIN_LEN:-unknown}"
         echo "[INFO] max-len                   = ${DENOISE_MAX_LEN:-unknown}"
         echo "[INFO] max-ee                    = ${DENOISE_MAX_EE:-unknown}"
+        echo "[INFO] max-mismatch              = ${DENOISE_MAX_MISMATCH:-unknown}"
+        echo "[INFO] indels                    = ${DENOISE_INDELS:-unknown}"
+        echo "[INFO] trunc-q                   = ${DENOISE_TRUNC_Q:-unknown}"
         echo "[INFO] pooling                   = ${DENOISE_POOLING_METHOD:-unknown}"
         echo "[INFO] chimera                   = ${DENOISE_CHIMERA_METHOD:-unknown}"
+        echo "[INFO] min-fold-parent           = ${DENOISE_MIN_FOLD_PARENT_OVER_ABUNDANCE:-unknown}"
+        echo "[INFO] allow-one-off             = ${DENOISE_ALLOW_ONE_OFF:-unknown}"
         echo "[INFO] threads                   = ${DENOISE_THREADS:-unknown}"
+        echo "[INFO] n-reads-learn             = ${DENOISE_N_READS_LEARN:-unknown}"
+        echo "[INFO] hashed-feature-ids        = ${DENOISE_HASHED_FEATURE_IDS:-unknown}"
+        echo "[INFO] retain-all-samples        = ${DENOISE_RETAIN_ALL_SAMPLES:-unknown}"
 
 
     elif [ "${DENOISE_METHOD}" = "dada2-single" ]; then
