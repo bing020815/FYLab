@@ -6,13 +6,14 @@
 * 20260805 updated
 ```
   + KTU方法分類 [20260805]
+  + 可再現性紀錄優化 [20260901]
 ```
 
 # Table of Contents:
 0. [|Pre-upstream| 初始設定](#Preset)
 1. [|Pre-upstream| 序列前處理與導入](#序列前處理與導入)
 2. [|Post-upstream| QIIME2 - Analysis: 模型分類導出特征表](#Analysis-模型分類導出特征表)
-3. [|Post-upstream| Dehost - 由序列排除host基因](#Dehost-排除host基因)
+3. [|Post-upstream| Dehost - 由序列排除host序列](#Dehost-排除-host-sequences)
 4. [|Post-upstream| 畫圖](#畫圖)
 5. [|Post-upstream| KTU 分類](#ktu-分類)
 6. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
@@ -560,11 +561,54 @@ biom 記錄樣本與 OTU/ASV 之間的豐度矩陣
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
 
 
-# Dehost 排除host基因
-## 1. 啟動host-tools package 
+# Dehost 排除 host sequences
+Dehost 以 representative sequences 對宿主 reference genome 進行比對， 移除可比對至宿主基因組的 Feature，保留 non-host sequences 供後續菌相分析。
 
+## Citation
+Citation [Bowtie2]:
+```
+Langmead B, Salzberg SL. Fast gapped-read alignment with Bowtie 2. Nature Methods. 2012;9:357–359. DOI: 10.1038/nmeth.1923.
+```
+
+Citation [Samtools]:
+```
+Danecek P, Bonfield JK, Liddle J, et al. Twelve years of SAMtools and BCFtools. GigaScience. 2021;10(2):giab008. DOI: 10.1093/gigascience/giab008.
+```
+
+Citation [SeqKit]:
+```
+Shen W, Le S, Li Y, Hu F. SeqKit: A Cross-Platform and Ultrafast Toolkit for FASTA/Q File Manipulation. PLoS ONE. 2016;11(10):e0163962. DOI: 10.1371/journal.pone.0163962.
+```
+
+### Host reference genome
+Dehost 使用 [Ensembl host genome reference](https://useast.ensembl.org/index.html) 建立 Bowtie2 index，並以 representative sequences 對宿主基因組進行比對。
+
+Host reference genomes 來源為 Ensembl，並預先建立 Bowtie2 index。 
+
+目前 human reference：
+- Species: `Homo sapiens`
+- Assembly: `GRCh38`
+- Reference type: `primary assembly`
+- Source: `Ensembl`
+- Ensembl release: `not recorded`
+
+其他支援的 HOST_DB：
+- `human`: Homo sapiens
+- `mouse`: Mus musculus
+- `dog`: Canis lupus familiaris
+- `cat`: Felis catus
+- `duck`: Anas platyrhynchos platyrhynchos
+- `cattle`: Bos taurus
+- `sheep`: Ovis aries
+- `goat`: Capra hircus
+- `horse`: Equus caballus
+- `pig`: Sus scrofa
+- `turkey`: Meleagris gallopavo
+- `rabbit`: Oryctolagus cuniculus
+- `chicken`: Gallus gallus
+
+## 1. 啟動host-tools package 
 包含: bowtie2, samtools, seqkit 工具包 
-https://useast.ensembl.org/index.html
 ```bash
 conda activate host-tools
 ```
@@ -1031,6 +1075,17 @@ KEGG 功能:
   * 將每個樣本中 ASV 的豐度 × 功能拷貝數 加總，輸出
     + `pred_metagenome_unstrat.tsv`(ASV 層級的功能表)
     + `path_abun_unstrat.tsv`(樣本層級的 KEGG pathway abundance)
+
+Citation [PICRUSt2]:
+```
+Douglas GM, Maffei VJ, Zaneveld JR, Yurgel SN, Brown JR, Taylor CM, Huttenhower C, Langille MGI. PICRUSt2 for prediction of metagenome functions. Nature Biotechnology. 2020;38:685–688. DOI: 10.1038/s41587-020-0548-6.
+```
+
+Citation [PICRUSt2-SC]:
+```
+Wright RJ, Langille MGI. PICRUSt2-SC: an update to the reference database used for functional prediction within PICRUSt2.
+Bioinformatics. 2025;41(5):btaf269. DOI: 10.1093/bioinformatics/btaf269.
+```
 
 ## 啟動PICRUSt2 package
 則一環境啟動即可。
