@@ -450,7 +450,7 @@ CMD="qiime feature-classifier classify-consensus-vsearch \
 <summary><strong>SILVA DaDa2 Zenodo 138.2 16S [20260419 修正]</strong></summary>
 
 由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 資料庫 138.2 版本建立 (約42萬條序列)
-* ASV 數量約90.4萬筆，Taxonomy 總數維持約45.2萬筆
+* SILVA reference sequences 數量約90.4萬筆，Taxonomy 總數維持約45.2萬筆
 
 [SILVA DaDa2 Zenodo 138.2 Cite 參考資訊](https://zenodo.org/records/14169026)
   
@@ -475,7 +475,7 @@ CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
-JOB_NAME=gg_nb_full \
+JOB_NAME=silva_dada2_1382_nb_full \
 CMD="qiime feature-classifier classify-sklearn \
   --i-classifier /home/adprc/classifier/SILVA/trained/${CURRENT_ENV}/silva_dada2_zenodo_138.2_NB_classifier_full-length.qza \
   --i-reads rep-seqs.qza \
