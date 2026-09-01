@@ -479,7 +479,7 @@ CMD="qiime feature-classifier classify-sklearn \
 ./shell_tools/run_in_tmux.sh
 ```
 
-### Option2: Naive Bayes 模型分類 (full-length)
+### Option2: Naive Bayes 模型分類 (full-length) [Self-trained]
 ```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
 
