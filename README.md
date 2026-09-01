@@ -447,12 +447,22 @@ CMD="qiime feature-classifier classify-consensus-vsearch \
 </details><br>
 
 <details>
-<summary><strong>SILVA DaDa2 Zenodo 138.2 16S [20260419 修正]</strong></summary>
+<summary><strong>SILVA 138.2 — DADA2-formatted reference [20260419 修正]</strong></summary>
 
-由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 資料庫 138.2 版本建立 (約42萬條序列)
+由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 138.2 官方資料建立之 DADA2-compatible reference FASTA
 * SILVA reference sequences 數量約90.4萬筆，Taxonomy 總數維持約45.2萬筆
+* 此資料集將 SILVA 138.2 重新整理成適合 DADA2 assignTaxonomy() / assignSpecies() 使用的格式
 
-[SILVA DaDa2 Zenodo 138.2 Cite 參考資訊](https://zenodo.org/records/14169026)
+Citation [SILVA database]:
+```
+Quast C, Pruesse E, Yilmaz P, Gerken J, Schweer T, Yarza P, Peplies J, Glöckner FO. The SILVA ribosomal RNA gene database project: improved data processing and web-based tools. Nucleic Acids Research. 2013;41(Database issue):D590–D596. DOI: 10.1093/nar/gks1219. 
+```
+
+Citation [SILVA DaDa2 Zenodo 138.2](https://zenodo.org/records/14169026):
+```
+Callahan B. Silva taxonomic training data formatted for DADA2 (Silva version 138.2). Zenodo. 2024. DOI: 10.5281/zenodo.14169026.
+```
+
   
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```bash
