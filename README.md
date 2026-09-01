@@ -3,10 +3,10 @@
 * 三代定序下機前處理使用[PacBio轉檔Fastq](./docs/pacbio_bam2fastq.md)
 
 
-* 20260805 updated
+* 20260901 updated
 ```
   + KTU方法分類 [20260805]
-  + 可再現性紀錄優化 [20260901]
+  + 可再現性紀錄優化、Citation [20260901]
 ```
 
 # Table of Contents:
