@@ -9,10 +9,10 @@ set -euo pipefail
 #   2. rep-seqs.qza -> dna-sequences.fasta
 #   3. taxonomy.qza / taxonomy.tsv -> taxonomy.tsv
 #
-#   4. 從 logs/latest_denoise.status 反查 DADA2 設定
-#      - denoise-paired
-#      - denoise-single
-#      - denoise-ccs (PacBio CCS / full-length 16S)
+#   4. DADA2 provenance：
+#      - Primary：從 rep-seqs.qza 的 QIIME2 provenance 讀取
+#      - Fallback：logs/latest_denoise.status
+#      - 支援 denoise-paired / denoise-single / denoise-ccs
 #
 #   5. 從 logs/latest_taxonomy.status 反查 taxonomy 執行方式
 #
@@ -357,7 +357,9 @@ prepare_taxonomy_tsv() {
 # Denoise provenance
 # ============================================================
 
-infer_denoise_provenance() {
+reset_denoise_provenance() {
+
+    DENOISE_PROVENANCE_SOURCE="unavailable"
 
     DENOISE_METHOD="unknown"
 
@@ -389,15 +391,345 @@ infer_denoise_provenance() {
 
     DENOISE_THREADS=""
 
+    DENOISE_QIIME_VERSION=""
+    DENOISE_PLUGIN_VERSION=""
+    DENOISE_PYTHON_VERSION=""
+    DENOISE_ACTION_UUID=""
+}
 
-    if [ ! -f "${LATEST_DENOISE_STATUS}" ]; then
 
-        echo "[WARN] 找不到 ${LATEST_DENOISE_STATUS}"
-        echo "[WARN] denoise provenance 將不完整"
+infer_denoise_from_qza() {
 
-        return
+    local qza_path="$1"
+    local parser_output
+    local parser_status
+
+    if [ ! -f "${qza_path}" ]; then
+        return 1
     fi
 
+    set +e
+
+    parser_output="$(
+        python - "${qza_path}" <<'PY'
+import io
+import sys
+import zipfile
+
+try:
+    import yaml
+except Exception as exc:
+    print(f"[ERROR] 無法 import PyYAML: {exc}", file=sys.stderr)
+    sys.exit(3)
+
+
+qza_path = sys.argv[1]
+
+TARGET_ACTIONS = {
+    "denoise-paired",
+    "denoise_paired",
+    "denoise-single",
+    "denoise_single",
+    "denoise-ccs",
+    "denoise_ccs",
+}
+
+
+def clean_scalar(value):
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, (str, int, float)):
+        return str(value)
+    return str(value)
+
+
+def normalize_mapping_list(obj):
+    """
+    QIIME2 action.yaml 常把 inputs / parameters 寫成：
+      - key: value
+      - key2: value2
+    也兼容 dict。
+    """
+    out = {}
+
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out[str(k)] = v
+        return out
+
+    if isinstance(obj, list):
+        for item in obj:
+            if isinstance(item, dict):
+                for k, v in item.items():
+                    out[str(k)] = v
+
+    return out
+
+
+def dig(mapping, *path):
+    cur = mapping
+    for key in path:
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(key)
+    return cur
+
+
+def recursive_find_version(obj, names):
+    """
+    在 environment 等巢狀結構中找版本。
+    names 為候選 key。
+    """
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if str(k) in names:
+                if isinstance(v, dict):
+                    for vk in ("version", "Version"):
+                        if vk in v:
+                            return clean_scalar(v[vk])
+                elif isinstance(v, (str, int, float)):
+                    return clean_scalar(v)
+
+        for v in obj.values():
+            found = recursive_find_version(v, names)
+            if found:
+                return found
+
+    elif isinstance(obj, list):
+        for v in obj:
+            found = recursive_find_version(v, names)
+            if found:
+                return found
+
+    return ""
+
+
+candidates = []
+
+try:
+    with zipfile.ZipFile(qza_path, "r") as zf:
+
+        action_paths = [
+            name
+            for name in zf.namelist()
+            if name.endswith("/action/action.yaml")
+            and "/provenance/" in name
+        ]
+
+        for action_path in action_paths:
+
+            try:
+                raw = zf.read(action_path)
+                doc = yaml.safe_load(raw)
+            except Exception:
+                continue
+
+            if not isinstance(doc, dict):
+                continue
+
+            action = doc.get("action", {})
+            if not isinstance(action, dict):
+                continue
+
+            plugin = clean_scalar(action.get("plugin")).strip()
+            action_name = clean_scalar(action.get("action")).strip()
+
+            if plugin != "dada2":
+                continue
+
+            if action_name not in TARGET_ACTIONS:
+                continue
+
+            inputs = normalize_mapping_list(action.get("inputs"))
+            params = normalize_mapping_list(action.get("parameters"))
+
+            execution = doc.get("execution", {})
+            environment = doc.get("environment", {})
+
+            # 兼容 "-" 與 "_" 兩種 action 命名。
+            normalized_action = action_name.replace("_", "-")
+
+            # provenance/action/action.yaml 是目前 artifact 本身的 action；
+            # provenance/artifacts/<uuid>/action/action.yaml 是 ancestry。
+            # DADA2 通常會在 ancestry 中。這裡都收集，再選最合理的一筆。
+            artifact_depth = action_path.count("/artifacts/")
+
+            candidates.append(
+                {
+                    "path": action_path,
+                    "depth": artifact_depth,
+                    "method": f"dada2-{normalized_action.removeprefix('denoise-')}",
+                    "action_name": normalized_action,
+                    "inputs": inputs,
+                    "params": params,
+                    "action_uuid": clean_scalar(
+                        execution.get("uuid") if isinstance(execution, dict) else ""
+                    ),
+                    "qiime_version": recursive_find_version(
+                        environment, {"qiime2", "QIIME2"}
+                    ),
+                    "plugin_version": recursive_find_version(
+                        environment, {"q2-dada2", "dada2"}
+                    ),
+                    "python_version": recursive_find_version(
+                        environment, {"python", "Python"}
+                    ),
+                }
+            )
+
+except zipfile.BadZipFile:
+    print("[ERROR] QZA 不是有效的 ZIP artifact", file=sys.stderr)
+    sys.exit(4)
+
+
+if not candidates:
+    sys.exit(1)
+
+
+# 正常情況只有一個 DADA2 denoise action。
+# 若有多個，優先取 ancestry depth 最淺者；
+# 若仍有多筆則採 action path 排序第一筆，並在 stderr 警告。
+candidates.sort(key=lambda x: (x["depth"], x["path"]))
+
+if len(candidates) > 1:
+    unique = {(c["action_name"], c["action_uuid"], c["path"]) for c in candidates}
+    if len(unique) > 1:
+        print(
+            "[WARN] QZA provenance 中找到多筆 DADA2 denoise action；"
+            "將使用排序後第一筆。",
+            file=sys.stderr,
+        )
+        for c in candidates:
+            print(
+                f"[WARN] {c['action_name']} | uuid={c['action_uuid']} | {c['path']}",
+                file=sys.stderr,
+            )
+
+c = candidates[0]
+params = c["params"]
+inputs = c["inputs"]
+
+
+def first(*names):
+    for name in names:
+        if name in params and params[name] is not None:
+            return clean_scalar(params[name])
+    return ""
+
+
+def first_input(*names):
+    for name in names:
+        if name in inputs and inputs[name] is not None:
+            return clean_scalar(inputs[name])
+    return ""
+
+
+values = {
+    "denoise_provenance_source": "qiime2_artifact",
+    "denoise_method": c["method"],
+    "denoise_input": first_input(
+        "demultiplexed_seqs",
+        "demultiplexed-seqs",
+    ),
+
+    "denoise_trim_left": first("trim_left", "trim-left"),
+    "denoise_trunc_len": first("trunc_len", "trunc-len"),
+
+    "denoise_trim_left_f": first("trim_left_f", "trim-left-f"),
+    "denoise_trim_left_r": first("trim_left_r", "trim-left-r"),
+    "denoise_trunc_len_f": first("trunc_len_f", "trunc-len-f"),
+    "denoise_trunc_len_r": first("trunc_len_r", "trunc-len-r"),
+
+    "denoise_front": first("front"),
+    "denoise_adapter": first("adapter"),
+    "denoise_min_len": first("min_len", "min-len"),
+    "denoise_max_len": first("max_len", "max-len"),
+    "denoise_max_ee": first("max_ee", "max-ee"),
+    "denoise_max_mismatch": first("max_mismatch", "max-mismatch"),
+
+    "denoise_pooling_method": first("pooling_method", "pooling-method"),
+    "denoise_chimera_method": first("chimera_method", "chimera-method"),
+
+    "denoise_threads": first("n_threads", "n-threads"),
+
+    "denoise_qiime_version": c["qiime_version"],
+    "denoise_plugin_version": c["plugin_version"],
+    "denoise_python_version": c["python_version"],
+    "denoise_action_uuid": c["action_uuid"],
+}
+
+
+for key, value in values.items():
+    value = clean_scalar(value)
+    value = value.replace("\t", " ").replace("\r", " ").replace("\n", " ")
+    print(f"{key}\t{value}")
+
+PY
+    )"
+
+    parser_status=$?
+
+    set -e
+
+    if [ "${parser_status}" -ne 0 ]; then
+        return "${parser_status}"
+    fi
+
+
+    while IFS=$'\t' read -r key value; do
+
+        case "${key}" in
+            denoise_provenance_source) DENOISE_PROVENANCE_SOURCE="${value}" ;;
+            denoise_method) DENOISE_METHOD="${value}" ;;
+            denoise_input) DENOISE_INPUT="${value}" ;;
+
+            denoise_trim_left) DENOISE_TRIM_LEFT="${value}" ;;
+            denoise_trunc_len) DENOISE_TRUNC_LEN="${value}" ;;
+
+            denoise_trim_left_f) DENOISE_TRIM_LEFT_F="${value}" ;;
+            denoise_trim_left_r) DENOISE_TRIM_LEFT_R="${value}" ;;
+            denoise_trunc_len_f) DENOISE_TRUNC_LEN_F="${value}" ;;
+            denoise_trunc_len_r) DENOISE_TRUNC_LEN_R="${value}" ;;
+
+            denoise_front) DENOISE_FRONT="${value}" ;;
+            denoise_adapter) DENOISE_ADAPTER="${value}" ;;
+            denoise_min_len) DENOISE_MIN_LEN="${value}" ;;
+            denoise_max_len) DENOISE_MAX_LEN="${value}" ;;
+            denoise_max_ee) DENOISE_MAX_EE="${value}" ;;
+            denoise_max_mismatch) DENOISE_MAX_MISMATCH="${value}" ;;
+
+            denoise_pooling_method) DENOISE_POOLING_METHOD="${value}" ;;
+            denoise_chimera_method) DENOISE_CHIMERA_METHOD="${value}" ;;
+
+            denoise_threads) DENOISE_THREADS="${value}" ;;
+
+            denoise_qiime_version) DENOISE_QIIME_VERSION="${value}" ;;
+            denoise_plugin_version) DENOISE_PLUGIN_VERSION="${value}" ;;
+            denoise_python_version) DENOISE_PYTHON_VERSION="${value}" ;;
+            denoise_action_uuid) DENOISE_ACTION_UUID="${value}" ;;
+        esac
+
+    done <<< "${parser_output}"
+
+
+    if [ "${DENOISE_PROVENANCE_SOURCE}" != "qiime2_artifact" ]; then
+        return 1
+    fi
+
+
+    return 0
+}
+
+
+infer_denoise_from_status() {
+
+    if [ ! -f "${LATEST_DENOISE_STATUS}" ]; then
+        return 1
+    fi
+
+    DENOISE_PROVENANCE_SOURCE="latest_denoise_status"
 
     DENOISE_JOB_STATUS="$(
         read_kv_value \
@@ -436,10 +768,6 @@ infer_denoise_provenance() {
     )"
 
 
-    # ========================================================
-    # DADA2 paired
-    # ========================================================
-
     if [[ "${DENOISE_CMD}" == *"dada2 denoise-paired"* ]]; then
 
         DENOISE_METHOD="dada2-paired"
@@ -454,10 +782,6 @@ infer_denoise_provenance() {
 
         DENOISE_THREADS="$(extract_cmd_argument "${DENOISE_CMD}" "--p-n-threads")"
 
-
-    # ========================================================
-    # DADA2 PacBio CCS
-    # ========================================================
 
     elif [[ "${DENOISE_CMD}" == *"dada2 denoise-ccs"* ]]; then
 
@@ -482,10 +806,6 @@ infer_denoise_provenance() {
         DENOISE_THREADS="$(extract_cmd_argument "${DENOISE_CMD}" "--p-n-threads")"
 
 
-    # ========================================================
-    # DADA2 single
-    # ========================================================
-
     elif [[ "${DENOISE_CMD}" == *"dada2 denoise-single"* ]]; then
 
         DENOISE_METHOD="dada2-single"
@@ -500,11 +820,93 @@ infer_denoise_provenance() {
 
     else
 
-        echo "[WARN] 無法辨識 denoise command 類型"
+        echo "[WARN] 無法辨識 latest_denoise.status 中的 denoise command"
+        return 1
 
     fi
+
+
+    return 0
 }
 
+
+fill_denoise_job_metadata_from_status() {
+
+    if [ ! -f "${LATEST_DENOISE_STATUS}" ]; then
+        return 0
+    fi
+
+    # QZA 是參數 provenance 的 primary source。
+    # 若 status 同時存在，只補 job-level metadata，不覆蓋 QZA 的 DADA2 參數。
+    DENOISE_JOB_STATUS="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "status"
+    )"
+
+    DENOISE_JOB_NAME="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "job_name"
+    )"
+
+    DENOISE_JOB_ID="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "job_id"
+    )"
+
+    DENOISE_JOB_START="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "start_time"
+    )"
+
+    DENOISE_JOB_END="$(
+        read_kv_value \
+            "${LATEST_DENOISE_STATUS}" \
+            "end_time"
+    )"
+}
+
+
+infer_denoise_provenance() {
+
+    reset_denoise_provenance
+
+
+    # ========================================================
+    # Priority 1：QIIME2 artifact provenance
+    # ========================================================
+
+    if infer_denoise_from_qza "${REPSEQS_QZA}"; then
+
+        echo "[INFO] denoise provenance source = QIIME2 artifact"
+
+        fill_denoise_job_metadata_from_status
+
+        return
+    fi
+
+
+    echo "[WARN] rep-seqs.qza provenance 找不到可辨識的 DADA2 denoise action"
+
+
+    # ========================================================
+    # Priority 2：latest_denoise.status fallback
+    # ========================================================
+
+    if infer_denoise_from_status; then
+
+        echo "[INFO] denoise provenance source = latest_denoise.status"
+
+        return
+    fi
+
+
+    echo "[WARN] 找不到可用的 denoise provenance"
+    echo "[WARN] QZA provenance 與 latest_denoise.status 均無法取得 DADA2 設定"
+}
 
 # ============================================================
 # Classifier manifest lookup
@@ -932,7 +1334,12 @@ EOF
 
     cat >> "${ANALYSIS_METADATA}" <<EOF
 
+denoise_provenance_source=${DENOISE_PROVENANCE_SOURCE}
 denoise_method=${DENOISE_METHOD}
+denoise_qiime_version=${DENOISE_QIIME_VERSION}
+denoise_plugin_version=${DENOISE_PLUGIN_VERSION}
+denoise_python_version=${DENOISE_PYTHON_VERSION}
+denoise_action_uuid=${DENOISE_ACTION_UUID}
 denoise_job_status=${DENOISE_JOB_STATUS}
 denoise_job_name=${DENOISE_JOB_NAME}
 denoise_job_id=${DENOISE_JOB_ID}
@@ -1081,7 +1488,12 @@ show_provenance() {
     echo " Denoise provenance"
     echo "============================================================"
 
+    echo "[INFO] provenance source         = ${DENOISE_PROVENANCE_SOURCE:-unknown}"
     echo "[INFO] method                    = ${DENOISE_METHOD}"
+    echo "[INFO] QIIME version             = ${DENOISE_QIIME_VERSION:-unknown}"
+    echo "[INFO] q2-dada2 version          = ${DENOISE_PLUGIN_VERSION:-unknown}"
+    echo "[INFO] Python version            = ${DENOISE_PYTHON_VERSION:-unknown}"
+    echo "[INFO] action UUID               = ${DENOISE_ACTION_UUID:-unknown}"
     echo "[INFO] denoise job               = ${DENOISE_JOB_NAME:-unknown}"
     echo "[INFO] denoise status            = ${DENOISE_JOB_STATUS}"
 
