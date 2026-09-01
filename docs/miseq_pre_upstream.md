@@ -51,6 +51,11 @@ FastQ現存現象:
   + 沒 primer 的序列則保留不動，不切序列前段
 ![Primer](../img/primer-idx.png)
 
+Citation [Cutadapt]:
+```
+Martin M. Cutadapt removes adapter sequences from high-throughput sequencing reads. EMBnet.journal. 2011;17(1):10–12. DOI: 10.14806/ej.17.1.200.
+```
+
 ## 啟用cutadapt環境
 ```
 conda activate cutadapt310
@@ -95,6 +100,17 @@ cd ..
 
 # QIIME2 - Preparation 分析前準備
 ![QIIME2](../img/QIIME2_flow.png)
+
+Citation [QIIME 2]:
+```
+Bolyen E, Rideout JR, Dillon MR, et al. Reproducible, interactive, scalable and extensible microbiome data science using QIIME 2. Nature Biotechnology. 2019;37:852–857. DOI: 10.1038/s41587-019-0209-9.
+```
+
+Citation [DADA2]:
+```
+Callahan BJ, McMurdie PJ, Rosen MJ, Han AW, Johnson AJA, Holmes SP. DADA2: High-resolution sample inference from Illumina amplicon data. Nature Methods. 2016;13:581–583. DOI: 10.1038/nmeth.3869.
+```
+
 ## 下載腳本與賦予執行權限
 ```
 mkdir -p shell_tools
