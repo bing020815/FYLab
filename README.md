@@ -463,7 +463,6 @@ Citation [SILVA DaDa2 Zenodo 138.2](https://zenodo.org/records/14169026):
 Callahan B. Silva taxonomic training data formatted for DADA2 (Silva version 138.2). Zenodo. 2024. DOI: 10.5281/zenodo.14169026.
 ```
 
-  
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
 ```bash
 CURRENT_ENV="${CONDA_DEFAULT_ENV}"
@@ -626,8 +625,10 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 ### Phylogeny Tree 檔案 [optional]
-* 親緣關係樹是由 sequence 建立，並且qiime2賦予Feature ID
+* 親緣關係樹由 representative sequences 建立，tree tip 對應輸入序列既有的 Feature ID（ASV ID）
 * 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted_tree.qza`
+* 方法學: MAFFT → mask → FastTree → root
+* 目前採 de novo phylogenetic tree 建構方式，由 representative sequences 經 MAFFT alignment 與 FastTree 建樹，不依賴 taxonomy reference database（如 SILVA、Greengenes2）
 * 親緣關係樹不可合併專案使用
 
 <details>
