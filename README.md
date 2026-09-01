@@ -447,7 +447,7 @@ CMD="qiime feature-classifier classify-consensus-vsearch \
 </details><br>
 
 <details>
-<summary><strong>SILVA 138.2 — DADA2-formatted reference [20260419 修正]</strong></summary>
+<summary><strong>SILVA 138.2 16S — DADA2-formatted reference [20260419 修正]</strong></summary>
 
 由 DADA2 套件作者（Callahan BJ 等）基於 SILVA 138.2 官方資料建立之 DADA2-compatible reference FASTA
 * SILVA reference sequences 數量約90.4萬筆，Taxonomy 總數維持約45.2萬筆
