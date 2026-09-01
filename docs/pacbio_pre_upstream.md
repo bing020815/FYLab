@@ -232,6 +232,26 @@ sample2 Treatment
 9. export biom
 10. barplot / report
 
+Citation [QIIME 2]:
+```
+Bolyen E, Rideout JR, Dillon MR, et al. Reproducible, interactive, scalable and extensible microbiome data science using QIIME 2. Nature Biotechnology. 2019;37:852–857. DOI: 10.1038/s41587-019-0209-9.
+```
+
+Citation [DADA2]:
+```
+Callahan BJ, McMurdie PJ, Rosen MJ, Han AW, Johnson AJA, Holmes SP. DADA2: High-resolution sample inference from Illumina amplicon data. Nature Methods. 2016;13:581–583. DOI: 10.1038/nmeth.3869.
+```
+
+Citation [Cutadapt]:
+```
+Martin M. Cutadapt removes adapter sequences from high-throughput sequencing reads. EMBnet.journal. 2011;17(1):10–12. DOI: 10.14806/ej.17.1.200.
+```
+
+Citation [SeqKit]:
+```
+Shen W, Le S, Li Y, Hu F. SeqKit: A Cross-Platform and Ultrafast Toolkit for FASTA/Q File Manipulation. PLoS ONE. 2016;11(10):e0163962. DOI: 10.1371/journal.pone.0163962.
+```
+
 ## Step1. 啟動執行 workflow
 * `CPU` 可調整
 * 需要前景除錯資訊可改:`RUN_IN_TMUX=false CPU=8 ./shell_tools/run_pacbio_workflow.sh .`
