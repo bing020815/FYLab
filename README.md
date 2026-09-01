@@ -670,7 +670,7 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 ```
 ### Phylogeny Tree 檔案 [optional]
 * 親緣關係樹由 representative sequences 建立，tree tip 對應輸入序列既有的 Feature ID（ASV ID）
-* 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted_tree.qza`
+* 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted-tree.qza`
 * 方法學: MAFFT → mask → FastTree → root
 * 目前採 de novo phylogenetic tree 建構方式，由 representative sequences 經 MAFFT alignment 與 FastTree 建樹，不依賴 taxonomy reference database（如 SILVA、Greengenes2）
 * 親緣關係樹不可合併專案使用
@@ -679,62 +679,79 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 <summary><strong>Dehost使後用語法</strong></summary>
 
 ```bash
+mkdir -p phylogeny_tree
+
 JOB_TYPE=phylogeny_tree \
 PROJECT_DIR=. \
 JOB_NAME=dehost_tree \
 CMD='qiime phylogeny align-to-tree-mafft-fasttree \
   --i-sequences phyloseq/dehost_output/dehost_rep_seqs.qza \
-  --o-alignment aligned-rep-seqs.qza \
-  --o-masked-alignment masked-aligned-rep-seqs.qza \
-  --o-tree unrooted-tree.qza \
-  --o-rooted-tree rooted-tree.qza \
+  --o-alignment phylogeny_tree/aligned-rep-seqs.qza \
+  --o-masked-alignment phylogeny_tree/masked-aligned-rep-seqs.qza \
+  --o-tree phylogeny_tree/unrooted-tree.qza \
+  --o-rooted-tree phylogeny_tree/rooted-tree.qza \
   --p-n-threads 2' \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
+
 <details>
 <summary><strong>未Dehost使後語法</strong></summary>
 
 ```bash
+mkdir -p phylogeny_tree
+
 JOB_TYPE=phylogeny_tree \
 PROJECT_DIR=. \
 JOB_NAME=raw_tree \
 CMD='qiime phylogeny align-to-tree-mafft-fasttree \
   --i-sequences rep-seqs.qza \
-  --o-alignment aligned-rep-seqs.qza \
-  --o-masked-alignment masked-aligned-rep-seqs.qza \
-  --o-tree unrooted-tree.qza \
-  --o-rooted-tree rooted-tree.qza \
+  --o-alignment phylogeny_tree/aligned-rep-seqs.qza \
+  --o-masked-alignment phylogeny_tree/masked-aligned-rep-seqs.qza \
+  --o-tree phylogeny_tree/unrooted-tree.qza \
+  --o-rooted-tree phylogeny_tree/rooted-tree.qza \
   --p-n-threads 2' \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
 
 ## 進化樹轉出 [optional]
-* 有根樹、無根樹是由 sequence 建立，並且qiime2賦予Feature ID
-* 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted_tree.nwk`
+* 有根樹、無根樹是由 representative sequences 既有的 Feature ID（ASV ID）建立
+* 計算 unweighted UniFrac、weighted UniFrac beta diversity 需要有根樹 `rooted-tree.nwk`
 * 有根樹、無根樹不可合併專案使用
+* `phylogeny_tree/nwk/` 為提供 R、phyloseq、Python 等下游分析使用的 Newick tree 輸出位置。
 
 <details>
-<summary><strong>點我展開畫進化樹(optional)</strong></summary>
-  
-### 1. 導出無根進化樹 [optional]
+<summary><strong>點我展開匯出進化樹 [optional]</strong></summary>
+
+將 QIIME 2 phylogeny tree artifact 匯出為 Newick (`.nwk`) 格式，
+統一儲存於 `phylogeny_tree/nwk/`，供下游分析使用。
+
+### 1. 匯出無根進化樹 [optional]
+
 ```bash
+mkdir -p phylogeny_tree/nwk
+
 qiime tools export \
---input-path unrooted-tree.qza \
---output-path phyloseq
-cd phyloseq; mv tree.nwk unrooted_tree.nwk; cd ../
+  --input-path phylogeny_tree/unrooted-tree.qza \
+  --output-path phylogeny_tree/nwk
+
+mv phylogeny_tree/nwk/tree.nwk \
+   phylogeny_tree/nwk/unrooted_tree.nwk
 ```
 
-### 2. 導出有根進化樹 [optional]
+### 2. 匯出有根進化樹 [optional]
+
 ```bash
 qiime tools export \
---input-path rooted-tree.qza \
---output-path phyloseq
-cd phyloseq; mv tree.nwk rooted_tree.nwk; cd ../
+  --input-path phylogeny_tree/rooted-tree.qza \
+  --output-path phylogeny_tree/nwk
+
+mv phylogeny_tree/nwk/tree.nwk \
+   phylogeny_tree/nwk/rooted_tree.nwk
 ```
+
 </details><br>
-
 
   
 ## OTU Bar Plot [optional]
