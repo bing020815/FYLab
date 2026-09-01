@@ -12,13 +12,22 @@ set -euo pipefail
 #   4. 從 logs/latest_denoise.status 反查 DADA2 設定
 #      - denoise-paired
 #      - denoise-single
+#      - denoise-ccs (PacBio CCS / full-length 16S)
 #
 #   5. 從 logs/latest_taxonomy.status 反查 taxonomy 執行方式
 #
 #   6. classify-sklearn：
-#      - classifier path
-#      - SHA256
+#      - classifier path / SHA256
 #      - classifier_manifest.tsv
+#      - reference_set
+#      - reference_variant
+#      - reference_source
+#      - reference_url
+#      - taxonomy_depth
+#      - db_version
+#      - region
+#      - classifier training sklearn version
+#      - export 當下 runtime sklearn version
 #
 #   7. classify-consensus-vsearch：
 #      - reference reads
@@ -29,11 +38,10 @@ set -euo pipefail
 #      phyloseq/analysis_metadata.txt
 #
 # 使用：
-#   ./shell_tools/export_table_qza_to_phyloseq.sh
+#   ./scripts/post_upstream/export_table_qza_to_phyloseq.sh
 #
 # 或：
-#   ./shell_tools/export_table_qza_to_phyloseq.sh /path/to/project
-#
+#   ./scripts/post_upstream/export_table_qza_to_phyloseq.sh /path/to/project
 # ============================================================
 
 
@@ -140,22 +148,42 @@ extract_cmd_argument() {
     local cmd="$1"
     local arg="$2"
 
-    printf '%s\n' "${cmd}" \
-        | awk -v target="${arg}" '
-        {
-            for (i = 1; i <= NF; i++) {
-                if ($i == target && i < NF) {
-                    value = $(i + 1)
+    python - "${cmd}" "${arg}" <<'PY'
+import shlex
+import sys
 
-                    gsub(/^["'\''"]/, "", value)
-                    gsub(/["'\''"]$/, "", value)
+cmd = sys.argv[1]
+target = sys.argv[2]
 
-                    print value
-                    exit
-                }
-            }
-        }
-        '
+try:
+    tokens = shlex.split(cmd)
+except ValueError:
+    tokens = cmd.split()
+
+for i, token in enumerate(tokens[:-1]):
+    if token == target:
+        print(tokens[i + 1])
+        break
+PY
+}
+
+
+get_runtime_sklearn_version() {
+    python - <<'PY' 2>/dev/null || true
+try:
+    import sklearn
+    print(sklearn.__version__)
+except Exception:
+    print("unavailable")
+PY
+}
+
+
+get_runtime_python_version() {
+    python - <<'PY' 2>/dev/null || true
+import platform
+print(platform.python_version())
+PY
 }
 
 
@@ -340,7 +368,6 @@ infer_denoise_provenance() {
     DENOISE_JOB_END=""
 
     DENOISE_CMD=""
-
     DENOISE_INPUT=""
 
     DENOISE_TRIM_LEFT=""
@@ -350,6 +377,15 @@ infer_denoise_provenance() {
     DENOISE_TRIM_LEFT_R=""
     DENOISE_TRUNC_LEN_F=""
     DENOISE_TRUNC_LEN_R=""
+
+    DENOISE_FRONT=""
+    DENOISE_ADAPTER=""
+    DENOISE_MIN_LEN=""
+    DENOISE_MAX_LEN=""
+    DENOISE_MAX_EE=""
+    DENOISE_MAX_MISMATCH=""
+    DENOISE_POOLING_METHOD=""
+    DENOISE_CHIMERA_METHOD=""
 
     DENOISE_THREADS=""
 
@@ -408,41 +444,42 @@ infer_denoise_provenance() {
 
         DENOISE_METHOD="dada2-paired"
 
-        DENOISE_INPUT="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--i-demultiplexed-seqs"
-        )"
+        DENOISE_INPUT="$(extract_cmd_argument "${DENOISE_CMD}" "--i-demultiplexed-seqs")"
 
-        DENOISE_TRIM_LEFT_F="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-trim-left-f"
-        )"
+        DENOISE_TRIM_LEFT_F="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trim-left-f")"
+        DENOISE_TRIM_LEFT_R="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trim-left-r")"
 
-        DENOISE_TRIM_LEFT_R="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-trim-left-r"
-        )"
+        DENOISE_TRUNC_LEN_F="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trunc-len-f")"
+        DENOISE_TRUNC_LEN_R="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trunc-len-r")"
 
-        DENOISE_TRUNC_LEN_F="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-trunc-len-f"
-        )"
+        DENOISE_THREADS="$(extract_cmd_argument "${DENOISE_CMD}" "--p-n-threads")"
 
-        DENOISE_TRUNC_LEN_R="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-trunc-len-r"
-        )"
 
-        DENOISE_THREADS="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-n-threads"
-        )"
+    # ========================================================
+    # DADA2 PacBio CCS
+    # ========================================================
+
+    elif [[ "${DENOISE_CMD}" == *"dada2 denoise-ccs"* ]]; then
+
+        DENOISE_METHOD="dada2-ccs"
+
+        DENOISE_INPUT="$(extract_cmd_argument "${DENOISE_CMD}" "--i-demultiplexed-seqs")"
+
+        DENOISE_FRONT="$(extract_cmd_argument "${DENOISE_CMD}" "--p-front")"
+        DENOISE_ADAPTER="$(extract_cmd_argument "${DENOISE_CMD}" "--p-adapter")"
+
+        DENOISE_TRIM_LEFT="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trim-left")"
+        DENOISE_TRUNC_LEN="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trunc-len")"
+
+        DENOISE_MIN_LEN="$(extract_cmd_argument "${DENOISE_CMD}" "--p-min-len")"
+        DENOISE_MAX_LEN="$(extract_cmd_argument "${DENOISE_CMD}" "--p-max-len")"
+        DENOISE_MAX_EE="$(extract_cmd_argument "${DENOISE_CMD}" "--p-max-ee")"
+        DENOISE_MAX_MISMATCH="$(extract_cmd_argument "${DENOISE_CMD}" "--p-max-mismatch")"
+
+        DENOISE_POOLING_METHOD="$(extract_cmd_argument "${DENOISE_CMD}" "--p-pooling-method")"
+        DENOISE_CHIMERA_METHOD="$(extract_cmd_argument "${DENOISE_CMD}" "--p-chimera-method")"
+
+        DENOISE_THREADS="$(extract_cmd_argument "${DENOISE_CMD}" "--p-n-threads")"
 
 
     # ========================================================
@@ -453,29 +490,12 @@ infer_denoise_provenance() {
 
         DENOISE_METHOD="dada2-single"
 
-        DENOISE_INPUT="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--i-demultiplexed-seqs"
-        )"
+        DENOISE_INPUT="$(extract_cmd_argument "${DENOISE_CMD}" "--i-demultiplexed-seqs")"
 
-        DENOISE_TRIM_LEFT="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-trim-left"
-        )"
+        DENOISE_TRIM_LEFT="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trim-left")"
+        DENOISE_TRUNC_LEN="$(extract_cmd_argument "${DENOISE_CMD}" "--p-trunc-len")"
 
-        DENOISE_TRUNC_LEN="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-trunc-len"
-        )"
-
-        DENOISE_THREADS="$(
-            extract_cmd_argument \
-                "${DENOISE_CMD}" \
-                "--p-n-threads"
-        )"
+        DENOISE_THREADS="$(extract_cmd_argument "${DENOISE_CMD}" "--p-n-threads")"
 
 
     else
@@ -494,7 +514,6 @@ lookup_classifier_manifest() {
 
     local classifier_path="$1"
     local classifier_file
-    local lookup_output
     local lookup_status
 
     classifier_file="$(basename "${classifier_path}")"
@@ -512,22 +531,42 @@ lookup_classifier_manifest() {
 
     set +e
 
-    lookup_output="$(
+    while IFS=$'\t' read -r manifest_key manifest_value; do
+
+        case "${manifest_key}" in
+            db_key) DB_KEY="${manifest_value}" ;;
+            db_family) DB_FAMILY="${manifest_value}" ;;
+            db_version) DB_VERSION="${manifest_value}" ;;
+            region) REGION="${manifest_value}" ;;
+
+            reference_set) REFERENCE_SET="${manifest_value}" ;;
+            reference_variant) REFERENCE_VARIANT="${manifest_value}" ;;
+            reference_source) REFERENCE_SOURCE="${manifest_value}" ;;
+            reference_url) REFERENCE_URL="${manifest_value}" ;;
+            taxonomy_depth) TAXONOMY_DEPTH="${manifest_value}" ;;
+
+            qiime_release) QIIME_RELEASE="${manifest_value}" ;;
+            qiime_version) QIIME_VERSION="${manifest_value}" ;;
+            qiime_env_name) QIIME_ENV="${manifest_value}" ;;
+
+            sklearn_version) CLASSIFIER_SKLEARN_VERSION="${manifest_value}" ;;
+            training_type) TRAINING_TYPE="${manifest_value}" ;;
+            status) CLASSIFIER_STATUS="${manifest_value}" ;;
+        esac
+
+    done < <(
         python - \
             "${CLASSIFIER_MANIFEST}" \
             "${classifier_path}" \
             "${classifier_file}" \
             "${CONDA_DEFAULT_ENV:-}" <<'PY'
-
 import csv
 import sys
-
 
 manifest_path = sys.argv[1]
 classifier_path = sys.argv[2]
 classifier_file = sys.argv[3]
 current_env = sys.argv[4]
-
 
 with open(
     manifest_path,
@@ -568,7 +607,7 @@ for row in rows:
 
 
 # ------------------------------------------------------------
-# Priority 2: filename + env
+# Priority 2: classifier_file + current env
 # ------------------------------------------------------------
 
 if match is None:
@@ -614,53 +653,43 @@ if match is None:
 keys = [
     "db_key",
     "db_family",
-    "db_variant",
     "db_version",
     "region",
+
+    "reference_set",
+    "reference_variant",
+    "reference_source",
+    "reference_url",
+    "taxonomy_depth",
+
     "qiime_release",
     "qiime_version",
     "qiime_env_name",
+
     "sklearn_version",
     "training_type",
+    "status",
 ]
 
 
 for key in keys:
-    print(match.get(key, ""))
+    value = match.get(key, "")
+    value = value.replace("\t", " ").replace("\r", " ").replace("\n", " ")
+    print(f"{key}\t{value}")
 
 PY
-    )"
+    )
 
-    lookup_status=$?
+    lookup_status="${PIPESTATUS[0]:-0}"
 
     set -e
 
 
-    if [ "${lookup_status}" -ne 0 ]; then
-        return "${lookup_status}"
-    fi
-
-
-    mapfile -t MANIFEST_VALUES <<< "${lookup_output}"
-
-
-    if [ "${#MANIFEST_VALUES[@]}" -lt 10 ]; then
-        echo "[WARN] classifier manifest 欄位數不足"
+    # process substitution 的 Python exit status 無法直接由 while 取得，
+    # 因此再用一個輕量 check 確認至少有 db_key。
+    if [ -z "${DB_KEY:-}" ]; then
         return 1
     fi
-
-
-    DB_KEY="${MANIFEST_VALUES[0]}"
-    DB_FAMILY="${MANIFEST_VALUES[1]}"
-    DB_VARIANT="${MANIFEST_VALUES[2]}"
-    DB_VERSION="${MANIFEST_VALUES[3]}"
-    REGION="${MANIFEST_VALUES[4]}"
-
-    QIIME_RELEASE="${MANIFEST_VALUES[5]}"
-    QIIME_VERSION="${MANIFEST_VALUES[6]}"
-    QIIME_ENV="${MANIFEST_VALUES[7]}"
-    SKLEARN_VERSION="${MANIFEST_VALUES[8]}"
-    TRAINING_TYPE="${MANIFEST_VALUES[9]}"
 
 
     return 0
@@ -691,15 +720,25 @@ infer_taxonomy_provenance() {
 
     DB_KEY=""
     DB_FAMILY=""
-    DB_VARIANT=""
     DB_VERSION=""
     REGION=""
+
+    REFERENCE_SET=""
+    REFERENCE_VARIANT=""
+    REFERENCE_SOURCE=""
+    REFERENCE_URL=""
+    TAXONOMY_DEPTH=""
 
     QIIME_RELEASE=""
     QIIME_VERSION=""
     QIIME_ENV=""
-    SKLEARN_VERSION=""
+
+    CLASSIFIER_SKLEARN_VERSION=""
+    RUNTIME_SKLEARN_VERSION="$(get_runtime_sklearn_version)"
+    RUNTIME_PYTHON_VERSION="$(get_runtime_python_version)"
+
     TRAINING_TYPE=""
+    CLASSIFIER_STATUS=""
 
 
     if [ ! -f "${LATEST_TAXONOMY_STATUS}" ]; then
@@ -711,41 +750,13 @@ infer_taxonomy_provenance() {
     fi
 
 
-    TAXONOMY_JOB_STATUS="$(
-        read_kv_value \
-            "${LATEST_TAXONOMY_STATUS}" \
-            "status"
-    )"
+    TAXONOMY_JOB_STATUS="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "status")"
+    TAXONOMY_JOB_NAME="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "job_name")"
+    TAXONOMY_JOB_ID="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "job_id")"
+    TAXONOMY_JOB_START="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "start_time")"
+    TAXONOMY_JOB_END="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "end_time")"
 
-    TAXONOMY_JOB_NAME="$(
-        read_kv_value \
-            "${LATEST_TAXONOMY_STATUS}" \
-            "job_name"
-    )"
-
-    TAXONOMY_JOB_ID="$(
-        read_kv_value \
-            "${LATEST_TAXONOMY_STATUS}" \
-            "job_id"
-    )"
-
-    TAXONOMY_JOB_START="$(
-        read_kv_value \
-            "${LATEST_TAXONOMY_STATUS}" \
-            "start_time"
-    )"
-
-    TAXONOMY_JOB_END="$(
-        read_kv_value \
-            "${LATEST_TAXONOMY_STATUS}" \
-            "end_time"
-    )"
-
-    TAXONOMY_CMD="$(
-        read_kv_value \
-            "${LATEST_TAXONOMY_STATUS}" \
-            "cmd_full"
-    )"
+    TAXONOMY_CMD="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "cmd_full")"
 
 
     # ========================================================
@@ -782,6 +793,19 @@ infer_taxonomy_provenance() {
                 echo "[WARN] ${CLASSIFIER_PATH}"
 
             fi
+        fi
+
+
+        if \
+            [ -n "${CLASSIFIER_SKLEARN_VERSION}" ] && \
+            [ "${CLASSIFIER_SKLEARN_VERSION}" != "unavailable" ] && \
+            [ -n "${RUNTIME_SKLEARN_VERSION}" ] && \
+            [ "${RUNTIME_SKLEARN_VERSION}" != "unavailable" ] && \
+            [ "${CLASSIFIER_SKLEARN_VERSION}" != "${RUNTIME_SKLEARN_VERSION}" ]
+        then
+            echo "[WARN] classifier 訓練時 sklearn=${CLASSIFIER_SKLEARN_VERSION}"
+            echo "[WARN] export 當下 sklearn=${RUNTIME_SKLEARN_VERSION}"
+            echo "[WARN] 版本不同，已保留兩者於 provenance；請確認實際 taxonomy 執行環境。"
         fi
 
 
@@ -841,19 +865,34 @@ EOF
 
 reference_db=${DB_FAMILY}
 reference_db_key=${DB_KEY}
-reference_db_variant=${DB_VARIANT}
 reference_db_version=${DB_VERSION}
+
+reference_set=${REFERENCE_SET}
+reference_variant=${REFERENCE_VARIANT}
+reference_source=${REFERENCE_SOURCE}
+reference_url=${REFERENCE_URL}
+reference_taxonomy_depth=${TAXONOMY_DEPTH}
+
+# backward-compatible alias
+reference_db_variant=${REFERENCE_VARIANT}
 
 classifier_region=${REGION}
 classifier_file=${CLASSIFIER_FILE}
 classifier_path=${CLASSIFIER_PATH}
 classifier_sha256=${CLASSIFIER_SHA256}
 classifier_training_type=${TRAINING_TYPE}
+classifier_status=${CLASSIFIER_STATUS}
 
 qiime_release=${QIIME_RELEASE}
 qiime_version=${QIIME_VERSION}
 qiime_env_name=${QIIME_ENV}
-sklearn_version=${SKLEARN_VERSION}
+
+classifier_sklearn_version=${CLASSIFIER_SKLEARN_VERSION}
+runtime_sklearn_version=${RUNTIME_SKLEARN_VERSION}
+runtime_python_version=${RUNTIME_PYTHON_VERSION}
+
+# backward-compatible alias: training-time sklearn from manifest
+sklearn_version=${CLASSIFIER_SKLEARN_VERSION}
 EOF
 
 
@@ -880,7 +919,7 @@ write_analysis_metadata() {
     # --------------------------------------------------------
 
     cat > "${ANALYSIS_METADATA}" <<EOF
-metadata_version=1
+metadata_version=2
 
 phyloseq_exported_at=$(date --iso-8601=seconds)
 phyloseq_export_env=${CONDA_DEFAULT_ENV:-unknown}
@@ -920,6 +959,28 @@ EOF
 
 
     # --------------------------------------------------------
+    # DADA2 PacBio CCS
+    # --------------------------------------------------------
+
+    elif [ "${DENOISE_METHOD}" = "dada2-ccs" ]; then
+
+        cat >> "${ANALYSIS_METADATA}" <<EOF
+
+denoise_front=${DENOISE_FRONT}
+denoise_adapter=${DENOISE_ADAPTER}
+denoise_trim_left=${DENOISE_TRIM_LEFT}
+denoise_trunc_len=${DENOISE_TRUNC_LEN}
+denoise_min_len=${DENOISE_MIN_LEN}
+denoise_max_len=${DENOISE_MAX_LEN}
+denoise_max_ee=${DENOISE_MAX_EE}
+denoise_max_mismatch=${DENOISE_MAX_MISMATCH}
+denoise_pooling_method=${DENOISE_POOLING_METHOD}
+denoise_chimera_method=${DENOISE_CHIMERA_METHOD}
+denoise_threads=${DENOISE_THREADS}
+EOF
+
+
+    # --------------------------------------------------------
     # DADA2 single
     # --------------------------------------------------------
 
@@ -943,6 +1004,10 @@ EOF
 
 taxonomy_method=${TAXONOMY_METHOD}
 taxonomy_job_status=${TAXONOMY_JOB_STATUS}
+taxonomy_job_name=${TAXONOMY_JOB_NAME}
+taxonomy_job_id=${TAXONOMY_JOB_ID}
+taxonomy_job_start=${TAXONOMY_JOB_START}
+taxonomy_job_end=${TAXONOMY_JOB_END}
 EOF
 
 
@@ -952,19 +1017,34 @@ EOF
 
 reference_db=${DB_FAMILY}
 reference_db_key=${DB_KEY}
-reference_db_variant=${DB_VARIANT}
 reference_db_version=${DB_VERSION}
+
+reference_set=${REFERENCE_SET}
+reference_variant=${REFERENCE_VARIANT}
+reference_source=${REFERENCE_SOURCE}
+reference_url=${REFERENCE_URL}
+reference_taxonomy_depth=${TAXONOMY_DEPTH}
+
+# backward-compatible alias
+reference_db_variant=${REFERENCE_VARIANT}
 
 classifier_region=${REGION}
 classifier_file=${CLASSIFIER_FILE}
 classifier_path=${CLASSIFIER_PATH}
 classifier_sha256=${CLASSIFIER_SHA256}
 classifier_training_type=${TRAINING_TYPE}
+classifier_status=${CLASSIFIER_STATUS}
 
 taxonomy_qiime_release=${QIIME_RELEASE}
 taxonomy_qiime_version=${QIIME_VERSION}
 taxonomy_qiime_env=${QIIME_ENV}
-taxonomy_sklearn_version=${SKLEARN_VERSION}
+
+taxonomy_classifier_sklearn_version=${CLASSIFIER_SKLEARN_VERSION}
+taxonomy_runtime_sklearn_version=${RUNTIME_SKLEARN_VERSION}
+taxonomy_runtime_python_version=${RUNTIME_PYTHON_VERSION}
+
+# backward-compatible alias: training-time sklearn from manifest
+taxonomy_sklearn_version=${CLASSIFIER_SKLEARN_VERSION}
 EOF
 
 
@@ -1001,27 +1081,37 @@ show_provenance() {
     echo " Denoise provenance"
     echo "============================================================"
 
-    echo "[INFO] method              = ${DENOISE_METHOD}"
-    echo "[INFO] denoise job         = ${DENOISE_JOB_NAME:-unknown}"
-    echo "[INFO] denoise status      = ${DENOISE_JOB_STATUS}"
+    echo "[INFO] method                    = ${DENOISE_METHOD}"
+    echo "[INFO] denoise job               = ${DENOISE_JOB_NAME:-unknown}"
+    echo "[INFO] denoise status            = ${DENOISE_JOB_STATUS}"
 
 
     if [ "${DENOISE_METHOD}" = "dada2-paired" ]; then
 
-        echo "[INFO] trim-left F         = ${DENOISE_TRIM_LEFT_F:-unknown}"
-        echo "[INFO] trim-left R         = ${DENOISE_TRIM_LEFT_R:-unknown}"
+        echo "[INFO] trim-left F               = ${DENOISE_TRIM_LEFT_F:-unknown}"
+        echo "[INFO] trim-left R               = ${DENOISE_TRIM_LEFT_R:-unknown}"
+        echo "[INFO] trunc-len F               = ${DENOISE_TRUNC_LEN_F:-unknown}"
+        echo "[INFO] trunc-len R               = ${DENOISE_TRUNC_LEN_R:-unknown}"
+        echo "[INFO] threads                   = ${DENOISE_THREADS:-unknown}"
 
-        echo "[INFO] trunc-len F         = ${DENOISE_TRUNC_LEN_F:-unknown}"
-        echo "[INFO] trunc-len R         = ${DENOISE_TRUNC_LEN_R:-unknown}"
 
-        echo "[INFO] threads             = ${DENOISE_THREADS:-unknown}"
+    elif [ "${DENOISE_METHOD}" = "dada2-ccs" ]; then
+
+        echo "[INFO] front primer              = ${DENOISE_FRONT:-unknown}"
+        echo "[INFO] adapter                   = ${DENOISE_ADAPTER:-unknown}"
+        echo "[INFO] min-len                   = ${DENOISE_MIN_LEN:-unknown}"
+        echo "[INFO] max-len                   = ${DENOISE_MAX_LEN:-unknown}"
+        echo "[INFO] max-ee                    = ${DENOISE_MAX_EE:-unknown}"
+        echo "[INFO] pooling                   = ${DENOISE_POOLING_METHOD:-unknown}"
+        echo "[INFO] chimera                   = ${DENOISE_CHIMERA_METHOD:-unknown}"
+        echo "[INFO] threads                   = ${DENOISE_THREADS:-unknown}"
 
 
     elif [ "${DENOISE_METHOD}" = "dada2-single" ]; then
 
-        echo "[INFO] trim-left           = ${DENOISE_TRIM_LEFT:-unknown}"
-        echo "[INFO] trunc-len           = ${DENOISE_TRUNC_LEN:-unknown}"
-        echo "[INFO] threads             = ${DENOISE_THREADS:-unknown}"
+        echo "[INFO] trim-left                 = ${DENOISE_TRIM_LEFT:-unknown}"
+        echo "[INFO] trunc-len                 = ${DENOISE_TRUNC_LEN:-unknown}"
+        echo "[INFO] threads                   = ${DENOISE_THREADS:-unknown}"
 
     fi
 
@@ -1031,34 +1121,43 @@ show_provenance() {
     echo " Taxonomy provenance"
     echo "============================================================"
 
-    echo "[INFO] method              = ${TAXONOMY_METHOD}"
-    echo "[INFO] taxonomy job        = ${TAXONOMY_JOB_NAME:-unknown}"
-    echo "[INFO] taxonomy status     = ${TAXONOMY_JOB_STATUS}"
+    echo "[INFO] method                    = ${TAXONOMY_METHOD}"
+    echo "[INFO] taxonomy job              = ${TAXONOMY_JOB_NAME:-unknown}"
+    echo "[INFO] taxonomy status           = ${TAXONOMY_JOB_STATUS}"
 
 
     if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
 
-        echo "[INFO] classifier          = ${CLASSIFIER_FILE:-unknown}"
-        echo "[INFO] classifier path     = ${CLASSIFIER_PATH:-unknown}"
+        echo "[INFO] classifier                = ${CLASSIFIER_FILE:-unknown}"
+        echo "[INFO] classifier path           = ${CLASSIFIER_PATH:-unknown}"
 
         echo
-        echo "[INFO] classifier manifest = ${CLASSIFIER_MANIFEST}"
+        echo "[INFO] classifier manifest       = ${CLASSIFIER_MANIFEST}"
 
-        echo "[INFO] reference DB        = ${DB_FAMILY:-unknown}"
-        echo "[INFO] reference DB key    = ${DB_KEY:-unknown}"
-        echo "[INFO] DB variant          = ${DB_VARIANT:-unknown}"
-        echo "[INFO] DB version          = ${DB_VERSION:-unknown}"
-        echo "[INFO] region              = ${REGION:-unknown}"
+        echo "[INFO] reference DB              = ${DB_FAMILY:-unknown}"
+        echo "[INFO] reference DB key          = ${DB_KEY:-unknown}"
+        echo "[INFO] DB version                = ${DB_VERSION:-unknown}"
 
-        echo "[INFO] QIIME env           = ${QIIME_ENV:-unknown}"
-        echo "[INFO] QIIME version       = ${QIIME_VERSION:-unknown}"
-        echo "[INFO] sklearn version     = ${SKLEARN_VERSION:-unknown}"
+        echo "[INFO] reference set             = ${REFERENCE_SET:-unknown}"
+        echo "[INFO] reference variant         = ${REFERENCE_VARIANT:-unknown}"
+        echo "[INFO] reference source          = ${REFERENCE_SOURCE:-unknown}"
+        echo "[INFO] taxonomy depth            = ${TAXONOMY_DEPTH:-unknown}"
+
+        echo "[INFO] region                    = ${REGION:-unknown}"
+
+        echo "[INFO] classifier QIIME env      = ${QIIME_ENV:-unknown}"
+        echo "[INFO] classifier QIIME version  = ${QIIME_VERSION:-unknown}"
+        echo "[INFO] classifier sklearn        = ${CLASSIFIER_SKLEARN_VERSION:-unknown}"
+
+        echo "[INFO] runtime env               = ${CONDA_DEFAULT_ENV:-unknown}"
+        echo "[INFO] runtime sklearn           = ${RUNTIME_SKLEARN_VERSION:-unknown}"
+        echo "[INFO] runtime Python            = ${RUNTIME_PYTHON_VERSION:-unknown}"
 
 
     elif [ "${TAXONOMY_METHOD}" = "classify-consensus-vsearch" ]; then
 
-        echo "[INFO] reference reads     = ${REFERENCE_READS:-unknown}"
-        echo "[INFO] reference taxonomy  = ${REFERENCE_TAXONOMY:-unknown}"
+        echo "[INFO] reference reads           = ${REFERENCE_READS:-unknown}"
+        echo "[INFO] reference taxonomy        = ${REFERENCE_TAXONOMY:-unknown}"
 
     fi
 
