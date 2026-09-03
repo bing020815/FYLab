@@ -70,7 +70,7 @@ LATEST_TAXONOMY_STATUS="${LOG_DIR}/latest_taxonomy.status"
 
 CLASSIFIER_MANIFEST="${CLASSIFIER_MANIFEST:-/home/adprc/classifier/classifier_manifest.tsv}"
 
-QIIME_ENV_NAME="${QIIME_ENV_NAME:-qiime2-2023.2}"
+QIIME_ENV_NAME="${QIIME_ENV_NAME:-}"
 
 TIMEZONE="${TIMEZONE:-Asia/Taipei}"
 export TZ="${TIMEZONE}"
@@ -1026,7 +1026,10 @@ for row in rows:
 
 
 # ------------------------------------------------------------
-# Priority 2: classifier_file + current env
+# Priority 2: unique classifier_file
+#
+# manifest 是 runtime policy 的來源，因此不能用 current_env
+# 反過來篩選 manifest；否則在尚未切換環境前可能找不到正確列。
 # ------------------------------------------------------------
 
 if match is None:
@@ -1034,10 +1037,7 @@ if match is None:
     candidates = [
         row
         for row in rows
-        if (
-            row.get("classifier_file") == classifier_file
-            and row.get("qiime_env_name") == current_env
-        )
+        if row.get("classifier_file") == classifier_file
     ]
 
 
@@ -1611,22 +1611,139 @@ show_provenance() {
 
 
 # ============================================================
+# QIIME environment resolution
+# ============================================================
+
+init_conda() {
+
+    local conda_sh="/home/adprc/miniconda3/etc/profile.d/conda.sh"
+
+    if [ ! -f "${conda_sh}" ]; then
+        echo "[ERROR] 找不到 conda 初始化腳本：${conda_sh}"
+        return 1
+    fi
+
+    # shellcheck disable=SC1091
+    source "${conda_sh}"
+}
+
+
+validate_qiime_artifact() {
+
+    local artifact="$1"
+    local label="$2"
+
+    if [ ! -f "${artifact}" ]; then
+        echo "[ERROR] 找不到 ${label}：${artifact}"
+        return 1
+    fi
+
+    if ! qiime tools peek "${artifact}" >/dev/null 2>&1; then
+        echo "[ERROR] manifest 指定的 QIIME 環境無法讀取 ${label}"
+        echo "[ERROR] artifact    = ${artifact}"
+        echo "[ERROR] current env = ${CONDA_DEFAULT_ENV:-unknown}"
+        return 1
+    fi
+}
+
+
+ensure_manifest_qiime_environment() {
+
+    local current_env="${CONDA_DEFAULT_ENV:-}"
+
+    # classify-sklearn：
+    # classifier_manifest.tsv 的 qiime_env_name 是 FYLab runtime policy。
+    # 不從 classifier 檔名、artifact 建立版本或目前環境推測。
+    if [ "${TAXONOMY_METHOD}" = "classify-sklearn" ]; then
+
+        if [ -z "${DB_KEY:-}" ]; then
+            echo "[ERROR] taxonomy 使用 classify-sklearn，"
+            echo "[ERROR] 但 classifier_manifest.tsv 找不到對應 classifier。"
+            echo "[ERROR] classifier = ${CLASSIFIER_PATH:-unknown}"
+            return 1
+        fi
+
+        if [ -z "${QIIME_ENV:-}" ]; then
+            echo "[ERROR] classifier manifest 缺少 qiime_env_name"
+            echo "[ERROR] db_key = ${DB_KEY:-unknown}"
+            return 1
+        fi
+
+        if [ "${current_env}" != "${QIIME_ENV}" ]; then
+
+            echo "[INFO] manifest QIIME env     = ${QIIME_ENV}"
+            echo "[INFO] current QIIME env      = ${current_env:-none}"
+            echo "[INFO] 切換至 classifier_manifest.tsv 指定環境"
+
+            init_conda || return 1
+
+            if ! conda activate "${QIIME_ENV}"; then
+                echo "[ERROR] 無法啟用 manifest 指定環境：${QIIME_ENV}"
+                return 1
+            fi
+
+        else
+            echo "[INFO] current env 已符合 classifier manifest：${QIIME_ENV}"
+        fi
+
+    else
+
+        # 非 sklearn taxonomy 沒有 classifier manifest runtime policy，
+        # 因此沿用目前環境。
+        if ! command -v qiime >/dev/null 2>&1; then
+            echo "[ERROR] taxonomy method = ${TAXONOMY_METHOD}"
+            echo "[ERROR] 目前環境找不到 qiime，且沒有 classifier manifest 可指定環境。"
+            return 1
+        fi
+    fi
+
+
+    if ! command -v qiime >/dev/null 2>&1; then
+        echo "[ERROR] 目前環境找不到 qiime"
+        echo "[ERROR] current env = ${CONDA_DEFAULT_ENV:-unknown}"
+        return 1
+    fi
+
+    if ! command -v biom >/dev/null 2>&1; then
+        echo "[ERROR] 目前 QIIME 環境找不到 biom"
+        echo "[ERROR] current env = ${CONDA_DEFAULT_ENV:-unknown}"
+        return 1
+    fi
+
+    if ! command -v python >/dev/null 2>&1; then
+        echo "[ERROR] 目前 QIIME 環境找不到 python"
+        echo "[ERROR] current env = ${CONDA_DEFAULT_ENV:-unknown}"
+        return 1
+    fi
+
+
+    validate_qiime_artifact "${TABLE_QZA}" "table.qza" || return 1
+    validate_qiime_artifact "${REPSEQS_QZA}" "rep-seqs.qza" || return 1
+
+    if [[ "${TAXONOMY_INPUT}" == *.qza ]]; then
+        validate_qiime_artifact "${TAXONOMY_INPUT}" "taxonomy.qza" || return 1
+    fi
+
+
+    RUNTIME_SKLEARN_VERSION="$(get_runtime_sklearn_version)"
+    RUNTIME_PYTHON_VERSION="$(get_runtime_python_version)"
+
+    echo "[INFO] QIIME artifact compatibility = passed"
+    echo "[INFO] export QIIME env             = ${CONDA_DEFAULT_ENV:-unknown}"
+    echo "[INFO] runtime sklearn              = ${RUNTIME_SKLEARN_VERSION:-unknown}"
+    echo "[INFO] runtime Python               = ${RUNTIME_PYTHON_VERSION:-unknown}"
+}
+
+
+# ============================================================
 # Main
 # ============================================================
 
 main() {
 
     check_cmd \
-        "qiime" \
-        "請先啟用 QIIME2 環境，例如：conda activate ${QIIME_ENV_NAME}"
-
-    check_cmd \
-        "biom" \
-        "請確認目前 QIIME2 環境包含 biom"
-
-    check_cmd \
         "python" \
-        "目前環境需要 Python 才能解析 classifier_manifest.tsv"
+        "需要 Python 解析 QIIME2 provenance 與 classifier_manifest.tsv"
 
 
     check_file "${TABLE_QZA}"
@@ -1641,35 +1758,26 @@ main() {
     echo
     echo "[INFO] PROJECT_DIR          = ${PROJECT_DIR}"
     echo "[INFO] OUTPUT_DIR           = ${OUTDIR}"
-    echo "[INFO] CURRENT_ENV          = ${CONDA_DEFAULT_ENV:-unknown}"
+    echo "[INFO] START_ENV            = ${CONDA_DEFAULT_ENV:-unknown}"
     echo "[INFO] TIMEZONE             = ${TIMEZONE}"
     echo "[INFO] DENOISE_STATUS       = ${LATEST_DENOISE_STATUS}"
     echo "[INFO] TAXONOMY_SOURCE      = ${TAXONOMY_INPUT}"
     echo "[INFO] CLASSIFIER_MANIFEST  = ${CLASSIFIER_MANIFEST}"
 
 
-    # --------------------------------------------------------
-    # Provenance
-    # --------------------------------------------------------
-
     infer_denoise_provenance
     infer_taxonomy_provenance
 
+    # classifier manifest 的 qiime_env_name 為 runtime 主依據。
+    ensure_manifest_qiime_environment
+
     show_provenance
 
-
-    # --------------------------------------------------------
-    # Export
-    # --------------------------------------------------------
 
     export_table_and_biom
     export_repseqs
     prepare_taxonomy_tsv
 
-
-    # --------------------------------------------------------
-    # Metadata
-    # --------------------------------------------------------
 
     write_taxonomy_source
     write_analysis_metadata
@@ -1692,3 +1800,4 @@ main() {
 
 
 main "$@"
+
