@@ -555,9 +555,9 @@ conda activate qiime2-2026.7
 
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
-JOB_NAME=gtdb_r220_nb_full \
+JOB_NAME=gtdb_r226_nb_full \
 CMD="qiime feature-classifier classify-sklearn \
-  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r220.0-2026.4.0-classifier.qza \
+  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r226.0-2026.4.0-classifier.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2" \
@@ -589,9 +589,9 @@ conda activate qiime2-2026.7
 
 JOB_TYPE=taxonomy \
 PROJECT_DIR=. \
-JOB_NAME=gtdb_r220_nb_full \
+JOB_NAME=gtdb_r232_nb_full \
 CMD="qiime feature-classifier classify-sklearn \
-  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r220.0-2026.4.0-classifier.qza \
+  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r232.0-2026.7.0-classifier.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza \
   --p-n-jobs 2" \
