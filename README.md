@@ -459,7 +459,7 @@ Citation [SILVA database]:
 Quast C, Pruesse E, Yilmaz P, Gerken J, Schweer T, Yarza P, Peplies J, Glöckner FO. The SILVA ribosomal RNA gene database project: improved data processing and web-based tools. Nucleic Acids Research. 2013;41(Database issue):D590–D596. DOI: 10.1093/nar/gks1219. 
 ```
 
-Citation [SILVA DaDa2 Zenodo 138.2](https://zenodo.org/records/14169026):
+Citation [Silva taxonomic training data formatted for DADA2](https://zenodo.org/records/14169026):
 ```
 Callahan B. Silva taxonomic training data formatted for DADA2 (Silva version 138.2). Zenodo. 2024. DOI: 10.5281/zenodo.14169026.
 ```
@@ -496,7 +496,109 @@ CMD="qiime feature-classifier classify-sklearn \
 
 </details><br>
 
+<details>
+<summary><strong>GTDB r220 — DADA2-formatted reference [20260903 修正]</strong></summary>
 
+[由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r220 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
+* classifier 只適用於`qiime2-2026.7`環境
+* 歷史DB，可用於DB之間比較
+
+Citation [GTDB database]:
+```
+Donovan H Parks, Maria Chuvochina, Christian Rinke, Aaron J Mussig, Pierre-Alain Chaumeil, Philip Hugenholtz, GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy, Nucleic Acids Research, Volume 50, Issue D1, 7 January 2022, Pages D785–D794, https://doi.org/10.1093/nar/gkab776
+```
+
+Citation [Genome Taxonomy Database (GTDB) pre-trained classifier]:
+```
+Caporaso, J. G. (2026). Genome Taxonomy Database (GTDB) pre-trained classifiers for QIIME 2 (Version 2026.7.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21619532
+```
+
+
+### Naive Bayes 模型分類 (full-length) [pretrained]
+```bash
+conda activate qiime2-2026.7
+
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gtdb_r220_nb_full \
+CMD="qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r220.0-2026.4.0-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2" \
+./shell_tools/run_in_tmux.sh
+```
+
+</details><br>
+
+<details>
+<summary><strong>GTDB r226 — DADA2-formatted reference [20260903 修正]</strong></summary>
+
+[由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r226 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
+* classifier 只適用於`qiime2-2026.7`環境
+* 歷史DB，可用於DB之間比較
+
+Citation [GTDB database]:
+```
+Donovan H Parks, Maria Chuvochina, Christian Rinke, Aaron J Mussig, Pierre-Alain Chaumeil, Philip Hugenholtz, GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy, Nucleic Acids Research, Volume 50, Issue D1, 7 January 2022, Pages D785–D794, https://doi.org/10.1093/nar/gkab776
+```
+
+Citation [Genome Taxonomy Database (GTDB) pre-trained classifier]:
+```
+Caporaso, J. G. (2026). Genome Taxonomy Database (GTDB) pre-trained classifiers for QIIME 2 (Version 2026.7.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21619532
+```
+
+
+### Naive Bayes 模型分類 (full-length) [pretrained]
+```bash
+conda activate qiime2-2026.7
+
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gtdb_r220_nb_full \
+CMD="qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r220.0-2026.4.0-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2" \
+./shell_tools/run_in_tmux.sh
+```
+
+</details><br>
+
+<details>
+<summary><strong>GTDB r232 — DADA2-formatted reference [20260903 修正]</strong></summary>
+
+[由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r232 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
+* classifier 只適用於`qiime2-2026.7`環境
+
+Citation [GTDB database]:
+```
+Donovan H Parks, Maria Chuvochina, Christian Rinke, Aaron J Mussig, Pierre-Alain Chaumeil, Philip Hugenholtz, GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy, Nucleic Acids Research, Volume 50, Issue D1, 7 January 2022, Pages D785–D794, https://doi.org/10.1093/nar/gkab776
+```
+
+Citation [Genome Taxonomy Database (GTDB) pre-trained classifier]:
+```
+Caporaso, J. G. (2026). Genome Taxonomy Database (GTDB) pre-trained classifiers for QIIME 2 (Version 2026.7.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21619532
+```
+
+
+### Naive Bayes 模型分類 (full-length) [pretrained]
+```bash
+conda activate qiime2-2026.7
+
+JOB_TYPE=taxonomy \
+PROJECT_DIR=. \
+JOB_NAME=gtdb_r220_nb_full \
+CMD="qiime feature-classifier classify-sklearn \
+  --i-classifier /home/adprc/classifier/GTDB/pretrained/official/gtdb-r220.0-2026.4.0-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza \
+  --p-n-jobs 2" \
+./shell_tools/run_in_tmux.sh
+```
+
+</details><br>
 
 模型分類進度查詢
 ```
