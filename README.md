@@ -1335,7 +1335,7 @@ MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
 
 查詢任務狀態
 ```bash
-MODE=all JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
+JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## 3. Generate metagenome predictions
@@ -1371,7 +1371,7 @@ MODE=all JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 
 查詢任務狀態
 ```bash
-MODE=all JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
+JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## 3.5 Picrust QC [Optional]
