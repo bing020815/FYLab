@@ -1171,7 +1171,7 @@ CMD="Rscript rscript/run_ktu2.R \
 
 <details>
 <summary><strong>GTDB r220 DADA2 轉 KTU 語法</strong></summary>
-* classifier 只適用於qiime2-2026.7環境
+classifier 只適用於qiime2-2026.7環境
   
 ```bash
 JOB_TYPE=ktu2 \
@@ -1187,7 +1187,7 @@ CMD="Rscript rscript/run_ktu2.R \
 
 <details>
 <summary><strong>GTDB r226 DADA2 轉 KTU 語法</strong></summary>
-* classifier 只適用於qiime2-2026.7環境
+classifier 只適用於qiime2-2026.7環境
   
 ```bash
 JOB_TYPE=ktu2 \
@@ -1203,7 +1203,7 @@ CMD="Rscript rscript/run_ktu2.R \
 
 <details>
 <summary><strong>GTDB r232 DADA2 轉 KTU 語法</strong></summary>
-* classifier 只適用於qiime2-2026.7環境
+classifier 只適用於qiime2-2026.7環境
   
 ```bash
 JOB_TYPE=ktu2 \
