@@ -1090,6 +1090,8 @@ cd ..
 * Citation:
   ```
   Liu, P.-Y., Yang, S.-H., & Yang, S.-Y. (2022). KTU: K-mer Taxonomic Units improve the biological relevance of amplicon sequence variant microbiota data. Methods in Ecology and Evolution, 13, 560– 568. https://doi.org/10.1111/2041-210X.13758
+        
+        
   ```
 
 <details>
@@ -1162,6 +1164,57 @@ JOB_NAME=ktu2_silva_dada2_138.2_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver silva_dada2_138.2 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>GTDB r220 DADA2 轉 KTU 語法</strong></summary>
+* classifier 只適用於qiime2-2026.7環境
+* 只支援 16S full-length
+  
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gtdb_r220_dada2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gtdb_r220_dada2 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>GTDB r226 DADA2 轉 KTU 語法</strong></summary>
+* classifier 只適用於qiime2-2026.7環境
+* 只支援 16S full-length
+  
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gtdb_r226_dada2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gtdb_r226_dada2 \
+--cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+</details><br>
+
+<details>
+<summary><strong>GTDB r232 DADA2 轉 KTU 語法</strong></summary>
+* classifier 只適用於qiime2-2026.7環境
+* 只支援 16S full-length
+  
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gtdb_r232_dada2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gtdb_r232_dada2 \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
