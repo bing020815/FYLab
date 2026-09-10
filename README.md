@@ -1329,7 +1329,6 @@ MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
 * 此執行會同時平行執行3個 level 的 hidden-state prediction
   * 預設共用核心數: 2
   * 調整共用核心數: `--cores 4`，配置會是 3 個 HSP 同時執行 × 4 cores = 12 cores
-  * 
 ```bash
 ./shell_tools/run_hsp_predictions.sh --cores 2
 ```
