@@ -1516,6 +1516,21 @@ CMD='add_descriptions.py \
   -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz' \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Step 3 - Stratified output
++ 可得到`path_abun_contrib.tsv.gz`用來解釋路徑跟菌的貢獻程度
+```
+JOB_TYPE=picrust_pathway \
+PROJECT_DIR=. \
+JOB_NAME=picrust2_kegg_pathway_contrib \
+CMD='pathway_pipeline.py \
+  --input KO_metagenome_out/pred_metagenome_contrib.tsv.gz \
+  --out_dir KEGG_pathways_out \
+  --no_regroup \
+  --map /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \
+  --processes 2' \
+./shell_tools/run_in_tmux.sh
+```
 </details><br>
 
 <details>
@@ -1550,21 +1565,6 @@ CMD='add_descriptions.py \
   -i KEGG_pathways_out/path_abun_unstrat.tsv.gz \
   --custom_map_table /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz \
   -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz' \
-./shell_tools/run_in_tmux.sh
-```
-
-Step 3 - Stratified output
-+ 可得到`path_abun_contrib.tsv.gz`用來解釋路徑跟菌的貢獻程度
-```
-JOB_TYPE=picrust_pathway \
-PROJECT_DIR=. \
-JOB_NAME=picrust2_kegg_pathway_contrib \
-CMD='pathway_pipeline.py \
-  --input KO_metagenome_out/pred_metagenome_contrib.tsv.gz \
-  --out_dir KEGG_pathways_out \
-  --no_regroup \
-  --map /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \
-  --processes 2' \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
