@@ -2,7 +2,6 @@
 * 基因定序上游分析流程使用說明，或是使用[舊流程觀看對照](./docs/old_sop.md)
 * 三代定序下機前處理使用[PacBio轉檔Fastq](./docs/pacbio_bam2fastq.md)
 
-
 * 20260903 updated
 ```
   + KTU方法分類 [20260805]
@@ -924,7 +923,6 @@ biom convert \
 </details><br>
 
 
-  
 ## Diversity  [optional]
 <details>
 <summary><strong>點我展開畫Diversity圖</strong></summary>
@@ -1631,7 +1629,8 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 ```
 
 
-# raw_data structure  [optional]
+# Project structure  [optional]
+依執行分析時，單一分析專案的主要資料夾結構如下：
 ```
 <project>/
 │
