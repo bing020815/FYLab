@@ -1632,55 +1632,57 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 
 # raw_data structure  [optional]
 ```
- . 
-├── 科研案A
-│   └── human
-│       └── Stool
-│       └── YF
-│       └── Stomach
-│       └── YF
-│   └── metadata
-├── 科研案B
-│   └── metadata
-│   └── human
-│       └── Stool
-│             └── Fastq 
-│             └── Basespace 
-│                    └── *BasespaceFiles
-│                    └── *SampleTable
-│                              └── SampleA.csv
-│                              └── SampleB.csv …
-│                    └── PopulationTable
-│                              └── PopulationTable_abundance.csv
-│                              └── PopulationTable_reads.csv
-│             └── Qiime2 
-│                    └── *Qiime_ver
-│                            └── ReferenceDB_ver
-│                                    └── *SampleTable
-│                                            └── sampleID.csv [in taxonomy summary format]
-│                                    └── TabularTable
-│                                            └── microbes_tabular_level_type_Qiimer_ver.csv
-│                                            └── picrust_ver
-│                                                    └── pathway_tabular_picrust_ver.csv
-│                                                    └── enzyme_tabular_picrust_ver.csv
-│                                    └── PopulationTable
-│                                            └── PopulationTable_abundance_Qiimer_ver.csv
-│                                            └── PopulationTable_reads_Qiimer_ver.csv  
-│                                            └── PopulationTable_pathway_picrust_ver.csv
-│                                            └── PopulationTable_enzyme_picrust_ver.csv
-│                                    └── picrust_ver
-│                                            └── EC_metagenome_out
-│                                                    └── pred_metagenome_unstrat_descrip.tsv.gz
-│                                            └── KO_metagenome_out
-│                                                    └── pred_metagenome_unstrat_descrip.tsv.gz
-│                                            └── KEGG_pathways_out
-│                                                    └── path_abun_unstrat_descrip.tsv.gz
-│                                    └── raw
-│                                            └── otu_table.tsv
-│                                            └── taxonomy.tsv
-│                                            └── dehost_otu_table.tsv
-│                                            └── dehost_taxonomy.tsv
-│                                            └── dna-sequences.fasta
-│                                            └── denoise_settings.txt
-└── 商業案-廠商A 
+<project>/
+│
+├── raw_fastq/                         # 原始 FASTQ
+│
+├── phyloseq/                          # QIIME2 匯出及後續共用資料
+│   ├── feature-table.biom
+│   ├── otu_table.tsv
+│   ├── taxonomy.tsv
+│   ├── dna-sequences.fasta
+│   │
+│   ├── dehost_work/                   # Dehost 中間處理資料
+│   │
+│   └── dehost_output/                 # Dehost 後正式輸出
+│       ├── dehost_otu_table.biom
+│       ├── dehost_otu_table.tsv
+│       ├── dehost_taxonomy.tsv
+│       └── dehost_dna-sequences.fasta
+│
+├── shell_tools/                       # 專案使用的 FYLab 執行工具
+│   ├── run_in_tmux.sh
+│   ├── check_tmux_jobs.sh
+│   ├── ...
+│   └── logs/                          # tmux job status / stdout / stderr
+│
+├── intermediate/                      # 分析中間檔
+│   └── place_seqs/                    # PICRUSt2 sequence placement
+│
+├── KO_metagenome_out/                 # PICRUSt2 KO prediction
+│   ├── pred_metagenome_unstrat.tsv.gz
+│   ├── pred_metagenome_contrib.tsv.gz # 使用 --strat_out 時產生
+│   └── ...
+│
+├── EC_metagenome_out/                 # PICRUSt2 EC prediction
+│   ├── pred_metagenome_unstrat.tsv.gz
+│   ├── pred_metagenome_contrib.tsv.gz # 使用 --strat_out 時產生
+│   └── ...
+│
+├── KEGG_pathways_out/                 # KEGG pathway prediction
+│   ├── path_abun_unstrat.tsv.gz
+│   ├── path_abun_unstrat_descrip.tsv.gz
+│   ├── path_abun_contrib.tsv.gz       # Stratified pathway contribution
+│   └── ...
+│
+├── table.qza                          # QIIME2 feature table
+├── rep-seqs.qza                       # Representative sequences
+├── taxonomy.qza                       # Taxonomy classification
+│
+├── out.tre                            # PICRUSt2 placement tree
+├── marker_predicted_and_nsti.tsv.gz   # 16S copy number + NSTI
+├── KO_predicted.tsv.gz                # KO HSP prediction
+├── EC_predicted.tsv.gz                # EC HSP prediction
+│
+└── ...
 ```
