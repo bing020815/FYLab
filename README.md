@@ -71,8 +71,10 @@ curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_ups
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/prepare_dehost_qiime2_inputs.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/use_qiime_for_artifact.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/post_upstream/bootstrap_qiime_named_env.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/picrust/run_hsp_predictions.sh
+curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/picrust/run_metagenome_predictions.sh
 curl -O https://raw.githubusercontent.com/bing020815/FYLab/main/scripts/picrust/check_picrust_qc.sh
-chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh check_picrust_qc.sh use_qiime_for_artifact.sh bootstrap_qiime_named_env.sh
+chmod +x run_in_tmux.sh check_tmux_jobs.sh export_table_qza_to_phyloseq.sh run_dehost_on_fasta.sh filter_phyloseq_by_nonhost_ids.sh prepare_dehost_qiime2_inputs.sh check_picrust_qc.sh use_qiime_for_artifact.sh bootstrap_qiime_named_env.sh run_hsp_predictions.sh check_picrust_qc.sh
 cd ..
 ```
 
@@ -1210,12 +1212,19 @@ Bioinformatics. 2025;41(5):btaf269. DOI: 10.1093/bioinformatics/btaf269.
 ## 啟動PICRUSt2 package
 則一環境啟動即可。
 
-[PICRUSt2 2.5.2](https://github.com/picrust/picrust2/wiki/PICRUSt2-Tutorial-(v2.5.2)) --> ~20,000 筆序列建製 reference database
+[PICRUSt2 2.5.2](https://github.com/picrust/picrust2/wiki/PICRUSt2-Tutorial-(v2.5.2))
+* 使用約 20,000 筆 reference sequences / genomes 建立預設 phylogenetic reference
+* Conda environment: `picrust2`
+* KEGG pathway-to-KO mapping file: `/home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv`
+
 ```bash
 conda activate picrust2
 ```
 
-[PICRUSt2-SC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12089645/)  -->  ~27,000筆序列建製 Genome Taxonomy Database (GTDB) r214 基因組樹
+[PICRUSt2-SC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12089645/)
+* 使用約 27,000 筆 reference genomes，以 Genome Taxonomy Database (GTDB) release 214 建立擴充的基因組參考樹。
+* Conda environment: `picrust2sc`
+* KEGG pathway-to-KO mapping file: `/home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv`
 ```bash
 conda activate picrust2sc
 ```
@@ -1265,49 +1274,20 @@ MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
 
 ## 2. Hidden-state prediction
 * 可產生計算好的NSTI資料表，作為路徑預測的QC
-
-預測 ASV 所對應的 marker gene（如 16S 或特定 HMM marker）、NSTI 
+  * 16s: 預測 ASV 所對應的 marker gene（如 16S 或特定 HMM marker）、NSTI
+  * ko: 預測每個 ASV 可能擁有的 KO（KEGG Orthologs）功能基因
+  * ec: 預測每個 ASV 可能擁有的 EC（Enzyme Commission）代謝酵素
+* 此執行會同時平行執行3個 level 的 hidden-state prediction
+  * 預設共用核心數: 2
+  * 調整共用核心數: `--cores 4`，配置會是 3 個 HSP 同時執行 × 4 cores = 12 cores
+  * 
 ```bash
-JOB_TYPE=picrust_hsp \
-PROJECT_DIR=. \
-JOB_NAME=picrust2_hsp_marker_nsti \
-CMD='hsp.py \
-  -i 16S \
-  -t out.tre \
-  -o marker_predicted_and_nsti.tsv.gz \
-  -p 2 \
-  -n' \
-./shell_tools/run_in_tmux.sh
+./shell_tools/run_hsp_predictions.sh --cores 2
 ```
 
-預測每個 ASV 可能擁有的 KO（KEGG Orthologs）功能基因
-```bash
-JOB_TYPE=picrust_hsp \
-PROJECT_DIR=. \
-JOB_NAME=picrust2_hsp_ko \
-CMD='hsp.py \
-  -i KO \
-  -t out.tre \
-  -o KO_predicted.tsv.gz \
-  -p 2' \
-./shell_tools/run_in_tmux.sh
-```
-
-預測每個 ASV 可能擁有的 EC（Enzyme Commission）代謝酵素
-```bash
-JOB_TYPE=picrust_hsp \
-PROJECT_DIR=. \
-JOB_NAME=picrust2_hsp_ec \
-CMD='hsp.py \
-  -i EC \
-  -t out.tre \
-  -o EC_predicted.tsv.gz \
-  -p 2' \
-./shell_tools/run_in_tmux.sh
-```
 查詢任務狀態
 ```bash
-MODE=latest JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
+MODE=all JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## 3. Generate metagenome predictions
@@ -1316,82 +1296,7 @@ MODE=latest JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
   + `pred_metagenome_unstrat.tsv.gz`: KO 的每個 sample unstratified 預測結果
   + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 KO 的貢獻
   + `EC_metagenome_out/seqtab_norm.tsv.gz`: metagenome_pipeline 做的 normalization
-
-<details>
-<summary><strong>Picrust2 Dehost使後用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=dehost_picrust2_ko_metagenome \
-CMD='metagenome_pipeline.py \
-  -i phyloseq/dehost_output/dehost_otu_table.biom \
-  -m marker_predicted_and_nsti.tsv.gz \
-  -f KO_predicted.tsv.gz \
-  -o KO_metagenome_out \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
-
-<details>
-<summary><strong>Picrust2 未Dehost使用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=raw_picrust2_ko_metagenome \
-CMD='metagenome_pipeline.py \
-  -i phyloseq/feature-table.biom \
-  -m marker_predicted_and_nsti.tsv.gz \
-  -f KO_predicted.tsv.gz \
-  -o KO_metagenome_out \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
-
-<details>
-<summary><strong>Picrust2sc Dehost使後用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=dehost_picrust2sc_ko_metagenome \
-CMD='metagenome_pipeline.py \
-  --input phyloseq/dehost_output/dehost_otu_table.biom \
-  --marker marker_predicted_and_nsti.tsv.gz \
-  --function KO_predicted.tsv.gz \
-  --out_dir KO_metagenome_out \
-  --max_nsti 2.0 \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
-
-<details>
-<summary><strong>Picrust2sc 未Dehost使用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=raw_picrust2sc_ko_metagenome \
-CMD='metagenome_pipeline.py \
-  --input phyloseq/feature-table.biom \
-  --marker marker_predicted_and_nsti.tsv.gz \
-  --function KO_predicted.tsv.gz \
-  --out_dir KO_metagenome_out \
-  --max_nsti 2.0 \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
-
-查詢任務狀態
-```bash
-MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
-```
-
+  + 
 ### EC
 * 產出檔案在EC_metagenome_out資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: EC 的每個 sample unstratified 預測結果
@@ -1399,78 +1304,24 @@ MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
   + `EC_metagenome_out/seqtab_norm.tsv.gz`: metagenome_pipeline 做的 normalization
   
 <details>
-<summary><strong>Picrust2 Dehost使後用語法</strong></summary>
+<summary><strong>Dehost使後用語法</strong></summary>
 
 ```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=dehost_picrust2_ec_metagenome \
-CMD='metagenome_pipeline.py \
-  -i phyloseq/dehost_output/dehost_otu_table.biom \
-  -m marker_predicted_and_nsti.tsv.gz \
-  -f EC_predicted.tsv.gz \
-  -o EC_metagenome_out \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
+./shell_tools/run_metagenome_predictions.sh --input dehost
 ```
 </details><br>
 
 <details>
-<summary><strong>Picrust2 未Dehost使用語法</strong></summary>
+<summary><strong>未Dehost使用語法</strong></summary>
 
 ```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=raw_picrust2_ec_metagenome \
-CMD='metagenome_pipeline.py \
-  -i phyloseq/feature-table.biom \
-  -m marker_predicted_and_nsti.tsv.gz \
-  -f EC_predicted.tsv.gz \
-  -o EC_metagenome_out \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
-
-<details>
-<summary><strong>Picrust2sc Dehost使後用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=dehost_picrust2sc_ec_metagenome \
-CMD='metagenome_pipeline.py \
-  --input phyloseq/dehost_output/dehost_otu_table.biom \
-  --marker marker_predicted_and_nsti.tsv.gz \
-  --function EC_predicted.tsv.gz \
-  --out_dir EC_metagenome_out \
-  --max_nsti 2.0 \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
-
-<details>
-<summary><strong>Picrust2sc 未Dehost使用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_metagenome \
-PROJECT_DIR=. \
-JOB_NAME=raw_picrust2sc_ec_metagenome \
-CMD='metagenome_pipeline.py \
-  --input phyloseq/feature-table.biom \
-  --marker marker_predicted_and_nsti.tsv.gz \
-  --function EC_predicted.tsv.gz \
-  --out_dir EC_metagenome_out \
-  --max_nsti 2.0 \
-  --strat_out' \
-./shell_tools/run_in_tmux.sh
+./shell_tools/run_metagenome_predictions.sh --input raw
 ```
 </details><br>
 
 查詢任務狀態
 ```bash
-MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
+MODE=all JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## 3.5 Picrust QC [Optional]
@@ -1491,17 +1342,24 @@ MODE=latest JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
 <details>
 <summary><strong>Picrust2使用語法</strong></summary>
 
+Step 0 — 基本環境前處理
+```bash
+PICRUST_DIR=$(python -c "import picrust2, os; print(os.path.dirname(picrust2.__file__))")
+KEGG_MAP="${PICRUST_DIR}/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv"
+KEGG_DESC="${PICRUST_DIR}/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz"
+```
+
 Step 1 — Pathway abundance prediction
 ```bash
 JOB_TYPE=picrust_pathway \
 PROJECT_DIR=. \
 JOB_NAME=picrust2_kegg_pathway \
-CMD='pathway_pipeline.py \
+CMD="pathway_pipeline.py \
   -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
   -o KEGG_pathways_out \
   --no_regroup \
-  --map /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \
-  -p 2' \
+  --map ${KEGG_MAP} \
+  -p 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -1509,11 +1367,11 @@ Step 2 — Add KEGG pathway descriptions
 ```bash
 JOB_TYPE=picrust_pathway \
 PROJECT_DIR=. \
-JOB_NAME=picrust2_kegg_desc \
-CMD='add_descriptions.py \
+JOB_NAME=picrust2_kegg_pathway_desc \
+CMD="add_descriptions.py \
   -i KEGG_pathways_out/path_abun_unstrat.tsv.gz \
-  --custom_map_table /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz \
-  -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz' \
+  --custom_map_table ${KEGG_DESC} \
+  -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -1523,12 +1381,12 @@ Step 3 - Stratified output
 JOB_TYPE=picrust_pathway \
 PROJECT_DIR=. \
 JOB_NAME=picrust2_kegg_pathway_contrib \
-CMD='pathway_pipeline.py \
+CMD="pathway_pipeline.py \
   --input KO_metagenome_out/pred_metagenome_contrib.tsv.gz \
   --out_dir KEGG_pathways_out \
   --no_regroup \
-  --map /home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv \
-  --processes 2' \
+  --map ${KEGG_MAP} \
+  --processes 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
@@ -1536,8 +1394,11 @@ CMD='pathway_pipeline.py \
 <details>
 <summary><strong>Picrust2sc使用語法</strong></summary>
 
-Step 0 - Fix 'ko:' prefix issue
+Step 0 - 基本環境前處理: Fix 'ko:' prefix issue
 ```bash
+PICRUST_DIR=$(python -c "import picrust2, os; print(os.path.dirname(picrust2.__file__))")
+KEGG_MAP="${PICRUST_DIR}/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv"
+KEGG_DESC="${PICRUST_DIR}/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz"
 zcat KO_metagenome_out/pred_metagenome_unstrat.tsv.gz | \
     sed 's/^ko://g' | \
     gzip > KO_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz
@@ -1548,11 +1409,11 @@ Step 1 — Pathway abundance prediction
 JOB_TYPE=picrust_pathway \
 PROJECT_DIR=. \
 JOB_NAME=picrust2sc_kegg_pathway \
-CMD='pathway_pipeline.py \
+CMD="pathway_pipeline.py \
   --input KO_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz \
   --out_dir KEGG_pathways_out \
   --no_regroup \
-  --map /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv' \
+  --map ${KEGG_MAP}" \
 ./shell_tools/run_in_tmux.sh
 ```
 
@@ -1560,11 +1421,41 @@ Step 2 — Add KEGG pathway descriptions
 ```bash
 JOB_TYPE=picrust_pathway \
 PROJECT_DIR=. \
-JOB_NAME=picrust2sc_kegg_desc \
-CMD='add_descriptions.py \
+JOB_NAME=picrust2sc_kegg_pathway_desc \
+CMD="add_descriptions.py \
   -i KEGG_pathways_out/path_abun_unstrat.tsv.gz \
-  --custom_map_table /home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/description_mapfiles/KEGG_pathways_info.tsv.gz \
-  -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz' \
+  --custom_map_table ${KEGG_DESC} \
+  -o KEGG_pathways_out/path_abun_unstrat_descrip.tsv.gz" \
+./shell_tools/run_in_tmux.sh
+```
+
+Step 3 - Stratified output
++ 可得到`path_abun_contrib.tsv.gz`用來解釋路徑跟菌的貢獻程度
+```
+zcat KO_metagenome_out/pred_metagenome_contrib.tsv.gz | \
+awk 'BEGIN{FS=OFS="\t"}
+NR==1 {
+    for(i=1;i<=NF;i++) {
+        if($i=="function") func_col=i
+    }
+    print
+    next
+}
+{
+    sub(/^ko:/, "", $func_col)
+    print
+}' | \
+gzip > KO_metagenome_out/pred_metagenome_contrib.no_prefix.tsv.gz
+
+JOB_TYPE=picrust_pathway \
+PROJECT_DIR=. \
+JOB_NAME=picrust2sc_kegg_pathway_contrib \
+CMD="pathway_pipeline.py \
+  --input KO_metagenome_out/pred_metagenome_contrib.no_prefix.tsv.gz \
+  --out_dir KEGG_pathways_out \
+  --no_regroup \
+  --map ${KEGG_MAP} \
+  --processes 2" \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
@@ -1636,6 +1527,15 @@ MODE=latest JOB_TYPE=picrust_desc ./shell_tools/check_tmux_jobs.sh
 * 需要帶入雙引號`"`
 ```bash
 finish_project "owner_name" "project_name"
+```
+
+# 再現已分析專案
+將完成分析之專案從NAS專案保存區移動回到workspace個人工作區
+* `owner_name`： 輸入個人資料夾名
+* `project_name`： 輸入專案資料夾名
+* 需要帶入雙引號`"`
+```bash
+prepare_project "owner_name" "project_name"
 ```
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
 
