@@ -19,7 +19,8 @@
 5. [|Post-upstream| KTU 分類](#ktu-分類)
 6. [|Post-upstream| PICRUSt2 - Metabolism Pathway](#PICRUSt2---Metabolism-Pathway)
 7. [|Post-upstream| 分析專案歸檔](#分析專案歸檔)
-8. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
+8. [|Post-upstream| 再現已分析專案](#再現已分析專案)
+9. [|Downstream taxonomy analysis| 下游分析處理](./docs/downstream.md)
 
 # Preset
 ## Folder Management
