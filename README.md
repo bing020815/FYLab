@@ -504,6 +504,7 @@ CMD="qiime feature-classifier classify-sklearn \
 
 [由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r220 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
 * classifier 只適用於`qiime2-2026.7`環境
+* 只支援 16S full-length
 * 歷史DB，可用於DB之間比較
 
 Citation [GTDB database]:
@@ -539,6 +540,7 @@ CMD="qiime feature-classifier classify-sklearn \
 
 [由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r226 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
 * classifier 只適用於`qiime2-2026.7`環境
+* 只支援 16S full-length
 * 歷史DB，可用於DB之間比較
 
 Citation [GTDB database]:
@@ -574,6 +576,7 @@ CMD="qiime feature-classifier classify-sklearn \
 
 [由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r232 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
 * classifier 只適用於`qiime2-2026.7`環境
+* 只支援 16S full-length
 
 Citation [GTDB database]:
 ```
