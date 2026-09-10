@@ -1532,35 +1532,30 @@ MODE=latest JOB_TYPE=picrust_desc ./shell_tools/check_tmux_jobs.sh
 ```
 ## 6. KO: Add descriptions
 
-<details>
-<summary><strong>Picrust2使用語法</strong></summary>
-
 ```bash
 JOB_TYPE=picrust_desc \
 PROJECT_DIR=. \
-JOB_NAME=picrust2_ko_add_descriptions \
+JOB_NAME=ko_add_descriptions \
+PRE_CMD='
+CURRENT_ENV="${CONDA_DEFAULT_ENV:-}"
+
+case "${CURRENT_ENV}" in
+    picrust2|picrust2sc)
+        echo "[INFO] PICRUSt environment = ${CURRENT_ENV}"
+        ;;
+    *)
+        echo "[ERROR] 請先啟用 picrust2 或 picrust2sc 環境"
+        exit 1
+        ;;
+esac
+' \
 CMD='add_descriptions.py \
   -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
   -m KO \
   -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz' \
 ./shell_tools/run_in_tmux.sh
 ```
-</details><br>
 
-<details>
-<summary><strong>Picrust2sc使用語法</strong></summary>
-
-```bash
-JOB_TYPE=picrust_desc \
-PROJECT_DIR=. \
-JOB_NAME=picrust2sc_ko_add_descriptions \
-CMD='add_descriptions.py \
-  -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
-  -m KO \
-  -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz' \
-./shell_tools/run_in_tmux.sh
-```
-</details><br>
 
 查詢任務狀態
 ```bash
