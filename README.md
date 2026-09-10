@@ -1431,24 +1431,23 @@ CMD="add_descriptions.py \
 Step 3 - Stratified output
 + 可得到`path_abun_contrib.tsv.gz`用來解釋路徑跟菌的貢獻程度
 ```
-zcat KO_metagenome_out/pred_metagenome_contrib.tsv.gz | \
-awk 'BEGIN{FS=OFS="\t"}
+JOB_TYPE=picrust_pathway \
+PROJECT_DIR=. \
+JOB_NAME=picrust2sc_kegg_pathway_contrib \
+PRE_CMD="zcat KO_metagenome_out/pred_metagenome_contrib.tsv.gz | \
+awk 'BEGIN{FS=OFS=\"\t\"}
 NR==1 {
     for(i=1;i<=NF;i++) {
-        if($i=="function") func_col=i
+        if(\$i==\"function\") func_col=i
     }
     print
     next
 }
 {
-    sub(/^ko:/, "", $func_col)
+    sub(/^ko:/, \"\", \$func_col)
     print
 }' | \
-gzip > KO_metagenome_out/pred_metagenome_contrib.no_prefix.tsv.gz
-
-JOB_TYPE=picrust_pathway \
-PROJECT_DIR=. \
-JOB_NAME=picrust2sc_kegg_pathway_contrib \
+gzip > KO_metagenome_out/pred_metagenome_contrib.no_prefix.tsv.gz" \
 CMD="pathway_pipeline.py \
   --input KO_metagenome_out/pred_metagenome_contrib.no_prefix.tsv.gz \
   --out_dir KEGG_pathways_out \
