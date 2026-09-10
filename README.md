@@ -1171,8 +1171,8 @@ CMD="Rscript rscript/run_ktu2.R \
 
 <details>
 <summary><strong>GTDB r220 DADA2 轉 KTU 語法</strong></summary>
-classifier 只適用於qiime2-2026.7環境
   
+classifier 只適用於qiime2-2026.7環境
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1187,8 +1187,8 @@ CMD="Rscript rscript/run_ktu2.R \
 
 <details>
 <summary><strong>GTDB r226 DADA2 轉 KTU 語法</strong></summary>
+
 classifier 只適用於qiime2-2026.7環境
-  
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1203,8 +1203,8 @@ CMD="Rscript rscript/run_ktu2.R \
 
 <details>
 <summary><strong>GTDB r232 DADA2 轉 KTU 語法</strong></summary>
-classifier 只適用於qiime2-2026.7環境
-  
+
+classifier 只適用於qiime2-2026.7環境  
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1340,6 +1340,8 @@ MODE=all JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 ```
 
 ## 3. Generate metagenome predictions
+* 此步驟開始區分`picrust2`,`picrust2sc`流程
+
 ### KO
 * 產出檔案在KO_metagenome_out資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: KO 的每個 sample unstratified 預測結果
