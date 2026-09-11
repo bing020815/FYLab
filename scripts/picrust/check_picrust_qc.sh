@@ -2,52 +2,75 @@
 set -euo pipefail
 
 # ============================================================
-# PICRUSt QC
+# PICRUSt weighted NSTI QC
 #
 # Usage:
-#   ./check_picrust_qc.sh
-#
-# or:
-#   ./check_picrust_qc.sh /path/to/project
-#
-# Supported Conda environments:
-#   picrust2
-#   picrust2sc
+#   ./shell_tools/check_picrust_qc.sh
+#   ./shell_tools/check_picrust_qc.sh --input dehost
+#   ./shell_tools/check_picrust_qc.sh --input raw
 #
 # Output:
-#   <project>/picrust2/qc/*
-#   <project>/picrust2sc/qc/*
+#   picrust/<environment>/qc/
 # ============================================================
 
 
-# ============================================================
-# Project path
-# ============================================================
-PROJECT_DIR="${1:-$(pwd)}"
-PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
+PROJECT_DIR="."
+INPUT_MODE="auto"
+
+
+usage() {
+    cat <<'EOF'
+Usage:
+  ./shell_tools/check_picrust_qc.sh [options]
+
+Options:
+  --input auto|raw|dehost
+      Default: auto
+
+  --project-dir DIR
+      Default: .
+EOF
+}
+
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --input)
+            INPUT_MODE="$2"
+            shift 2
+            ;;
+        --project-dir)
+            PROJECT_DIR="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "[ERROR] Unknown option: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
 
 
 # ============================================================
-# Detect PICRUSt environment
+# Environment
 # ============================================================
+
 CURRENT_ENV="${CONDA_DEFAULT_ENV:-}"
 
 case "${CURRENT_ENV}" in
     picrust2)
-        PICRUST_VERSION="picrust2"
+        METHOD="picrust2"
         ;;
-
     picrust2sc)
-        PICRUST_VERSION="picrust2sc"
+        METHOD="picrust2sc"
         ;;
-
     *)
-        echo "[ERROR] 無法判斷 PICRUSt 版本"
-        echo "[ERROR] 目前 Conda environment = ${CURRENT_ENV:-<none>}"
-        echo
-        echo "[ERROR] 請先啟用支援的環境："
-        echo "  conda activate picrust2"
-        echo "  conda activate picrust2sc"
+        echo "[ERROR] Activate picrust2 or picrust2sc first."
         exit 1
         ;;
 esac
@@ -56,50 +79,75 @@ esac
 # ============================================================
 # Paths
 # ============================================================
-PICRUST_DIR="${PROJECT_DIR}/${PICRUST_VERSION}"
-QC_DIR="${PICRUST_DIR}/qc"
 
-NSTI_GZ="${PROJECT_DIR}/marker_predicted_and_nsti.tsv.gz"
+PROJECT_DIR="$(cd "${PROJECT_DIR}" && pwd)"
 
-DEHOST_OTU="${PROJECT_DIR}/phyloseq/filtered_host/dehost_otu_table.tsv"
+PICRUST_OUT="${PROJECT_DIR}/picrust/${METHOD}"
+QC_DIR="${PICRUST_OUT}/qc"
+
+NSTI_GZ="${PICRUST_OUT}/marker_predicted_and_nsti.tsv.gz"
+
+DEHOST_OTU="${PROJECT_DIR}/phyloseq/dehost_output/dehost_otu_table.tsv"
 RAW_OTU="${PROJECT_DIR}/phyloseq/otu_table.tsv"
 
 mkdir -p "${QC_DIR}"
 
 
 # ============================================================
-# Detect abundance table
+# Select abundance table
 # ============================================================
-if [ -f "${DEHOST_OTU}" ]; then
-    MODE="dehost"
-    OTU_TABLE="${DEHOST_OTU}"
 
-elif [ -f "${RAW_OTU}" ]; then
-    MODE="raw"
-    OTU_TABLE="${RAW_OTU}"
+case "${INPUT_MODE}" in
 
-else
-    echo "[ERROR] 找不到可用的 abundance table"
-    echo "[ERROR] 請確認以下檔案至少存在一個："
-    echo "  - ${DEHOST_OTU}"
-    echo "  - ${RAW_OTU}"
+    raw)
+        OTU_TABLE="${RAW_OTU}"
+        MODE="raw"
+        ;;
+
+    dehost)
+        OTU_TABLE="${DEHOST_OTU}"
+        MODE="dehost"
+        ;;
+
+    auto)
+        if [[ -f "${DEHOST_OTU}" ]]; then
+            OTU_TABLE="${DEHOST_OTU}"
+            MODE="dehost"
+
+        elif [[ -f "${RAW_OTU}" ]]; then
+            OTU_TABLE="${RAW_OTU}"
+            MODE="raw"
+
+        else
+            echo "[ERROR] No abundance table found."
+            exit 1
+        fi
+        ;;
+
+    *)
+        echo "[ERROR] --input must be auto, raw or dehost"
+        exit 1
+        ;;
+esac
+
+
+if [[ ! -f "${OTU_TABLE}" ]]; then
+    echo "[ERROR] Abundance table not found:"
+    echo "  ${OTU_TABLE}"
     exit 1
 fi
 
-
-# ============================================================
-# Check NSTI input
-# ============================================================
-if [ ! -f "${NSTI_GZ}" ]; then
-    echo "[ERROR] 找不到 NSTI prediction："
+if [[ ! -f "${NSTI_GZ}" ]]; then
+    echo "[ERROR] NSTI prediction not found:"
     echo "  ${NSTI_GZ}"
     exit 1
 fi
 
 
 # ============================================================
-# Output files
+# Outputs
 # ============================================================
+
 TOTAL_ABUNDANCE_TSV="${QC_DIR}/total_abundance.tsv"
 NSTI_TSV="${QC_DIR}/nsti.tsv"
 NSTI_ONLY_TSV="${QC_DIR}/nsti_only.tsv"
@@ -107,29 +155,20 @@ NSTI_MERGED_TSV="${QC_DIR}/nsti_merged.tsv"
 WEIGHTED_NSTI_TXT="${QC_DIR}/weighted_nsti.txt"
 
 
-# ============================================================
-# Summary
-# ============================================================
-echo
 echo "============================================================"
-echo " PICRUSt QC"
+echo " PICRUSt weighted NSTI QC"
 echo "============================================================"
-echo "[INFO] PROJECT_DIR     = ${PROJECT_DIR}"
-echo "[INFO] CONDA_ENV       = ${CURRENT_ENV}"
-echo "[INFO] PICRUST_VERSION = ${PICRUST_VERSION}"
-echo "[INFO] MODE            = ${MODE}"
-echo "[INFO] OTU_TABLE       = ${OTU_TABLE}"
-echo "[INFO] NSTI_GZ         = ${NSTI_GZ}"
-echo "[INFO] QC_DIR          = ${QC_DIR}"
+echo "[INFO] Environment : ${CURRENT_ENV}"
+echo "[INFO] Input mode  : ${MODE}"
+echo "[INFO] OTU table   : ${OTU_TABLE}"
+echo "[INFO] NSTI        : ${NSTI_GZ}"
+echo "[INFO] Output      : ${QC_DIR}"
 echo "============================================================"
-echo
 
 
 # ============================================================
-# Step 1
-# Calculate total abundance for each ASV
+# 1. ASV abundance
 # ============================================================
-echo "[INFO] Step 1. 從 abundance table 計算每個 ASV 的總 abundance"
 
 awk -F'\t' '
 NR <= 2 {
@@ -147,21 +186,17 @@ NR <= 2 {
 ' "${OTU_TABLE}" > "${TOTAL_ABUNDANCE_TSV}"
 
 
-if [ ! -s "${TOTAL_ABUNDANCE_TSV}" ]; then
-    echo "[ERROR] total_abundance.tsv 為空："
-    echo "  ${TOTAL_ABUNDANCE_TSV}"
+if [[ ! -s "${TOTAL_ABUNDANCE_TSV}" ]]; then
+    echo "[ERROR] Empty abundance output"
     exit 1
 fi
 
 
 # ============================================================
-# Step 2
-# Extract ASV and NSTI
+# 2. NSTI
 # ============================================================
-echo "[INFO] Step 2. 解壓 NSTI 並擷取 ASV 與 NSTI"
 
 zcat "${NSTI_GZ}" > "${NSTI_TSV}"
-
 
 awk -F'\t' '
 NR == 1 {
@@ -173,18 +208,9 @@ NR == 1 {
 ' "${NSTI_TSV}" > "${NSTI_ONLY_TSV}"
 
 
-if [ ! -s "${NSTI_ONLY_TSV}" ]; then
-    echo "[ERROR] nsti_only.tsv 為空："
-    echo "  ${NSTI_ONLY_TSV}"
-    exit 1
-fi
-
-
 # ============================================================
-# Step 3
-# Merge abundance and NSTI
+# 3. Merge
 # ============================================================
-echo "[INFO] Step 3. 合併 abundance 與 NSTI"
 
 join -t $'\t' \
     <(sort "${TOTAL_ABUNDANCE_TSV}") \
@@ -192,42 +218,36 @@ join -t $'\t' \
     > "${NSTI_MERGED_TSV}"
 
 
-if [ ! -s "${NSTI_MERGED_TSV}" ]; then
-    echo "[ERROR] nsti_merged.tsv 為空："
-    echo "  ${NSTI_MERGED_TSV}"
-    echo
-    echo "[ERROR] 可能原因："
-    echo "  abundance table 與 NSTI prediction 的 ASV ID 無法對應"
+if [[ ! -s "${NSTI_MERGED_TSV}" ]]; then
+    echo "[ERROR] abundance and NSTI ASV IDs could not be matched"
     exit 1
 fi
 
 
 # ============================================================
-# Step 4
-# Calculate weighted NSTI
+# 4. Weighted NSTI
 # ============================================================
-echo "[INFO] Step 4. 計算 weighted NSTI"
 
-WEIGHTED_NSTI=$(
+WEIGHTED_NSTI="$(
     awk -F'\t' '
     {
-        num += $2 * $3
-        den += $2
+        numerator += $2 * $3
+        denominator += $2
     }
 
     END {
-        if (den == 0) {
+        if (denominator == 0) {
             print "NA"
         } else {
-            printf "%.6f\n", num / den
+            printf "%.6f\n", numerator / denominator
         }
     }
     ' "${NSTI_MERGED_TSV}"
-)
+)"
 
 
-if [ "${WEIGHTED_NSTI}" = "NA" ]; then
-    echo "[ERROR] denominator 為 0，無法計算 weighted NSTI"
+if [[ "${WEIGHTED_NSTI}" == "NA" ]]; then
+    echo "[ERROR] Weighted NSTI denominator = 0"
     exit 1
 fi
 
@@ -236,12 +256,10 @@ echo "${WEIGHTED_NSTI}" > "${WEIGHTED_NSTI_TXT}"
 
 
 # ============================================================
-# Step 5
-# QC interpretation
+# 5. Interpretation
 # ============================================================
-echo "[INFO] Step 5. 判定 QC 等級"
 
-QC_LEVEL=$(
+QC_LEVEL="$(
     awk -v x="${WEIGHTED_NSTI}" '
     BEGIN {
         if (x < 0.05) {
@@ -255,41 +273,16 @@ QC_LEVEL=$(
         }
     }
     '
-)
+)"
 
 
-QC_DESC=$(
-    awk -v x="${WEIGHTED_NSTI}" '
-    BEGIN {
-        if (x < 0.05) {
-            print "預測非常可靠，人類腸道常見"
-        } else if (x < 0.10) {
-            print "預測可信度良好，可用於功能路徑分析"
-        } else if (x < 0.15) {
-            print "部分 ASV 缺乏近親基因組，需謹慎解讀"
-        } else {
-            print "預測可信度偏低，reference genomes 涵蓋面不足"
-        }
-    }
-    '
-)
-
-
-# ============================================================
-# Final report
-# ============================================================
 echo
 echo "============================================================"
-echo " ${PICRUST_VERSION} Weighted NSTI QC"
+echo " ${METHOD} Weighted NSTI QC"
 echo "============================================================"
 echo "[INFO] Weighted NSTI = ${WEIGHTED_NSTI}"
 echo "[INFO] QC Level      = ${QC_LEVEL}"
-echo "[INFO] 說明           = ${QC_DESC}"
 echo
-echo "[INFO] 輸出檔案："
-echo "[INFO] total_abundance.tsv = ${TOTAL_ABUNDANCE_TSV}"
-echo "[INFO] nsti.tsv            = ${NSTI_TSV}"
-echo "[INFO] nsti_only.tsv       = ${NSTI_ONLY_TSV}"
-echo "[INFO] nsti_merged.tsv     = ${NSTI_MERGED_TSV}"
-echo "[INFO] weighted_nsti.txt   = ${WEIGHTED_NSTI_TXT}"
+echo "[INFO] Output:"
+echo "  ${QC_DIR}"
 echo "============================================================"
