@@ -1343,13 +1343,13 @@ JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 ## 3. Generate metagenome predictions
 
 ### KO
-* 產出檔案在 `picrust/<environment>/<input_mode>/KO_metagenome_out/` 資料夾下:
+* 產出檔案在 `picrust/<method>/<input_mode>/KO_metagenome_out/` 資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: KO 的每個 sample unstratified 預測結果
   + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 KO 的貢獻
   + `seqtab_norm.tsv.gz`: metagenome_pipeline normalization 結果
 
 ### EC
-* 產出檔案在 `picrust/<environment>/<input_mode>/EC_metagenome_out/` 資料夾下:
+* 產出檔案在 `picrust/<method>/<input_mode>/EC_metagenome_out/` 資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: EC 的每個 sample unstratified 預測結果
   + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 EC 的貢獻
   + `seqtab_norm.tsv.gz`: metagenome_pipeline normalization 結果
@@ -1382,7 +1382,7 @@ JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
 * 0.05 <= Weighted NSTI < 0.10: Acceptable
 * 0.10 <= Weighted NSTI < 0.15: Borderline
 * Weighted NSTI >= 0.15: Low reliability - reference genomes 涵蓋可能不足，需謹慎解讀，可考慮使用 PICRUSt2-SC。
-* 主要輸出位於 `picrust/<environment>/<input_mode>/qc/`：
+* 主要輸出位於 `picrust/<method>/<input_mode>/qc/`：
   + `total_abundance.tsv`
   + `nsti.tsv`
   + `nsti_only.tsv`
