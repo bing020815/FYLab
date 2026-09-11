@@ -1668,5 +1668,5 @@ picrust/<method>/<input_mode>/
 ```
 
 其中：
-* <method>：picrust2 或 picrust2sc
-* <input_mode>：raw 或 dehost
+* `<method>`: picrust2 或 picrust2sc
+* `<input_mode>`:raw 或 dehost
