@@ -1520,8 +1520,28 @@ MODE=latest JOB_TYPE=picrust_pathway ./shell_tools/check_tmux_jobs.sh
 JOB_TYPE=picrust_desc \
 PROJECT_DIR=. \
 JOB_NAME=ec_add_descriptions \
+PRE_CMD='
+case "${CONDA_DEFAULT_ENV:-}" in
+    picrust2)
+        EC_INPUT="EC_metagenome_out/pred_metagenome_unstrat.tsv.gz"
+        ;;
+    picrust2sc)
+        EC_INPUT="EC_metagenome_out/pred_metagenome_unstrat.no_prefix.tsv.gz"
+        zcat EC_metagenome_out/pred_metagenome_unstrat.tsv.gz | \
+        sed "s/^EC://" | gzip > "${EC_INPUT}"
+        ;;
+    *)
+        echo "[ERROR] 請先啟用 picrust2 或 picrust2sc 環境"
+        exit 1
+        ;;
+esac
+
+echo "[INFO] CONDA_ENV = ${CONDA_DEFAULT_ENV}"
+echo "[INFO] EC_INPUT  = ${EC_INPUT}"
+export EC_INPUT
+' \
 CMD='add_descriptions.py \
-  -i EC_metagenome_out/pred_metagenome_unstrat.tsv.gz \
+  -i "${EC_INPUT}" \
   -m EC \
   -o EC_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz' \
 ./shell_tools/run_in_tmux.sh
@@ -1537,20 +1557,36 @@ JOB_TYPE=picrust_desc \
 PROJECT_DIR=. \
 JOB_NAME=ko_add_descriptions \
 PRE_CMD='
-CURRENT_ENV="${CONDA_DEFAULT_ENV:-}"
-
-case "${CURRENT_ENV}" in
-    picrust2|picrust2sc)
-        echo "[INFO] PICRUSt environment = ${CURRENT_ENV}"
+case "${CONDA_DEFAULT_ENV:-}" in
+    picrust2)
+        KO_INPUT="KO_metagenome_out/pred_metagenome_unstrat.tsv.gz"
         ;;
+
+    picrust2sc)
+        KO_INPUT="KO_metagenome_out/pred_metagenome_unstrat.for_desc.tsv.gz"
+
+        zcat KO_metagenome_out/pred_metagenome_unstrat.tsv.gz | \
+        awk "BEGIN{FS=OFS=\"\t\"}
+        NR==1 {print; next}
+        {
+            if (\$1 !~ /^ko:/) \$1=\"ko:\"\$1
+            print
+        }" | \
+        gzip > "${KO_INPUT}"
+        ;;
+
     *)
         echo "[ERROR] 請先啟用 picrust2 或 picrust2sc 環境"
         exit 1
         ;;
 esac
+
+echo "[INFO] PICRUSt environment = ${CONDA_DEFAULT_ENV}"
+echo "[INFO] KO_INPUT            = ${KO_INPUT}"
+export KO_INPUT
 ' \
 CMD='add_descriptions.py \
-  -i KO_metagenome_out/pred_metagenome_unstrat.tsv.gz \
+  -i "${KO_INPUT}" \
   -m KO \
   -o KO_metagenome_out/pred_metagenome_unstrat_descrip.tsv.gz' \
 ./shell_tools/run_in_tmux.sh
