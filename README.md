@@ -1551,7 +1551,8 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 
 # Project structure  [optional]
 依執行分析時，單一分析專案的主要資料夾結構如下：
-```
+
+```text
 <project>/
 │
 ├── raw_fastq/                         # 原始 FASTQ
@@ -1581,57 +1582,81 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 │
 ├── logs/                              # tmux job status / stdout / stderr
 │
-├── picrust/
+├── picrust/                           # PICRUSt 功能預測結果
 │   │
-│   ├── picrust2/
-│   │   ├── out.tre
-│   │   ├── marker_predicted_and_nsti.tsv.gz
-│   │   ├── KO_predicted.tsv.gz
-│   │   ├── EC_predicted.tsv.gz
+│   ├── picrust2/                      # Standard PICRUSt2
 │   │   │
-│   │   ├── intermediate/
-│   │   │   ├── place_seqs/
-│   │   │   └── functional/
+│   │   ├── raw/                       # 使用原始 phyloseq 資料
+│   │   │   ├── provenance.txt         # method / input source / input path 紀錄
+│   │   │   ├── out.tre
+│   │   │   ├── marker_predicted_and_nsti.tsv.gz
+│   │   │   ├── KO_predicted.tsv.gz
+│   │   │   ├── EC_predicted.tsv.gz
+│   │   │   ├── functional_status.txt
+│   │   │   │
+│   │   │   ├── intermediate/
+│   │   │   │   ├── place_seqs/
+│   │   │   │   └── functional/
+│   │   │   │
+│   │   │   ├── KO_metagenome_out/
+│   │   │   │   ├── pred_metagenome_unstrat.tsv.gz
+│   │   │   │   ├── pred_metagenome_contrib.tsv.gz
+│   │   │   │   ├── pred_metagenome_unstrat_descrip.tsv.gz
+│   │   │   │   └── ...
+│   │   │   │
+│   │   │   ├── EC_metagenome_out/
+│   │   │   │   ├── pred_metagenome_unstrat.tsv.gz
+│   │   │   │   ├── pred_metagenome_contrib.tsv.gz
+│   │   │   │   ├── pred_metagenome_unstrat_descrip.tsv.gz
+│   │   │   │   └── ...
+│   │   │   │
+│   │   │   ├── KEGG_pathways_out/
+│   │   │   │   ├── path_abun_unstrat.tsv.gz
+│   │   │   │   ├── path_abun_unstrat_descrip.tsv.gz
+│   │   │   │   ├── path_abun_contrib.tsv.gz
+│   │   │   │   └── ...
+│   │   │   │
+│   │   │   └── qc/
+│   │   │       ├── total_abundance.tsv
+│   │   │       ├── nsti.tsv
+│   │   │       ├── nsti_only.tsv
+│   │   │       ├── nsti_merged.tsv
+│   │   │       └── weighted_nsti.txt
 │   │   │
-│   │   ├── KO_metagenome_out/
-│   │   │   ├── pred_metagenome_unstrat.tsv.gz
-│   │   │   ├── pred_metagenome_contrib.tsv.gz
-│   │   │   ├── pred_metagenome_unstrat_descrip.tsv.gz
-│   │   │   └── ...
-│   │   │
-│   │   ├── EC_metagenome_out/
-│   │   │   ├── pred_metagenome_unstrat.tsv.gz
-│   │   │   ├── pred_metagenome_contrib.tsv.gz
-│   │   │   ├── pred_metagenome_unstrat_descrip.tsv.gz
-│   │   │   └── ...
-│   │   │
-│   │   ├── KEGG_pathways_out/
-│   │   │   ├── path_abun_unstrat.tsv.gz
-│   │   │   ├── path_abun_unstrat_descrip.tsv.gz
-│   │   │   ├── path_abun_contrib.tsv.gz
-│   │   │   └── ...
-│   │   │
-│   │   └── qc/
-│   │       ├── total_abundance.tsv
-│   │       ├── nsti.tsv
-│   │       ├── nsti_only.tsv
-│   │       ├── nsti_merged.tsv
-│   │       └── weighted_nsti.txt
+│   │   └── dehost/                    # 使用 dehost 後資料
+│   │       ├── provenance.txt
+│   │       ├── out.tre
+│   │       ├── marker_predicted_and_nsti.tsv.gz
+│   │       ├── KO_predicted.tsv.gz
+│   │       ├── EC_predicted.tsv.gz
+│   │       ├── functional_status.txt
+│   │       ├── intermediate/
+│   │       │   ├── place_seqs/
+│   │       │   └── functional/
+│   │       ├── KO_metagenome_out/
+│   │       ├── EC_metagenome_out/
+│   │       ├── KEGG_pathways_out/
+│   │       └── qc/
 │   │
-│   └── picrust2sc/
-│       ├── out.tre
-│       ├── marker_predicted_and_nsti.tsv.gz
-│       ├── KO_predicted.tsv.gz
-│       ├── EC_predicted.tsv.gz
-│       ├── intermediate/
-│       ├── KO_metagenome_out/
-│       ├── EC_metagenome_out/
-│       ├── KEGG_pathways_out/
-│       └── qc/
+│   └── picrust2sc/                    # PICRUSt2-SC
+│       │
+│       ├── raw/
+│       │   ├── provenance.txt
+│       │   ├── out.tre
+│       │   ├── marker_predicted_and_nsti.tsv.gz
+│       │   ├── KO_predicted.tsv.gz
+│       │   ├── EC_predicted.tsv.gz
+│       │   ├── functional_status.txt
+│       │   ├── intermediate/
+│       │   ├── KO_metagenome_out/
+│       │   ├── EC_metagenome_out/
+│       │   ├── KEGG_pathways_out/
+│       │   └── qc/
+│       │
+│       └── dehost/
 │
 ├── table.qza
 ├── rep-seqs.qza
 ├── taxonomy.qza
 │
 └── ...
-```
