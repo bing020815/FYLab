@@ -1318,9 +1318,22 @@ MODE=latest JOB_TYPE=picrust_place ./shell_tools/check_tmux_jobs.sh
 * 此執行會同時平行執行3個 level 的 hidden-state prediction
   * 預設每個 job 使用 2 cores
   * 調整共用核心數: `--cores 4`，配置會是 3 個 HSP 同時執行 × 4 cores = 12 cores
+
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
 ```bash
-./shell_tools/run_hsp_predictions.sh --cores 2
+./shell_tools/run_hsp_predictions.sh --input dehost --cores 2
 ```
+</details><br>
+
+<details>
+<summary><strong>未Dehost使用語法</strong></summary>
+
+```bash
+./shell_tools/run_hsp_predictions.sh --input raw --cores 2
+```
+</details><br>
 
 查詢任務狀態
 ```bash
@@ -1330,13 +1343,13 @@ JOB_TYPE=picrust_hsp ./shell_tools/check_tmux_jobs.sh
 ## 3. Generate metagenome predictions
 
 ### KO
-* 產出檔案在 `picrust/<environment>/KO_metagenome_out/` 資料夾下:
+* 產出檔案在 `picrust/<environment>/<input_mode>/KO_metagenome_out/` 資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: KO 的每個 sample unstratified 預測結果
   + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 KO 的貢獻
   + `seqtab_norm.tsv.gz`: metagenome_pipeline normalization 結果
 
 ### EC
-* 產出檔案在 `picrust/<environment>/EC_metagenome_out/` 資料夾下:
+* 產出檔案在 `picrust/<environment>/<input_mode>/EC_metagenome_out/` 資料夾下:
   + `pred_metagenome_unstrat.tsv.gz`: EC 的每個 sample unstratified 預測結果
   + `pred_metagenome_contrib.tsv.gz`: 每個 ASV 對每個 EC 的貢獻
   + `seqtab_norm.tsv.gz`: metagenome_pipeline normalization 結果
@@ -1364,12 +1377,12 @@ JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
 
 ## 3.5 Picrust QC [Optional]
 ### Weighted NSTI
-用於計算 weighted NSTI，依目前 Conda environment 儲存在： `picrust/picrust2/qc/`, `picrust/picrust2sc/qc/`
+用於計算 weighted NSTI，依目前 Conda environment 儲存在： `picrust/picrust2/<input_mode>/qc/`, `picrust/picrust2sc/<input_mode>/qc/`
 * Weighted NSTI < 0.05: Excellent
 * 0.05 <= Weighted NSTI < 0.10: Acceptable
 * 0.10 <= Weighted NSTI < 0.15: Borderline
 * Weighted NSTI >= 0.15: Low reliability - reference genomes 涵蓋可能不足，需謹慎解讀，可考慮使用 PICRUSt2-SC。
-* 主要輸出位於 `picrust/<environment>/qc/`：
+* 主要輸出位於 `picrust/<environment>/<input_mode>/qc/`：
   + `total_abundance.tsv`
   + `nsti.tsv`
   + `nsti_only.tsv`
@@ -1401,9 +1414,22 @@ JOB_TYPE=picrust_metagenome ./shell_tools/check_tmux_jobs.sh
   4. KEGG pathway descriptions
   5. KEGG pathway contribution
 * `path_abun_contrib.tsv.gz` 可用於分析各 ASV / taxon 對 KEGG pathway abundance 的貢獻。
+
+<details>
+<summary><strong>Dehost使後用語法</strong></summary>
+
+```bash
+./shell_tools/run_picrust_functional.sh --input dehost --cores 2
 ```
-./shell_tools/run_picrust_functional.sh --cores 2
+</details><br>
+
+<details>
+<summary><strong>未Dehost使用語法</strong></summary>
+
+```bash
+./shell_tools/run_picrust_functional.sh --input raw --cores 2
 ```
+</details><br>
 
 查詢任務狀態
 ```bash
