@@ -1551,7 +1551,6 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 
 # Project structure  [optional]
 依執行分析時，單一分析專案的主要資料夾結構如下：
-
 ```text
 <project>/
 │
@@ -1660,3 +1659,14 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 ├── taxonomy.qza
 │
 └── ...
+```
+
+### PICRUSt output branch
+PICRUSt 輸出依兩個維度分層：
+```text
+picrust/<method>/<input_mode>/
+```
+
+其中：
+* <method>：picrust2 或 picrust2sc
+* <input_mode>：raw 或 dehost
