@@ -23,8 +23,8 @@ SampleID.hifi_reads.fastq.gz
 ```
 
 # Table of Contents:
-1. [|下機前除裡| 工具介紹](#工具介紹)
-2. [|下機前除裡| 轉檔fastq](#建立官方-workflow)
+1. [|下機前處裡| 工具介紹](#工具介紹)
+2. [|下機前處裡| 轉檔fastq](#建立官方-workflow)
 
 # 工具介紹
 ## list.xlsx
