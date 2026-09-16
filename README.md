@@ -1099,6 +1099,7 @@ cd ..
 <details>
 <summary><strong>GG1 轉 KTU 語法</strong></summary>
 
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1109,11 +1110,28 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gg1_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gg1 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
+
 </details><br>
 
 <details>
 <summary><strong>GG2_202210 轉 KTU 語法</strong></summary>
 
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1124,11 +1142,28 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gg2_202210_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gg2_202210 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
+
 </details><br>
 
 <details>
 <summary><strong>GG2_202409 轉 KTU 語法</strong></summary>
 
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1139,11 +1174,27 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gg2_202409_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gg2_202409 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
 </details><br>
 
 <details>
 <summary><strong>SILVA 138 轉 KTU 語法</strong></summary>
 
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1154,11 +1205,27 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_silva138_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver silva138 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
 </details><br>
 
 <details>
 <summary><strong>SILVA DaDa2 Zenodo 138.2 轉 KTU 語法</strong></summary>
 
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1169,12 +1236,29 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_silva_dada2_138.2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver silva_dada2_138.2 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
 </details><br>
 
 <details>
 <summary><strong>GTDB r220 DADA2 轉 KTU 語法</strong></summary>
   
-classifier 只適用於qiime2-2026.7環境
+### classifier 只適用於qiime2-2026.7環境
+
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1185,12 +1269,29 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gtdb_r220_dada2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gtdb_r220_dada2 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
 </details><br>
 
 <details>
 <summary><strong>GTDB r226 DADA2 轉 KTU 語法</strong></summary>
 
-classifier 只適用於qiime2-2026.7環境
+### classifier 只適用於qiime2-2026.7環境
+
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1201,12 +1302,29 @@ CMD="Rscript rscript/run_ktu2.R \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gtdb_r226_dada2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gtdb_r226_dada2 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
+./shell_tools/run_in_tmux.sh
+```
 </details><br>
 
 <details>
 <summary><strong>GTDB r232 DADA2 轉 KTU 語法</strong></summary>
 
-classifier 只適用於qiime2-2026.7環境  
+### classifier 只適用於qiime2-2026.7環境  
+
+V3V4
 ```bash
 JOB_TYPE=ktu2 \
 PROJECT_DIR=. \
@@ -1215,6 +1333,21 @@ CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gtdb_r232_dada2 \
 --cores 4" \
+./shell_tools/run_in_tmux.sh
+```
+
+Full-length
+```bash
+JOB_TYPE=ktu2 \
+PROJECT_DIR=. \
+JOB_NAME=ktu2_gtdb_r232_dada2_standard \
+CMD="Rscript rscript/run_ktu2.R \
+--project-dir . \
+--db-ver gtdb_r232_dada2 \
+--cores 4" \
+--split-tree-init 5 \
+--split-lwrlim 4000 \
+--split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
 </details><br>
