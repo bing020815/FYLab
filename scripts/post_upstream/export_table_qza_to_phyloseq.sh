@@ -751,38 +751,55 @@ infer_denoise_from_status() {
     DENOISE_JOB_STATUS="$(
         read_kv_value \
             "${LATEST_DENOISE_STATUS}" \
-            "status"
+            "status" \
+        || true
     )"
 
     DENOISE_JOB_NAME="$(
         read_kv_value \
             "${LATEST_DENOISE_STATUS}" \
-            "job_name"
+            "job_name" \
+        || true
     )"
 
     DENOISE_JOB_ID="$(
         read_kv_value \
             "${LATEST_DENOISE_STATUS}" \
-            "job_id"
+            "job_id" \
+        || true
     )"
 
     DENOISE_JOB_START="$(
         read_kv_value \
             "${LATEST_DENOISE_STATUS}" \
-            "start_time"
+            "start_time" \
+        || true
     )"
 
     DENOISE_JOB_END="$(
         read_kv_value \
             "${LATEST_DENOISE_STATUS}" \
-            "end_time"
+            "end_time" \
+        || true
     )"
 
+    # Legacy run_in_tmux.sh stored cmd_full; current versions store cmd_preview.
+    # Command metadata is optional and must never abort export under set -e.
     DENOISE_CMD="$(
         read_kv_value \
             "${LATEST_DENOISE_STATUS}" \
-            "cmd_full"
+            "cmd_full" \
+        || true
     )"
+
+    if [ -z "${DENOISE_CMD}" ]; then
+        DENOISE_CMD="$(
+            read_kv_value \
+                "${LATEST_DENOISE_STATUS}" \
+                "cmd_preview" \
+            || true
+        )"
+    fi
 
 
     if [[ "${DENOISE_CMD}" == *"dada2 denoise-paired"* ]]; then
@@ -854,36 +871,28 @@ fill_denoise_job_metadata_from_status() {
     fi
 
     # QZA 是參數 provenance 的 primary source。
-    # 若 status 同時存在，只補 job-level metadata，不覆蓋 QZA 的 DADA2 參數。
+    # status 只補 job-level metadata；欄位缺失不得中止 export。
     DENOISE_JOB_STATUS="$(
-        read_kv_value \
-            "${LATEST_DENOISE_STATUS}" \
-            "status"
+        read_kv_value "${LATEST_DENOISE_STATUS}" "status" || true
     )"
 
     DENOISE_JOB_NAME="$(
-        read_kv_value \
-            "${LATEST_DENOISE_STATUS}" \
-            "job_name"
+        read_kv_value "${LATEST_DENOISE_STATUS}" "job_name" || true
     )"
 
     DENOISE_JOB_ID="$(
-        read_kv_value \
-            "${LATEST_DENOISE_STATUS}" \
-            "job_id"
+        read_kv_value "${LATEST_DENOISE_STATUS}" "job_id" || true
     )"
 
     DENOISE_JOB_START="$(
-        read_kv_value \
-            "${LATEST_DENOISE_STATUS}" \
-            "start_time"
+        read_kv_value "${LATEST_DENOISE_STATUS}" "start_time" || true
     )"
 
     DENOISE_JOB_END="$(
-        read_kv_value \
-            "${LATEST_DENOISE_STATUS}" \
-            "end_time"
+        read_kv_value "${LATEST_DENOISE_STATUS}" "end_time" || true
     )"
+
+    return 0
 }
 
 
@@ -902,7 +911,7 @@ infer_denoise_provenance() {
 
         fill_denoise_job_metadata_from_status
 
-        return
+        return 0
     fi
 
 
@@ -1169,13 +1178,22 @@ infer_taxonomy_provenance() {
     fi
 
 
-    TAXONOMY_JOB_STATUS="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "status")"
-    TAXONOMY_JOB_NAME="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "job_name")"
-    TAXONOMY_JOB_ID="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "job_id")"
-    TAXONOMY_JOB_START="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "start_time")"
-    TAXONOMY_JOB_END="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "end_time")"
+    # Job-level status metadata is optional. Missing fields must not abort
+    # the export workflow under set -euo pipefail.
+    TAXONOMY_JOB_STATUS="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "status" || true)"
+    TAXONOMY_JOB_NAME="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "job_name" || true)"
+    TAXONOMY_JOB_ID="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "job_id" || true)"
+    TAXONOMY_JOB_START="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "start_time" || true)"
+    TAXONOMY_JOB_END="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "end_time" || true)"
 
-    TAXONOMY_CMD="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "cmd_full")"
+    # Backward/forward compatibility with run_in_tmux.sh:
+    #   legacy status  -> cmd_full
+    #   current status -> cmd_preview
+    TAXONOMY_CMD="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "cmd_full" || true)"
+
+    if [ -z "${TAXONOMY_CMD}" ]; then
+        TAXONOMY_CMD="$(read_kv_value "${LATEST_TAXONOMY_STATUS}" "cmd_preview" || true)"
+    fi
 
 
     # ========================================================
