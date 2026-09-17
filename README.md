@@ -1131,7 +1131,7 @@ CMD="Rscript rscript/run_ktu2.R \
 phyloseq資料夾改名reference DB
 * `ktu`, `picrust` 跑完才能改名
 ```
-mv phyloseq gg1
+mv phyloseq gg_13_8
 ```
 
 </details><br>
@@ -1169,7 +1169,7 @@ CMD="Rscript rscript/run_ktu2.R \
 phyloseq資料夾改名reference DB
 * `ktu`, `picrust` 跑完才能改名
 ```
-mv phyloseq gg2_202210
+mv phyloseq gg2_2022_10
 ```
 
 </details><br>
@@ -1207,7 +1207,7 @@ CMD="Rscript rscript/run_ktu2.R \
 phyloseq資料夾改名reference DB
 * `ktu`, `picrust` 跑完才能改名
 ```
-mv phyloseq gg2_202409
+mv phyloseq gg2_2024_09
 ```
 
 </details><br>
