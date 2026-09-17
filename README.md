@@ -1094,6 +1094,8 @@ cd ..
   Liu, P.-Y., Yang, S.-H., & Yang, S.-Y. (2022). KTU: K-mer Taxonomic Units improve the biological relevance of amplicon sequence variant microbiota data. Methods in Ecology and Evolution, 13, 560– 568. https://doi.org/10.1111/2041-210X.13758
         
         
+        
+        
   ```
 
 <details>
@@ -1124,6 +1126,12 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
+```
+
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq gg1
 ```
 
 </details><br>
@@ -1158,6 +1166,12 @@ CMD="Rscript rscript/run_ktu2.R \
 ./shell_tools/run_in_tmux.sh
 ```
 
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq gg2_202210
+```
+
 </details><br>
 
 <details>
@@ -1189,6 +1203,13 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq gg2_202409
+```
+
 </details><br>
 
 <details>
@@ -1220,6 +1241,13 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+phyloseq資料夾改名
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq silva138
+```
+
 </details><br>
 
 <details>
@@ -1251,6 +1279,13 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq silva_dada2_138.2
+```
+
 </details><br>
 
 <details>
@@ -1284,6 +1319,13 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq gtdb_r220_dada2
+```
+
 </details><br>
 
 <details>
@@ -1317,6 +1359,13 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq gtdb_r226_dada2
+```
+
 </details><br>
 
 <details>
@@ -1350,6 +1399,13 @@ CMD="Rscript rscript/run_ktu2.R \
 --split-reassemble 1000" \
 ./shell_tools/run_in_tmux.sh
 ```
+
+phyloseq資料夾改名reference DB
+* `ktu`, `picrust` 跑完才能改名
+```
+mv phyloseq gtdb_r232_dada2
+```
+
 </details><br>
 
 
