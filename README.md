@@ -1108,7 +1108,7 @@ PROJECT_DIR=. \
 JOB_NAME=ktu2_gg1_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg1 \
+--db-ver gg_13_8 \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
@@ -1120,7 +1120,7 @@ PROJECT_DIR=. \
 JOB_NAME=ktu2_gg1_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg1 \
+--db-ver gg_13_8 \
 --cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
@@ -1146,7 +1146,7 @@ PROJECT_DIR=. \
 JOB_NAME=ktu2_gg2_202210_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg2_202210 \
+--db-ver gg2_2022_10 \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
@@ -1158,7 +1158,7 @@ PROJECT_DIR=. \
 JOB_NAME=ktu2_gg2_202210_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg2_202210 \
+--db-ver gg2_2022_10 \
 --cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
@@ -1184,7 +1184,7 @@ PROJECT_DIR=. \
 JOB_NAME=ktu2_gg2_202409_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg2_202409 \
+--db-ver gg2_2024_09 \
 --cores 4" \
 ./shell_tools/run_in_tmux.sh
 ```
@@ -1196,7 +1196,7 @@ PROJECT_DIR=. \
 JOB_NAME=ktu2_gg2_202409_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
---db-ver gg2_202409 \
+--db-ver gg2_2024_09 \
 --cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
