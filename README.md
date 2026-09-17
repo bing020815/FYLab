@@ -1121,7 +1121,7 @@ JOB_NAME=ktu2_gg1_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gg1 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1159,7 +1159,7 @@ JOB_NAME=ktu2_gg2_202210_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gg2_202210 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1197,7 +1197,7 @@ JOB_NAME=ktu2_gg2_202409_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gg2_202409 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1235,7 +1235,7 @@ JOB_NAME=ktu2_silva138_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver silva138 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1273,7 +1273,7 @@ JOB_NAME=ktu2_silva_dada2_138.2_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver silva_dada2_138.2 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1313,7 +1313,7 @@ JOB_NAME=ktu2_gtdb_r220_dada2_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gtdb_r220_dada2 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1353,7 +1353,7 @@ JOB_NAME=ktu2_gtdb_r226_dada2_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gtdb_r226_dada2 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
@@ -1393,7 +1393,7 @@ JOB_NAME=ktu2_gtdb_r232_dada2_standard \
 CMD="Rscript rscript/run_ktu2.R \
 --project-dir . \
 --db-ver gtdb_r232_dada2 \
---cores 4" \
+--cores 4 \
 --split-tree-init 5 \
 --split-lwrlim 4000 \
 --split-reassemble 1000" \
