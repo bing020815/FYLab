@@ -1095,10 +1095,6 @@ cd ..
 * Citation:
   ```
   Liu, P.-Y., Yang, S.-H., & Yang, S.-Y. (2022). KTU: K-mer Taxonomic Units improve the biological relevance of amplicon sequence variant microbiota data. Methods in Ecology and Evolution, 13, 560– 568. https://doi.org/10.1111/2041-210X.13758
-        
-        
-        
-        
   ```
 
 <details>
@@ -1762,6 +1758,72 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 │       ├── dehost_taxonomy.tsv
 │       └── dehost_dna-sequences.fasta
 │
+├── phylogeny_tree/                    # QIIME2 phylogenetic tree
+│   ├── aligned-rep-seqs.qza           # MAFFT alignment
+│   ├── masked-aligned-rep-seqs.qza    # Masked alignment
+│   ├── unrooted-tree.qza              # 無根樹 QIIME2 artifact
+│   ├── rooted-tree.qza                # 有根樹 QIIME2 artifact
+│   │
+│   └── nwk/                           # R / phyloseq / Python 使用
+│       ├── unrooted_tree.nwk
+│       └── rooted_tree.nwk
+│
+├── ktu/                               # KTU2 分析結果
+│   │
+│   ├── standard/                      # 使用原始 feature space
+│   │   ├── core/                      # 與 reference DB 無關的 KTU core
+│   │   │   ├── ktu_counts.tsv
+│   │   │   ├── asv_to_ktu.tsv
+│   │   │   ├── ktu_id_mapping.tsv
+│   │   │   ├── ktu_representative_sequences.fasta
+│   │   │   ├── kmer_table.tsv
+│   │   │   └── core_manifest.tsv
+│   │   │
+│   │   └── annotation/                # Reference DB-dependent annotation
+│   │       ├── gg1/
+│   │       │   ├── ktu_taxonomy.tsv
+│   │       │   ├── ktu_abundance_taxonomy_gg1.tsv
+│   │       │   └── ...
+│   │       │
+│   │       └── gg2_202210/
+│   │           ├── ktu_taxonomy.tsv
+│   │           ├── ktu_abundance_taxonomy_gg2_202210.tsv
+│   │           └── ...
+│   │
+│   └── dehost/                        # 使用 dehost feature space
+│       ├── core/
+│       │   └── ...
+│       └── annotation/
+│           └── <db-ver>/
+│               └── ...
+│
+├── picrust/                           # PICRUSt 功能預測結果
+│   │
+│   ├── picrust2/                      # Standard PICRUSt2
+│   │   ├── raw/
+│   │   │   ├── provenance.txt
+│   │   │   ├── out.tre
+│   │   │   ├── marker_predicted_and_nsti.tsv.gz
+│   │   │   ├── KO_predicted.tsv.gz
+│   │   │   ├── EC_predicted.tsv.gz
+│   │   │   ├── functional_status.txt
+│   │   │   ├── intermediate/
+│   │   │   │   ├── place_seqs/
+│   │   │   │   └── functional/
+│   │   │   ├── KO_metagenome_out/
+│   │   │   ├── EC_metagenome_out/
+│   │   │   ├── KEGG_pathways_out/
+│   │   │   └── qc/
+│   │   │
+│   │   └── dehost/
+│   │       └── ...
+│   │
+│   └── picrust2sc/                    # PICRUSt2-SC
+│       ├── raw/
+│       │   └── ...
+│       └── dehost/
+│           └── ...
+│
 ├── shell_tools/                       # FYLab 執行工具
 │   ├── run_in_tmux.sh
 │   ├── check_tmux_jobs.sh
@@ -1771,85 +1833,15 @@ KO_metagenome_out/pred_metagenome_unstrat.tsv.gz
 │   ├── run_picrust_functional.sh
 │   └── check_picrust_qc.sh
 │
+├── rscript/
+│   └── run_ktu2.R
+│
 ├── logs/                              # tmux job status / stdout / stderr
 │
-├── picrust/                           # PICRUSt 功能預測結果
-│   │
-│   ├── picrust2/                      # Standard PICRUSt2
-│   │   │
-│   │   ├── raw/                       # 使用原始 phyloseq 資料
-│   │   │   ├── provenance.txt         # method / input source / input path 紀錄
-│   │   │   ├── out.tre
-│   │   │   ├── marker_predicted_and_nsti.tsv.gz
-│   │   │   ├── KO_predicted.tsv.gz
-│   │   │   ├── EC_predicted.tsv.gz
-│   │   │   ├── functional_status.txt
-│   │   │   │
-│   │   │   ├── intermediate/
-│   │   │   │   ├── place_seqs/
-│   │   │   │   └── functional/
-│   │   │   │
-│   │   │   ├── KO_metagenome_out/
-│   │   │   │   ├── pred_metagenome_unstrat.tsv.gz
-│   │   │   │   ├── pred_metagenome_contrib.tsv.gz
-│   │   │   │   ├── pred_metagenome_unstrat_descrip.tsv.gz
-│   │   │   │   └── ...
-│   │   │   │
-│   │   │   ├── EC_metagenome_out/
-│   │   │   │   ├── pred_metagenome_unstrat.tsv.gz
-│   │   │   │   ├── pred_metagenome_contrib.tsv.gz
-│   │   │   │   ├── pred_metagenome_unstrat_descrip.tsv.gz
-│   │   │   │   └── ...
-│   │   │   │
-│   │   │   ├── KEGG_pathways_out/
-│   │   │   │   ├── path_abun_unstrat.tsv.gz
-│   │   │   │   ├── path_abun_unstrat_descrip.tsv.gz
-│   │   │   │   ├── path_abun_contrib.tsv.gz
-│   │   │   │   └── ...
-│   │   │   │
-│   │   │   └── qc/
-│   │   │       ├── total_abundance.tsv
-│   │   │       ├── nsti.tsv
-│   │   │       ├── nsti_only.tsv
-│   │   │       ├── nsti_merged.tsv
-│   │   │       └── weighted_nsti.txt
-│   │   │
-│   │   └── dehost/                    # 使用 dehost 後資料
-│   │       ├── provenance.txt
-│   │       ├── out.tre
-│   │       ├── marker_predicted_and_nsti.tsv.gz
-│   │       ├── KO_predicted.tsv.gz
-│   │       ├── EC_predicted.tsv.gz
-│   │       ├── functional_status.txt
-│   │       ├── intermediate/
-│   │       │   ├── place_seqs/
-│   │       │   └── functional/
-│   │       ├── KO_metagenome_out/
-│   │       ├── EC_metagenome_out/
-│   │       ├── KEGG_pathways_out/
-│   │       └── qc/
-│   │
-│   └── picrust2sc/                    # PICRUSt2-SC
-│       │
-│       ├── raw/
-│       │   ├── provenance.txt
-│       │   ├── out.tre
-│       │   ├── marker_predicted_and_nsti.tsv.gz
-│       │   ├── KO_predicted.tsv.gz
-│       │   ├── EC_predicted.tsv.gz
-│       │   ├── functional_status.txt
-│       │   ├── intermediate/
-│       │   ├── KO_metagenome_out/
-│       │   ├── EC_metagenome_out/
-│       │   ├── KEGG_pathways_out/
-│       │   └── qc/
-│       │
-│       └── dehost/
-│
-├── table.qza
-├── rep-seqs.qza
-├── taxonomy.qza
-│
+├── table.qza                          # Feature table
+├── rep-seqs.qza                       # Representative sequences
+├── taxonomy.qza                       # Taxonomy
+├── metadata.tsv
 └── ...
 ```
 
