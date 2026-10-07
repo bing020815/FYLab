@@ -101,7 +101,7 @@ source ./shell_tools/use_qiime_for_artifact.sh rep-seqs.qza
 5. 命名必須經正式發表與認可
     + 需刊登於《International Journal of Systematic and Evolutionary Microbiology (IJSEM)》並被 ICSP 接受
   
-菌新舊名查詢：
+菌的新、舊名可透過 Leibniz Institute DSMZ 已整理公開管理資料庫查詢：
 * [LPSN - List of Prokaryotic names with Standing in Nomenclature](https://lpsn.dsmz.de/) 
 
 <details>
