@@ -1448,7 +1448,7 @@ Bioinformatics. 2025;41(5):btaf269. DOI: 10.1093/bioinformatics/btaf269.
 則一環境啟動即可。
 
 [PICRUSt2 2.5.2](https://github.com/picrust/picrust2/wiki/PICRUSt2-Tutorial-(v2.5.2))
-* 使用約 20,000 筆 reference sequences / genomes 建立預設 phylogenetic reference
+* 使用約 20,000 筆 reference sequences / genomes 建立預設 phylogenetic reference (IMG-based)
 * Conda environment: `picrust2`
 * KEGG pathway-to-KO mapping file: `/home/adprc/miniconda3/envs/picrust2/lib/python3.8/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv`
 
@@ -1457,7 +1457,7 @@ conda activate picrust2
 ```
 
 [PICRUSt2-SC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12089645/)
-* 使用約 27,000 筆 reference genomes，以 Genome Taxonomy Database (GTDB) release 214 建立擴充的基因組參考樹。
+* 使用約 26,868 bacterial + 1,002 archaeal reference genomes，以 Genome Taxonomy Database (GTDB) release 214 建立擴充的基因組參考樹。
 * Conda environment: `picrust2sc`
 * KEGG pathway-to-KO mapping file: `/home/adprc/miniconda3/envs/picrust2sc/lib/python3.9/site-packages/picrust2/default_files/pathway_mapfiles/KEGG_pathways_to_KO.tsv`
 ```bash
