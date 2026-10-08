@@ -1416,10 +1416,6 @@ MODE=latest JOB_TYPE=ktu2 ./shell_tools/check_tmux_jobs.sh
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
 
 
-
-
-![PICRUSt2](img/picrust2_flow.png)
-
 # PICRUSt2 - Metabolism Pathway
 ![PICRUSt2](img/picrust2_flow.png)
 
