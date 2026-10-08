@@ -1,4 +1,4 @@
-# FYLab 分析流程
+# FYLab 16S-based 分析流程
 * 基因定序上游分析流程使用說明，或是使用[舊流程觀看對照](./docs/old_sop.md)
 * 三代定序下機前處理使用[PacBio轉檔Fastq](./docs/pacbio_bam2fastq.md)
 
