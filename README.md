@@ -26,20 +26,20 @@
 * Window -> File WINSCP
 * Mac -> Filezilla
 
-主機名稱：140.127.97.95
+主機名稱：140.127.97.85
 使⽤者名稱：adprc
 
 ## Puty/terminal
 Windos: Putty
   + IP:
   ```bash
-  adprc@140.127.97.95
+  adprc@140.127.97.85
   ```
 
 Mac: Terminal / Windos: Powershell
   + Run:
   ```bash
-  ssh adprc@140.127.97.95
+  ssh adprc@140.127.97.85
   ```
 <p align="center"><a href="#FYLab-分析流程">Top</a></p>
 
