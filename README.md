@@ -461,12 +461,16 @@ CMD="qiime feature-classifier classify-consensus-vsearch \
 
 Citation [SILVA database]:
 ```
-Quast C, Pruesse E, Yilmaz P, Gerken J, Schweer T, Yarza P, Peplies J, Glöckner FO. The SILVA ribosomal RNA gene database project: improved data processing and web-based tools. Nucleic Acids Research. 2013;41(Database issue):D590–D596. DOI: 10.1093/nar/gks1219. 
+Quast C, Pruesse E, Yilmaz P, Gerken J, Schweer T, Yarza P, Peplies J, Glöckner FO. The SILVA ribosomal RNA gene database project: improved data processing and web-based tools. Nucleic Acids Research. 2013;41(Database issue):D590–D596. DOI: 10.1093/nar/gks1219
+        
+        . 
 ```
 
 Citation [Silva taxonomic training data formatted for DADA2](https://zenodo.org/records/14169026):
 ```
-Callahan B. Silva taxonomic training data formatted for DADA2 (Silva version 138.2). Zenodo. 2024. DOI: 10.5281/zenodo.14169026.
+Callahan B. Silva taxonomic training data formatted for DADA2 (Silva version 138.2). Zenodo. 2024. DOI: 10.5281/zenodo.14169026
+        
+        .
 ```
 
 ### Option1: Naive Bayes 模型分類 (V3-V4) [Self-trained]
@@ -512,11 +516,15 @@ CMD="qiime feature-classifier classify-sklearn \
 Citation [GTDB database]:
 ```
 Donovan H Parks, Maria Chuvochina, Christian Rinke, Aaron J Mussig, Pierre-Alain Chaumeil, Philip Hugenholtz, GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy, Nucleic Acids Research, Volume 50, Issue D1, 7 January 2022, Pages D785–D794, https://doi.org/10.1093/nar/gkab776
+        
+        
 ```
 
 Citation [Genome Taxonomy Database (GTDB) pre-trained classifier]:
 ```
 Caporaso, J. G. (2026). Genome Taxonomy Database (GTDB) pre-trained classifiers for QIIME 2 (Version 2026.7.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21619532
+        
+        
 ```
 
 
@@ -542,7 +550,7 @@ CMD="qiime feature-classifier classify-sklearn \
 
 [由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r226 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
 * classifier 只適用於`qiime2-2026.7`環境
-* 由官方於`2025年4月`釋出的 GTDB r220 版本，總計約`732,475`組基因組、約`143,614`物種叢集
+* 由官方於`2025年4月`釋出的 GTDB r226 版本，總計約`732,475`組基因組、約`143,614`物種叢集
 * 歷史DB，可用於DB之間比較
 
 Citation [GTDB database]:
@@ -578,7 +586,7 @@ CMD="qiime feature-classifier classify-sklearn \
 
 [由 DADA2 套件作者（Callahan BJ 等）基於 GTDB r232 官方資料建立之 DADA2-compatible reference FASTA](https://zenodo.org/records/21619532)
 * classifier 只適用於`qiime2-2026.7`環境
-* 由官方於`2026年4月`釋出的 GTDB r220 版本，總計約`901,341`組基因組、約`199,923`物種叢集
+* 由官方於`2026年4月`釋出的 GTDB r232 版本，總計約`901,341`組基因組、約`199,923`物種叢集
 
 Citation [GTDB database]:
 ```
