@@ -1473,6 +1473,7 @@ conda activate picrust2sc
 ```
 
 ## 1. Place ASV sequences into reference tree
+* 需要有 `phyloseq/dna-sequences.fasta` 才能接續使用
 
 <details>
 <summary><strong>Dehost使後用語法</strong></summary>
